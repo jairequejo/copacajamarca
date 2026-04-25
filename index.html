@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1f3a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Copa Cajamarca 2026 — En Vivo</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <img src="logo.svg" alt="Copa Cajamarca 2026" class="logo" onerror="this.style.display='none'" />
+      <div class="header-text">
+        <span class="header-sup">Campeonato de Menores · 2026</span>
+        <h1 class="header-title">Copa Cajamarca</h1>
+      </div>
+    </div>
+    <div class="live-pill">
+      <span class="pulse-dot"></span>
+      En Vivo
+    </div>
+  </header>
+
+  <div class="filters-container" id="filtersContainer">
+    <div class="filter-row">
+      <span class="filter-label">Cat.</span>
+      <nav class="filter-bar" id="filterCat" role="navigation" aria-label="Filtrar por categoría"></nav>
+    </div>
+    <div class="filter-row">
+      <span class="filter-label">Lugar</span>
+      <nav class="filter-bar" id="filterLugar" role="navigation" aria-label="Filtrar por lugar"></nav>
+    </div>
+    <div class="filter-row">
+      <span class="filter-label">Cancha</span>
+      <nav class="filter-bar" id="filterCancha" role="navigation" aria-label="Filtrar por cancha"></nav>
+    </div>
+    <div class="filter-row">
+      <span class="filter-label">Estado</span>
+      <nav class="filter-bar" id="filterEstado" role="navigation" aria-label="Filtrar por estado"></nav>
+    </div>
+  </div>
+
+  <div class="refresh-bar" id="refreshBar" hidden>
+    <span class="spin"></span>
+    Actualizando…
+  </div>
+
+  <main class="main-content">
+    <div class="matches-list" id="matchesList"></div>
+    <div class="empty-state" id="emptyState" hidden>
+      <img src="logo.svg" alt="Copa Cajamarca" style="width: 72px; opacity: 0.25; margin: 0 auto 16px; display: block;" onerror="this.style.display='none'">
+      <p>Sin partidos en esta categoría</p>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <button class="btn-download" id="btnDownload">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Descargar Resumen
+    </button>
+    <p class="footer-note">Actualización automática cada 30 s</p>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+  <div id="formatModal" class="modal-overlay" hidden>
+    <div class="modal-content">
+      <h3>Formato de Descarga</h3>
+      <p>Selecciona el tipo de fútbol para el banner:</p>
+      <div class="modal-actions">
+        <button class="btn-format" data-format="7">Fútbol 7</button>
+        <button class="btn-format" data-format="9">Fútbol 9</button>
+      </div>
+      <button class="btn-cancel" id="btnCancelFormat">Cancelar</button>
+    </div>
+  </div>
+
+</body>
+</html>
