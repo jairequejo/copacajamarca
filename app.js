@@ -255,7 +255,10 @@ function renderMatches() {
             <div class="match-card" data-estado="${estadoLC}">
                 <div class="card-top">
                     <span class="card-cat">Cat. ${match.categoria} — Jor. ${match.jornada}</span>
-                    <span class="status-chip ${stateClass}">${match.estadoStandard}</span>
+                    <span class="status-chip ${stateClass}">
+                        ${stateClass === 'en-curso' ? '<span class="pulse-dot"></span>' : ''}
+                        ${match.estadoStandard}
+                    </span>
                 </div>
                 <div class="card-score">
                     <div class="team ${localClass}">${match.local}</div>
@@ -331,12 +334,10 @@ function drawLogo(ctx,cx,cy,r){
   const g=ctx.createRadialGradient(cx-r*.3,cy-r*.3,r*.05,cx,cy,r);
   g.addColorStop(0,'#1c3da6');g.addColorStop(1,'#040e30');
   ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
-  const rg=ctx.createLinearGradient(cx-r,cy,cx+r,cy);
-  rg.addColorStop(0,'#6a3c00');rg.addColorStop(0.5,'#ffd15c');rg.addColorStop(1,'#6a3c00');
-  ctx.strokeStyle=rg;ctx.lineWidth=r*.07;ctx.stroke();
-  ctx.save();ctx.beginPath();ctx.arc(cx,cy,r*.82,0,Math.PI*2);ctx.clip();
+  ctx.strokeStyle='#ffffff';ctx.lineWidth=r*.03;ctx.stroke();
+  ctx.save();ctx.beginPath();ctx.arc(cx,cy,r*.90,0,Math.PI*2);ctx.clip();
   if(_logo.complete){
-    const s=r*1.85;ctx.drawImage(_logo,cx-s/2,cy-s/2,s,s);
+    const s=r*2.05;ctx.drawImage(_logo,cx-s/2,cy-s/2,s,s);
   } else {
     ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.font=`900 ${r*.4}px "Barlow Condensed"`;ctx.fillText('CC',cx,cy);
@@ -344,13 +345,9 @@ function drawLogo(ctx,cx,cy,r){
   ctx.restore();
 }
 
-function drawVerticalFutbol(ctx, num, tableX, tableY, tableH) {
-  const cx = tableX / 2;
-  const cy = tableY + tableH / 2;
-
+function drawHorizontalFutbol(ctx, num, cx, cy) {
   ctx.save();
   ctx.translate(cx, cy);
-  ctx.rotate(-Math.PI / 2);
 
   const FONT  = '"Barlow Condensed", Impact, "Arial Narrow", sans-serif';
   const NAVY  = '#081C4A';
@@ -371,30 +368,26 @@ function drawVerticalFutbol(ctx, num, tableX, tableY, tableH) {
 
   const total  = fW + gap + nW;
   const startX = -total / 2;
-  const bY     = fSize * 0.36;
+  const bY     = 0;
 
   function drawThick(chars, x, y, size, spacing) {
     ctx.font      = `italic 900 ${size}px ${FONT}`;
     ctx.textBaseline = 'alphabetic';
     ctx.textAlign    = 'left';
-    ctx.lineJoin     = 'miter';
-    ctx.miterLimit   = 2;
 
-    ctx.lineWidth   = 8;
-    ctx.strokeStyle = '#ffffff';
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.85)';
+    ctx.shadowBlur = 12;
+    ctx.shadowOffsetX = 3;
+    ctx.shadowOffsetY = 3;
+    ctx.fillStyle = '#ffffff';
+    
     let px = x;
-    chars.forEach(c => {
-      ctx.strokeText(c, px, y);
-      px += ctx.measureText(c).width + spacing;
-    });
-
-    ctx.lineWidth   = 0;
-    ctx.fillStyle   = NAVY;
-    px = x;
     chars.forEach(c => {
       ctx.fillText(c, px, y);
       px += ctx.measureText(c).width + spacing;
     });
+    ctx.restore();
   }
 
   drawThick('FÚTBOL'.split(''), startX, bY, fSize, LS);
@@ -454,156 +447,179 @@ async function downloadScreenshot(futbolFormat) {
             });
         }
 
+        // Cargar imagen de fondo
+        const _bg = new Image();
+        _bg.src = 'fondo-resultados.png';
+        if (!_bg.complete) {
+            await new Promise((resolve) => {
+                _bg.onload = resolve;
+                _bg.onerror = resolve;
+                setTimeout(resolve, 4000);
+            });
+        }
+
         const W = 1080, H = 1080;
         const cv = document.createElement('canvas');
         cv.width = W; cv.height = H;
         const ctx = cv.getContext('2d');
 
-        const HEADER  = 160;
-        const DATEBAR = 58;
-        const FOOTER  = 86;
-        const PAD_L   = 170;
-        const PAD_R   = 32;
-        const TBL_X   = PAD_L;
-        const TBL_W   = W - PAD_L - PAD_R;
-        const GAP     = 24;
-        const THEAD   = 54;
 
-        const TABLE_AREA_Y = HEADER + DATEBAR + GAP;
-        const TABLE_AREA_H = H - TABLE_AREA_Y - FOOTER - GAP;
+
+        // ── 1. FONDO FOTOGRÁFICO ──
+        if (_bg.complete && _bg.naturalWidth > 0) {
+            // Escalar la imagen para cubrir todo el canvas (object-fit: cover)
+            const scale = Math.max(W / _bg.naturalWidth, H / _bg.naturalHeight);
+            const bw = _bg.naturalWidth * scale;
+            const bh = _bg.naturalHeight * scale;
+            ctx.drawImage(_bg, (W - bw) / 2, (H - bh) / 2, bw, bh);
+        } else {
+            ctx.fillStyle = '#0b2060';
+            ctx.fillRect(0, 0, W, H);
+        }
+
+        // ── 2. HEADER AZUL ──
+        const HEADER = 155;
+        ctx.fillStyle = 'rgba(10,25,75,0.95)';
+        ctx.fillRect(0, 0, W, HEADER);
+        // línea dorada superior
+        ctx.fillStyle = '#f5c800';
+        ctx.fillRect(0, 0, W, 7);
+        // línea dorada inferior
+        ctx.fillStyle = '#f5c800';
+        ctx.fillRect(0, HEADER - 4, W, 4);
+
+        // Logo circular
+        drawLogo(ctx, 80, HEADER / 2 + 4, 52);
+
+        // Título Copa Cajamarca
+        const TX = 158;
+        const TITLE_MAX_W = 480;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#ffffff';
+        const tSize1 = fit(ctx, 'COPA CAJAMARCA', TITLE_MAX_W, 62, '900');
+        ctx.font = `900 ${tSize1}px "Barlow Condensed",sans-serif`;
+        ctx.fillText('COPA CAJAMARCA', TX, HEADER / 2 - 20);
         
-        let maxRowH = 110;
-        let ROW_H = Math.min(maxRowH, (TABLE_AREA_H - THEAD) / rows.length);
-        if (ROW_H < 38) ROW_H = 38;
+        ctx.fillStyle = '#c8d8f0';
+        const tSize2 = fit(ctx, 'CAMPEONATO DE MENORES', TITLE_MAX_W, 36, '700');
+        ctx.font = `700 ${tSize2}px "Barlow Condensed",sans-serif`;
+        ctx.fillText('CAMPEONATO DE MENORES', TX, HEADER / 2 + 28);
+
+        // RESULTADOS en rojo itálico
+        ctx.save();
+        ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+        ctx.shadowColor = 'rgba(220,20,20,0.9)'; ctx.shadowBlur = 22;
+        ctx.fillStyle = '#ff1a1a';
+        const resSize = fit(ctx, 'RESULTADOS', 380, 78, 'italic 900');
+        ctx.font = `italic 900 ${resSize}px "Barlow Condensed",sans-serif`;
+        ctx.fillText('RESULTADOS', W - 22, HEADER / 2 + 6);
+        ctx.restore();
+
+        // ── 3. BARRA DORADA FECHA ──
+        const DATEBAR = 54;
+        const dy = HEADER;
+        const DATEBAR_W = 580;
+        const dg = ctx.createLinearGradient(0, dy, DATEBAR_W, dy + DATEBAR);
+        dg.addColorStop(0, '#e0a200'); dg.addColorStop(0.5, '#f5c800'); dg.addColorStop(1, '#e0a200');
+        // Trapecio (rectángulo con borde derecho diagonal)
+        ctx.beginPath();
+        ctx.moveTo(0, dy);
+        ctx.lineTo(DATEBAR_W, dy);
+        ctx.lineTo(DATEBAR_W - 30, dy + DATEBAR);
+        ctx.lineTo(0, dy + DATEBAR);
+        ctx.closePath();
+        ctx.fillStyle = dg;
+        ctx.fill();
+        ctx.fillStyle = '#0a1830';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.font = 'bold 26px "Barlow Condensed",sans-serif';
+        ctx.fillText(fechaText, DATEBAR_W / 2 - 20, dy + DATEBAR / 2);
+
+        // ── 4. LAYOUT TABLA ──
+        const FOOTER = 60;
+        const GAP = 20;
+        const TBL_W = 960;
+        const TBL_X = (W - TBL_W) / 2;
+        const THEAD = 54;
+        
+        // Fijar la tabla en la parte superior, cerca de la fecha
+        const TABLE_Y = dy + DATEBAR + 110; 
+        const TABLE_AREA_H = H - TABLE_Y - FOOTER - GAP;
+        
+        let ROW_H = Math.min(60, (TABLE_AREA_H - THEAD) / rows.length);
+        if (ROW_H < 40) ROW_H = 40;
         const TABLE_H = THEAD + rows.length * ROW_H;
-        
-        const TABLE_Y = TABLE_AREA_Y + Math.max(0, (TABLE_AREA_H - TABLE_H) / 2);
 
-        const CC_W  = 100;
-        const CS_W  = 150;
+        const CC_W = 110, CS_W = 140;
         const TEAMS_W = TBL_W - CC_W - CS_W;
-        const TEAM_W  = Math.floor(TEAMS_W / 2);
+        const TEAM_W = Math.floor(TEAMS_W / 2);
         const CC = {x: TBL_X, w: CC_W};
         const CA = {x: TBL_X + CC_W, w: TEAM_W};
         const CS = {x: TBL_X + CC_W + TEAM_W, w: CS_W};
         const CB = {x: TBL_X + CC_W + TEAM_W + CS_W, w: TEAM_W};
 
-        ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,H);
-        
-        if (_logo.complete) {
-            ctx.save();
-            ctx.globalAlpha = 0.04;
-            const logoSize = 640;
-            ctx.drawImage(_logo, W/2 - logoSize/2, H/2 - logoSize/2, logoSize, logoSize);
-            ctx.restore();
-        }
+        // ── 5. TEXTO FÚTBOL X (pegado encima del cuadro) ──
+        const futbolY = TABLE_Y - 25;
+        drawHorizontalFutbol(ctx, futbolNum, W / 2, futbolY);
 
-        drawBall(ctx, W-90,  HEADER+DATEBAR+200, 150, 0.07);
-        drawBall(ctx, 48,    H-FOOTER-170,       120, 0.06);
+        // ── 6. TABLA ──
+        // Encabezado tabla
+        ctx.fillStyle = '#2349a0';
+        ctx.fillRect(TBL_X, TABLE_Y, TBL_W, THEAD);
+        ctx.fillStyle = '#f5c800';
+        ctx.font = 'bold 24px "Barlow Condensed",sans-serif';
+        ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+        ctx.fillText('CAT.', CC.x + CC.w / 2, TABLE_Y + THEAD / 2);
+        ctx.fillText('PARTIDO', CC.x + CC.w + (TBL_W - CC.w) / 2, TABLE_Y + THEAD / 2);
 
-        const hg=ctx.createLinearGradient(0,0,0,HEADER);
-        hg.addColorStop(0,'#0b2060'); hg.addColorStop(1,'#1a3d8a');
-        ctx.fillStyle=hg; ctx.fillRect(0,0,W,HEADER);
-        ctx.fillStyle='#f5c800'; ctx.fillRect(0,0,W,7);
-        ctx.fillStyle='rgba(245,200,0,0.3)'; ctx.fillRect(0,HEADER-1,W,1);
-
-        drawLogo(ctx,76,HEADER/2+4,55);
-
-        const TITLE_X=144, TITLE_MAX=500; // Reduced to prevent overlap
-        ctx.textAlign='left'; ctx.textBaseline='middle';
-        ctx.fillStyle='#ffffff';
-        const tSize1=fit(ctx,'COPA CAJAMARCA',TITLE_MAX,68,'900');
-        ctx.shadowColor='rgba(245,200,0,0.35)'; ctx.shadowBlur=8;
-        ctx.font=`900 ${tSize1}px "Barlow Condensed",sans-serif`;
-        ctx.fillText('COPA CAJAMARCA',TITLE_X,HEADER/2-18);
-        ctx.shadowBlur=0;
-        ctx.fillStyle='#c0d0f0';
-        const tSize2=fit(ctx,'CAMPEONATO DE MENORES',TITLE_MAX,34,'700');
-        ctx.font=`700 ${tSize2}px "Barlow Condensed",sans-serif`;
-        ctx.fillText('CAMPEONATO DE MENORES',TITLE_X,HEADER/2+26);
-
-        let rSize=70; // Reduced to prevent overlap
-        while(rSize>24){
-            ctx.font=`italic 900 ${rSize}px "Barlow Condensed",sans-serif`;
-            if(ctx.measureText('RESULTADOS').width<=380)break; rSize--;
-        }
-        ctx.textAlign='right'; ctx.textBaseline='middle';
-        ctx.shadowColor='rgba(220,20,20,0.85)'; ctx.shadowBlur=20;
-        ctx.fillStyle='#e01010';
-        ctx.font=`italic 900 ${rSize}px "Barlow Condensed",sans-serif`;
-        ctx.fillText('RESULTADOS',W-18,HEADER/2+8);
-        ctx.shadowBlur=0;
-
-        const dy=HEADER;
-        const dg=ctx.createLinearGradient(0,dy,W,dy+DATEBAR);
-        dg.addColorStop(0,'#e0a200'); dg.addColorStop(0.5,'#f5c800'); dg.addColorStop(1,'#e0a200');
-        ctx.fillStyle=dg; ctx.fillRect(0,dy,W,DATEBAR);
-        ctx.fillStyle='rgba(255,255,255,.22)'; ctx.fillRect(0,dy,W,2);
-        ctx.fillStyle='rgba(0,0,0,.18)'; ctx.fillRect(0,dy+DATEBAR-2,W,2);
-        ctx.fillStyle='#0a1830'; ctx.textAlign='left'; ctx.textBaseline='middle';
-        ctx.font='bold 28px "Barlow Condensed",sans-serif';
-        ctx.fillText(fechaText,22,dy+DATEBAR/2);
-
-        drawVerticalFutbol(ctx, futbolNum, TBL_X, TABLE_Y, TABLE_H);
-
-        ctx.fillStyle='#1a3d8a';
-        ctx.fillRect(TBL_X,TABLE_Y,TBL_W,THEAD);
-        ctx.fillStyle='#f5c800'; ctx.fillRect(TBL_X,TABLE_Y+THEAD-3,TBL_W,3);
-        ctx.fillStyle='#f5c800'; ctx.font='700 20px "Barlow Condensed",sans-serif';
-        ctx.textBaseline='middle'; ctx.textAlign='center';
-        ctx.fillText('CAT.', CC.x+CC.w/2, TABLE_Y+THEAD/2);
-        ctx.fillText('PARTIDO', CC.x+CC.w+(TBL_W-CC.w)/2, TABLE_Y+THEAD/2);
-        ctx.fillStyle='rgba(245,200,0,0.35)';
-        ctx.fillRect(CA.x, TABLE_Y+8, 1, THEAD-16);
-
+        // Filas
         const RS = TABLE_Y + THEAD;
-        rows.forEach((r,i)=>{
-            const ry=RS+i*ROW_H;
-            ctx.fillStyle = i%2===0 ? '#ffffff' : '#d8dfe8';
-            ctx.fillRect(TBL_X,ry,TBL_W,ROW_H);
-            ctx.fillStyle='rgba(100,130,180,0.14)';
-            ctx.fillRect(TBL_X,ry+ROW_H-1,TBL_W,1);
+        rows.forEach((r, i) => {
+            const ry = RS + i * ROW_H;
+            ctx.fillStyle = i % 2 === 0 ? '#ffffff' : '#f0f4f8';
+            ctx.fillRect(TBL_X, ry, TBL_W, ROW_H);
 
-            const my=ry+ROW_H/2;
-            const fs=Math.max(16, Math.min(42, ROW_H*0.42));
-            ctx.textBaseline='middle';
+            const my = ry + ROW_H / 2;
+            const fs = Math.max(16, Math.min(38, ROW_H * 0.42));
+            ctx.textBaseline = 'middle';
 
-            ctx.fillStyle='#1a2a5a';
-            ctx.font=`italic 700 ${fs}px "Barlow Condensed",sans-serif`;
-            ctx.textAlign='center';
-            ctx.fillText(r.jornada, CC.x+CC.w/2, my);
+            ctx.fillStyle = '#081c4a';
+            ctx.font = `${fs}px "Barlow",sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.fillText(r.jornada, CC.x + CC.w / 2, my);
 
-            const as=fit(ctx,r.teamA.toUpperCase(),CA.w-12,fs,'700');
-            ctx.font=`700 ${as}px "Barlow Condensed",sans-serif`;
-            ctx.fillStyle='#111827'; ctx.textAlign='right';
-            ctx.fillText(r.teamA.toUpperCase(), CA.x+CA.w-8, my);
+            const as = fit(ctx, r.teamA.toUpperCase(), CA.w - 14, fs, '500');
+            ctx.font = `500 ${as}px "Barlow",sans-serif`;
+            ctx.fillStyle = '#0a1830'; ctx.textAlign = 'center';
+            ctx.fillText(r.teamA.toUpperCase(), CA.x + CA.w / 2, my);
 
-            ctx.font=`bold ${Math.max(fs,16)}px "Barlow Condensed",sans-serif`;
-            ctx.fillStyle='#111827'; ctx.textAlign='center';
-            ctx.fillText(r.score, CS.x+CS.w/2, my);
+            const scoreFs = Math.max(20, Math.min(28, ROW_H * 0.5));
+            ctx.font = `600 ${scoreFs}px "Barlow",sans-serif`;
+            ctx.fillStyle = '#0a1830'; ctx.textAlign = 'center';
+            ctx.fillText(r.score, CS.x + CS.w / 2, my);
 
-            const bs=fit(ctx,r.teamB.toUpperCase(),CB.w-12,fs,'700');
-            ctx.font=`700 ${bs}px "Barlow Condensed",sans-serif`;
-            ctx.fillStyle='#111827'; ctx.textAlign='left';
-            ctx.fillText(r.teamB.toUpperCase(), CB.x+8, my);
+            const bs = fit(ctx, r.teamB.toUpperCase(), CB.w - 14, fs, '500');
+            ctx.font = `500 ${bs}px "Barlow",sans-serif`;
+            ctx.fillStyle = '#0a1830'; ctx.textAlign = 'center';
+            ctx.fillText(r.teamB.toUpperCase(), CB.x + CB.w / 2, my);
+
+            // Borde inferior de la fila
+            ctx.strokeStyle = '#081c4a';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(TBL_X, ry, TBL_W, ROW_H);
         });
 
-        ctx.strokeStyle='rgba(26,61,138,0.28)'; ctx.lineWidth=1.5;
-        ctx.strokeRect(TBL_X,TABLE_Y,TBL_W,TABLE_H);
-        ctx.fillStyle='rgba(26,61,138,0.12)';
-        ctx.fillRect(CA.x, RS, 1, rows.length*ROW_H);
-        ctx.fillRect(CA.x+CA.w, RS, 1, rows.length*ROW_H);
-        ctx.fillRect(CS.x+CS.w, RS, 1, rows.length*ROW_H);
+        // Divisores verticales oscuros
+        ctx.strokeStyle = '#081c4a';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(TBL_X, TABLE_Y, TBL_W, TABLE_H);
+        ctx.beginPath();
+        ctx.moveTo(CA.x, TABLE_Y); ctx.lineTo(CA.x, TABLE_Y + TABLE_H);
+        ctx.moveTo(CS.x, TABLE_Y + THEAD); ctx.lineTo(CS.x, TABLE_Y + TABLE_H);
+        ctx.moveTo(CB.x, TABLE_Y + THEAD); ctx.lineTo(CB.x, TABLE_Y + TABLE_H);
+        ctx.stroke();
 
-        const fy=H-FOOTER;
-        ctx.fillStyle='#ffffff'; ctx.fillRect(0,fy,W,FOOTER);
-        ctx.fillStyle='rgba(0,0,0,0.07)'; ctx.fillRect(0,fy,W,1);
-        ctx.fillStyle='#e01010';
-        ctx.beginPath(); ctx.moveTo(0,H); ctx.lineTo(88,H); ctx.lineTo(0,H-88);
-        ctx.closePath(); ctx.fill();
-        ctx.fillStyle='#0a1830'; ctx.textAlign='center'; ctx.textBaseline='middle';
-        ctx.font='900 36px "Bebas Neue",sans-serif';
-        ctx.fillText(tempText,W/2,fy+FOOTER/2);
+
 
         const link = document.createElement('a');
         let filename = 'Copa-Cajamarca';
