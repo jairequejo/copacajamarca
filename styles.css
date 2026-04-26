@@ -19,6 +19,9 @@
   --green:       #16a34a;
   --green-bg:    #dcfce7;
   --green-text:  #14532d;
+  --red:         #dc2626;
+  --red-bg:      #fee2e2;
+  --red-text:    #991b1b;
   --amber-bg:    #fef9c3;
   --amber-text:  #713f12;
   --slate-bg:    #f1f5f9;
@@ -287,7 +290,7 @@ button {
 }
 
 /* Franja de color superior por estado */
-.match-card[data-estado="en curso"]   { border-top: 3px solid var(--green); }
+.match-card[data-estado="en curso"]   { border-top: 3px solid var(--red); }
 .match-card[data-estado="finalizado"] { border-top: 3px solid var(--navy); }
 .match-card[data-estado="pendiente"]  { border-top: 3px solid var(--gold); }
 
@@ -318,7 +321,18 @@ button {
   border-radius: 99px;
   line-height: 1.4;
 }
-.status-chip.en-curso   { background: var(--green-bg);  color: var(--green-text); }
+.status-chip.en-curso   { 
+  background: var(--red-bg);  
+  color: var(--red-text); 
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.status-chip.en-curso .pulse-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--red);
+}
 .status-chip.finalizado { background: var(--slate-bg);  color: var(--slate-text); }
 .status-chip.pendiente  { background: var(--amber-bg);  color: var(--amber-text); }
 
@@ -379,7 +393,7 @@ button {
   /* Números más vivos cuando está en curso */
 }
 .match-card[data-estado="en curso"] .score-num {
-  color: var(--green);
+  color: var(--red);
 }
 .match-card[data-estado="finalizado"] .score-num {
   color: var(--navy-mid);
