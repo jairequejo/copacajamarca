@@ -435,7 +435,8 @@ async function downloadScreenshot(futbolFormat) {
 
         const futbolNum = futbolFormat;
         
-        const fechaText = filtered[0].fecha || '';
+        let fechaText = filtered[0].fecha || '';
+        if (fechaText.length > 0) fechaText = fechaText.charAt(0).toUpperCase() + fechaText.slice(1);
         const tempText = 'TEMPORADA 2026';
 
         if (!_logo.complete) {
@@ -491,13 +492,13 @@ async function downloadScreenshot(futbolFormat) {
         // Logo circular
         drawLogo(ctx, 80, HEADER / 2 + 4, 52);
 
-        // Título Copa Cajamarca
+        // Título Copa Cajamarca (misma fuente del h1: Barlow Condensed 800)
         const TX = 158;
         const TITLE_MAX_W = 480;
         ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
         ctx.fillStyle = '#ffffff';
-        const tSize1 = fit(ctx, 'COPA CAJAMARCA', TITLE_MAX_W, 62, '900');
-        ctx.font = `900 ${tSize1}px "Barlow Condensed",sans-serif`;
+        const tSize1 = fit(ctx, 'COPA CAJAMARCA', TITLE_MAX_W, 68, '800');
+        ctx.font = `800 ${tSize1}px "Barlow Condensed",sans-serif`;
         ctx.fillText('COPA CAJAMARCA', TX, HEADER / 2 - 20);
         
         ctx.fillStyle = '#c8d8f0';
@@ -505,14 +506,14 @@ async function downloadScreenshot(futbolFormat) {
         ctx.font = `700 ${tSize2}px "Barlow Condensed",sans-serif`;
         ctx.fillText('CAMPEONATO DE MENORES', TX, HEADER / 2 + 28);
 
-        // RESULTADOS en rojo itálico
+        // RESULTADOS en rojo oscuro (Anton, sin neón)
         ctx.save();
         ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-        ctx.shadowColor = 'rgba(220,20,20,0.9)'; ctx.shadowBlur = 22;
-        ctx.fillStyle = '#ff1a1a';
-        const resSize = fit(ctx, 'RESULTADOS', 380, 78, 'italic 900');
-        ctx.font = `italic 900 ${resSize}px "Barlow Condensed",sans-serif`;
-        ctx.fillText('RESULTADOS', W - 22, HEADER / 2 + 6);
+        ctx.fillStyle = '#cc0000';
+        let resSize = 78;
+        while (resSize > 9) { ctx.font = `italic 400 ${resSize}px "Anton","Barlow Condensed",sans-serif`; if (ctx.measureText('RESULTADOS').width <= 380) break; resSize--; }
+        ctx.font = `italic 400 ${resSize}px "Anton","Barlow Condensed",sans-serif`;
+        ctx.fillText('RESULTADOS', W - 50, HEADER / 2 + 10);
         ctx.restore();
 
         // ── 3. BARRA DORADA FECHA ──
