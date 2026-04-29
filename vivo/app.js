@@ -120,7 +120,7 @@ async function fetchAndRender(isSilent = false) {
         showToast('Error de conexión. Reintentando en breve...');
         if (!isSilent) {
             matchesList.innerHTML = '';
-            emptyState.innerHTML = '<img src="assets/img/logo.svg" style="width: 64px; opacity: 0.3; margin: 0 auto 12px; display: block;"> <p>No se pudo cargar la información</p>';
+            emptyState.innerHTML = '<img src="../assets/img/logo.svg" style="width: 64px; opacity: 0.3; margin: 0 auto 12px; display: block;"> <p>No se pudo cargar la información</p>';
             emptyState.hidden = false;
         }
     } finally {
@@ -222,7 +222,7 @@ function renderMatches() {
 
     if (filtered.length === 0) {
         matchesList.innerHTML = '';
-        emptyState.innerHTML = '<img src="assets/img/logo.svg" style="width: 72px; opacity: 0.25; margin: 0 auto 16px; display: block;"> <p>Sin partidos con estos filtros</p>';
+        emptyState.innerHTML = '<img src="../assets/img/logo.svg" style="width: 72px; opacity: 0.25; margin: 0 auto 16px; display: block;"> <p>Sin partidos con estos filtros</p>';
         emptyState.hidden = false;
         return;
     }
@@ -329,7 +329,7 @@ function drawBall(ctx,cx,cy,r,alpha){
   ctx.restore();
 }
 
-const _logo=new Image();_logo.src='assets/img/logo.svg';_logo.crossOrigin='anonymous';
+const _logo=new Image();_logo.src='../assets/img/logo.svg';_logo.crossOrigin='anonymous';
 function drawLogo(ctx,cx,cy,r){
   const g=ctx.createRadialGradient(cx-r*.3,cy-r*.3,r*.05,cx,cy,r);
   g.addColorStop(0,'#1c3da6');g.addColorStop(1,'#040e30');
@@ -450,7 +450,7 @@ async function downloadScreenshot(futbolFormat) {
 
         // Cargar imagen de fondo
         const _bg = new Image();
-        _bg.src = 'assets/img/fondo-resultados.png';
+        _bg.src = '../assets/img/fondo-resultados.png';
         if (!_bg.complete) {
             await new Promise((resolve) => {
                 _bg.onload = resolve;
