@@ -141,70 +141,76 @@ function getByeTeams(cat, jornada) {
 // ═══════════════════════════════════════════════════════════
 function renderMatchRow(m) {
   const isLive = m.estado === 'en vivo';
-  const isFin = m.estado === 'finalizado';
+  const isFin  = m.estado === 'finalizado';
 
-  let scoreHtml, scoreCls, chipHtml;
+  // Bloque de score con estructura rica
+  let scoreInner, scoreCls;
   if (isLive) {
     const gl = m.golesL !== null ? m.golesL : '?';
     const gv = m.golesV !== null ? m.golesV : '?';
-    scoreHtml = `${gl} — ${gv}`;
-    scoreCls = 'live';
-    chipHtml = `<span class="match-chip live"><span class="pulse-dot"></span>En Vivo</span>`;
+    scoreInner = `<span class="score-nums">${gl}&thinsp;&ndash;&thinsp;${gv}</span><span class="score-label">EN VIVO</span>`;
+    scoreCls   = 'live';
   } else if (isFin) {
-    scoreHtml = `${m.golesL} — ${m.golesV}`;
-    scoreCls = 'fin';
-    chipHtml = `<span class="match-chip fin">Final</span>`;
+    scoreInner = `<span class="score-nums">${m.golesL}&thinsp;&ndash;&thinsp;${m.golesV}</span><span class="score-label">FT</span>`;
+    scoreCls   = 'fin';
   } else {
-    scoreHtml = 'vs';
-    scoreCls = 'pend';
-    chipHtml = m.hora
-      ? `<span class="match-chip pend">${m.hora}</span>`
-      : `<span class="match-chip pend">Pend.</span>`;
+    const horaHtml = m.hora ? `<span class="hora-text">${m.hora}</span>` : '';
+    scoreInner = `<span class="score-vs">${horaHtml}VS</span>`;
+    scoreCls   = 'pend';
   }
 
-  // Determinar ganador/perdedor
+  // Ganador / perdedor
   let localCls = 'match-team local', visitCls = 'match-team visitante';
   if (isFin && m.golesL !== null && m.golesV !== null) {
-    if (m.golesL > m.golesV) { localCls += ' winner'; visitCls += ' loser'; }
-    else if (m.golesL < m.golesV) { localCls += ' loser'; visitCls += ' winner'; }
+    if      (m.golesL > m.golesV) { localCls += ' winner'; visitCls += ' loser'; }
+    else if (m.golesL < m.golesV) { localCls += ' loser';  visitCls += ' winner'; }
   }
 
-  const cancha = m.cancha ? `<span class="match-cancha">${m.cancha}</span>` : '';
+  // Fila de cancha — span completo debajo
+  const canchaRow = m.cancha ? `
+      <div class="match-cancha-row">
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        ${m.cancha}
+      </div>` : '';
 
   return `
     <div class="match-row" data-estado="${m.estado}">
       <div class="${localCls}">${m.local}</div>
-      <div class="match-score ${scoreCls}">${scoreHtml}</div>
-      <div class="${visitCls}">${m.visitante}</div>
+      <div class="match-score ${scoreCls}">${scoreInner}</div>
+      <div class="${visitCls}">${m.visitante}</div>${canchaRow}
     </div>`;
 }
 
 function renderJornada(jornadaNum, matches, byeTeams) {
-  const hasLive = matches.some(m => m.estado === 'en vivo');
+  const hasLive  = matches.some(m => m.estado === 'en vivo');
   const finCount = matches.filter(m => m.estado === 'finalizado').length;
 
-  const liveBadge = hasLive
-    ? `<span class="jornada-live-badge"><span style="width:6px;height:6px;background:#fca5a5;border-radius:50%;display:inline-block;animation:copa-pulse 1.3s ease-in-out infinite"></span>En Vivo</span>`
-    : '';
-  const meta = hasLive ? '' : `${finCount}/${matches.length} jugados`;
+  // Badge de estado
+  let metaHtml;
+  if (hasLive) {
+    metaHtml = `<span class="jornada-live-badge"><span style="width:5px;height:5px;background:rgba(255,255,255,.9);border-radius:50%;display:inline-block;flex-shrink:0;animation:copa-pulse 1.3s ease-in-out infinite"></span>En Vivo</span>`;
+  } else if (finCount === matches.length) {
+    metaHtml = `<span class="jornada-meta">Completada &#10003;</span>`;
+  } else {
+    metaHtml = `<span class="jornada-meta">${finCount}&thinsp;/&thinsp;${matches.length} jugados</span>`;
+  }
 
-  const byeSection = byeTeams.length > 0
-    ? `<div class="descanso-section">
-         <div class="descanso-title">
-           <span class="descanso-icon">⏸</span>
-           Descansa${byeTeams.length > 1 ? 'n' : ''} esta jornada · ${byeTeams.length} equipo${byeTeams.length > 1 ? 's' : ''}
-         </div>
-         <div class="descanso-teams">
-           ${byeTeams.map(t => `<span class="descanso-team">${t}</span>`).join('')}
-         </div>
-       </div>`
-    : `<div class="descanso-section" style="display:none"></div>`;
+  const byeSection = byeTeams.length > 0 ? `
+    <div class="descanso-section">
+      <div class="descanso-title">
+        <span>&#9208;</span>
+        Descansa${byeTeams.length > 1 ? 'n' : ''} &middot; ${byeTeams.length} equipo${byeTeams.length > 1 ? 's' : ''}
+      </div>
+      <div class="descanso-teams">
+        ${byeTeams.map(t => `<span class="descanso-team">${t}</span>`).join('')}
+      </div>
+    </div>` : '';
 
   return `
     <div class="jornada-block" id="jornada-${jornadaNum}">
       <div class="jornada-header">
-        <span class="jornada-title">Jornada ${jornadaNum}</span>
-        <span class="jornada-meta">${liveBadge || meta}</span>
+        <span class="jornada-title">JORNADA <strong>${jornadaNum}</strong></span>
+        ${metaHtml}
       </div>
       <div class="matches-list">
         ${matches.map(renderMatchRow).join('')}
