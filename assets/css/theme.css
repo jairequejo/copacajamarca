@@ -4,7 +4,7 @@
    Importar este archivo PRIMERO en cada CSS de página.
    ================================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700;1,900&family=Barlow:wght@400;500;600&display=swap');
+/* Las fuentes se cargan directamente en cada index.html via <link rel="preconnect"> */
 
 :root {
 
