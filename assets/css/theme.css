@@ -1,0 +1,178 @@
+/* ================================================================
+   COPA CAJAMARCA 2026 — theme.css
+   Fuente única de verdad para todo el sistema de diseño.
+   Importar este archivo PRIMERO en cada CSS de página.
+   ================================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700;1,900&family=Barlow:wght@400;500;600&display=swap');
+
+:root {
+
+  /* ── PALETA PRINCIPAL ── */
+  --navy:           #0b1f3a;   /* Azul oscuro — fondo header, textos oscuros  */
+  --navy-mid:       #132b52;   /* Azul medio — gradientes, variantes           */
+  --navy-light:     #1e3a6e;   /* Azul claro — hover en contextos oscuros      */
+  --navy-card:      #f7fafd;   /* Azul casi blanco — fondo tarjetas            */
+
+  /* ── DORADO (acento primario) ── */
+  --gold:           #f5c518;   /* Dorado — botones, badges, acentos            */
+  --gold-dark:      #d4a800;   /* Dorado oscuro — hover de botón dorado        */
+  --gold-text:      #7a5e00;   /* Dorado texto — sobre fondos dorados          */
+  --gold-subtle:    rgba(245, 197, 24, 0.15);  /* Dorado tenue — fondos suaves */
+  --gold-border:    rgba(245, 197, 24, 0.35);  /* Dorado borde — pills, rings  */
+
+  /* ── SEMÁNTICOS ── */
+  --green:          #16a34a;
+  --green-bg:       #dcfce7;
+  --green-text:     #14532d;
+
+  --red:            #dc2626;
+  --red-bg:         #fee2e2;
+  --red-text:       #991b1b;
+
+  --amber-bg:       #fef9c3;
+  --amber-text:     #713f12;
+
+  --slate-bg:       #f1f5f9;
+  --slate-text:     #334155;
+
+  /* ── NEUTROS ── */
+  --white:          #ffffff;
+  --bg:             #eef2f7;   /* Fondo de página                              */
+  --text-muted:     #6b87a4;   /* Texto secundario / subtítulos                */
+  --muted:          #6b87a4;   /* Alias para compatibilidad                    */
+  --border:         rgba(11, 31, 58, 0.10);  /* Bordes sutiles                 */
+
+  /* ── TIPOGRAFÍA — Familias ── */
+  --font-display:   'Bebas Neue', sans-serif;   /* Títulos hero, marcadores    */
+  --font-condensed: 'Barlow Condensed', sans-serif; /* Headers, badges, tabs   */
+  --font-stats:     'Anton', sans-serif;         /* Números de estadísticas     */
+  --font-body:      'Barlow', sans-serif;        /* Texto corrido, detalles     */
+
+  /* ── TIPOGRAFÍA — Escala de tamaños ── */
+  --text-xs:        0.70rem;   /* 11px — labels pequeños, timestamps           */
+  --text-sm:        0.75rem;   /* 12px — badges, subtítulos                    */
+  --text-base:      0.875rem;  /* 14px — texto body                            */
+  --text-md:        1rem;      /* 16px — texto principal                       */
+  --text-lg:        1.125rem;  /* 18px — subtítulos prominentes                */
+  --text-xl:        1.5rem;    /* 24px — títulos de sección                    */
+  --text-2xl:       2rem;      /* 32px — títulos de header                     */
+  --text-3xl:       2.6rem;    /* ~42px — marcadores de partido                */
+  --text-4xl:       4.2rem;    /* ~67px — hero title landing                   */
+  --text-5xl:       5.5rem;    /* ~88px — números de impacto                   */
+
+  /* ── TIPOGRAFÍA — Pesos ── */
+  --weight-regular: 400;
+  --weight-medium:  500;
+  --weight-semi:    600;
+  --weight-bold:    700;
+  --weight-xbold:   800;
+  --weight-black:   900;
+
+  /* ── ESPACIADO ── */
+  --space-1:   4px;
+  --space-2:   8px;
+  --space-3:   12px;
+  --space-4:   16px;
+  --space-5:   20px;
+  --space-6:   24px;
+  --space-8:   32px;
+  --space-10:  40px;
+  --space-12:  48px;
+
+  /* ── BORDER RADIUS ── */
+  --radius-xs:  4px;
+  --radius-sm:  8px;
+  --radius:     14px;
+  --radius-lg:  20px;
+  --radius-xl:  28px;
+  --radius-full: 9999px;  /* Círculos y pills                                  */
+
+  /* ── SOMBRAS ── */
+  --shadow-sm:  0 1px 3px rgba(0, 0, 0, 0.10), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow:     0 4px 12px rgba(0, 0, 0, 0.10);
+  --shadow-md:  0 6px 20px rgba(0, 0, 0, 0.14);
+  --shadow-lg:  0 10px 32px rgba(0, 0, 0, 0.18);
+  --shadow-gold: 0 4px 16px rgba(245, 197, 24, 0.45);  /* Glow dorado         */
+  --shadow-navy: 0 4px 16px rgba(11, 31, 58, 0.35);    /* Sombra navy         */
+
+  /* ── TRANSICIONES Y EASING ── */
+  --ease:       cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in:    cubic-bezier(0.4, 0, 1, 1);
+  --ease-out:   cubic-bezier(0, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);  /* Rebote suave         */
+
+  --duration-fast:   150ms;
+  --duration-base:   250ms;
+  --duration-slow:   400ms;
+
+  --transition:       var(--duration-base) var(--ease);
+  --transition-fast:  var(--duration-fast) var(--ease);
+
+  /* ── Z-INDEX ── */
+  --z-base:     0;
+  --z-raised:   10;
+  --z-sticky:   100;   /* Header, filtros sticky                               */
+  --z-overlay:  200;   /* Overlays de fondo                                    */
+  --z-modal:    300;   /* Modales                                              */
+  --z-toast:    400;   /* Notificaciones toast                                 */
+
+  /* ── LAYOUT ── */
+  --max-width:    700px;   /* Ancho máximo del contenido                       */
+  --header-h:     72px;    /* Alto aprox. del header para offsets sticky        */
+  --tap-min:      48px;    /* Tamaño mínimo de tap target (móvil tribuna)      */
+
+  /* ── BREAKPOINTS (usar en @media, aquí como referencia) ──
+     --bp-sm:  560px   Tablet pequeña, 2 col partidos
+     --bp-md:  640px   Player grid 3-4 col, nav grid 2 col
+     --bp-lg:  900px   3 columnas partidos
+  */
+}
+
+/* ================================================================
+   ANIMACIONES GLOBALES — disponibles en toda la app
+   ================================================================ */
+
+@keyframes copa-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.6; transform: scale(0.85); }
+}
+
+@keyframes copa-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes copa-shimmer {
+  from { background-position: -200% center; }
+  to   { background-position:  200% center; }
+}
+
+@keyframes copa-slideIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes copa-fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes copa-scaleIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ── Clases utilitarias de animación ── */
+.anim-pulse    { animation: copa-pulse    1.3s ease-in-out infinite; }
+.anim-spin     { animation: copa-spin     0.8s linear infinite; }
+.anim-slide-in { animation: copa-slideIn  var(--duration-slow) var(--ease) both; }
+.anim-fade-in  { animation: copa-fadeIn   var(--duration-base) var(--ease) both; }
+.anim-scale-in { animation: copa-scaleIn  var(--duration-slow) var(--ease-spring) both; }
+
+/* ── Skeleton shimmer ── */
+.skeleton {
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: copa-shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}

@@ -92,11 +92,18 @@ function parseFixture(rows) {
     const local = (row[IDX.local] || '').trim().toUpperCase();
     const visitante = (row[IDX.visitante] || '').trim().toUpperCase();
     if (!local || !visitante) continue;
-    
+
     let estado = 'pendiente';
-    const resLC = (row[IDX.resultado] || '').toLowerCase();
-    if (resLC.includes('vivo')) estado = 'en vivo';
-    else if (resLC !== '' && resLC !== 'pendiente' && resLC !== '-') estado = 'finalizado';
+    const resLC = (row[IDX.resultado] || '').trim().toLowerCase();
+    if (resLC.includes('vivo') || resLC.includes('live')) {
+      estado = 'en vivo';
+    } else {
+      const gl = parseInt(row[IDX.golesL] || '', 10);
+      const gv = parseInt(row[IDX.golesV] || '', 10);
+      const hasScore = !isNaN(gl) && !isNaN(gv);
+      const explicitFin = resLC.includes('finaliz') || resLC.includes('terminad') || resLC.includes(' fin');
+      if (hasScore || explicitFin) estado = 'finalizado';
+    }
 
     result.push({
       jornada: (row[IDX.jornada] || '').trim(),
@@ -140,8 +147,8 @@ function buildStandings() {
         const vis = m.visitante;
 
         // Asegurar que el equipo esté en el mapa aunque no esté en la lista inicial
-        if (!teamMap[loc]) teamMap[loc] = { equipo: loc, pj:0,pg:0,pe:0,pp:0,gf:0,gc:0,dg:0,pts:0 };
-        if (!teamMap[vis]) teamMap[vis] = { equipo: vis, pj:0,pg:0,pe:0,pp:0,gf:0,gc:0,dg:0,pts:0 };
+        if (!teamMap[loc]) teamMap[loc] = { equipo: loc, pj: 0, pg: 0, pe: 0, pp: 0, gf: 0, gc: 0, dg: 0, pts: 0 };
+        if (!teamMap[vis]) teamMap[vis] = { equipo: vis, pj: 0, pg: 0, pe: 0, pp: 0, gf: 0, gc: 0, dg: 0, pts: 0 };
 
         const tL = teamMap[loc];
         const tV = teamMap[vis];
@@ -175,18 +182,18 @@ function buildStandings() {
 function renderFixture(cat) {
   const tbody = document.getElementById('fixtureTbody');
   const matches = G.loaded.filter(m => String(m.cat) === String(cat));
-  
+
   if (matches.length === 0) {
     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--muted);">No hay partidos programados en esta categoría</td></tr>';
     return;
   }
-  
+
   tbody.innerHTML = matches.map(r => {
     let scoreHtml, cls;
-    if (r.estado === 'en vivo')         { scoreHtml = `${r.golesL} - ${r.golesV}`; cls = 'live'; }
+    if (r.estado === 'en vivo') { scoreHtml = `${r.golesL} - ${r.golesV}`; cls = 'live'; }
     else if (r.estado === 'finalizado') { scoreHtml = `${r.golesL} - ${r.golesV}`; cls = 'fin'; }
-    else                                { scoreHtml = 'vs'; cls = 'pend'; }
-    
+    else { scoreHtml = 'vs'; cls = 'pend'; }
+
     return `<tr>
       <td><span class="fixture-jor">J${r.jornada}</span></td>
       <td>${r.local}</td>
@@ -208,12 +215,12 @@ function setFixtureCat(cat, btn) {
 function renderTabla(cat) {
   const rows = G.standings[cat] || [];
   const tbody = document.getElementById('posTbody');
-  
+
   if (rows.length === 0) {
     tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--muted);">No hay equipos registrados</td></tr>';
     return;
   }
-  
+
   tbody.innerHTML = rows.map((r, i) => {
     const posClass = i === 0 ? 'p1' : i === 1 ? 'p2' : i === 2 ? 'p3' : 'pn';
     return `<tr>
@@ -240,13 +247,13 @@ function setTablaCat(cat, btn) {
 function renderMatchesPreview() {
   const container = document.getElementById('matchesPreview');
   let matches = G.loaded.filter(m => m.estado === 'finalizado' || m.estado === 'en vivo');
-  
+
   if (matches.length === 0) {
     matches = G.loaded;
   }
-  
+
   const previewMatches = matches.slice(-3).reverse();
-  
+
   if (previewMatches.length === 0) {
     container.innerHTML = '<div style="padding:12px;text-align:center;color:var(--muted);font-size:.9rem;">No hay partidos recientes</div>';
     return;
@@ -255,18 +262,18 @@ function renderMatchesPreview() {
   container.innerHTML = previewMatches.map(m => {
     const isLive = m.estado === 'en vivo';
     const isFin = m.estado === 'finalizado';
-    
+
     let chipHtml = '';
     if (isLive) chipHtml = '<span class="chip live"><span class="pulse-dot"></span>En Vivo</span>';
     else if (isFin) chipHtml = '<span class="chip fin">Finalizado</span>';
     else chipHtml = '<span class="chip pend">Pendiente</span>';
-    
+
     let scoreHtml = '';
     let scoreCls = '';
     if (isLive) { scoreHtml = `${m.golesL} - ${m.golesV}`; scoreCls = 'live'; }
     else if (isFin) { scoreHtml = `${m.golesL} - ${m.golesV}`; scoreCls = 'fin'; }
     else { scoreHtml = 'vs'; scoreCls = 'pend'; }
-    
+
     return `
       <div class="match-mini" data-estado="${m.estado}">
         <div class="match-mini-top">
@@ -283,13 +290,13 @@ function renderMatchesPreview() {
   }).join('');
 }
 
-function filterPlayers(q) {
+function filterPlayers(_q) {
   // Los datos de ejemplo de jugadores fueron eliminados según requerimiento
   document.getElementById('playerGrid').innerHTML = '';
   document.getElementById('noPlayers').hidden = false;
 }
 
-function setPlayerCat(cat, btn) {
+function setPlayerCat(_cat, btn) {
   document.querySelectorAll('#playerCatTabs .cat-tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('playerGrid').innerHTML = '';
@@ -297,64 +304,75 @@ function setPlayerCat(cat, btn) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// INICIALIZACIÓN
+// EN VIVO DINÁMICO
+// Muestra el pill del header y el botón del hero solo si
+// hay partidos en vivo en el sheets de fixture.
 // ═══════════════════════════════════════════════════════════
-function setupTabs() {
-  const cats = Object.keys(G.equipos).sort();
-  
-  if (cats.length > 0) {
-    currentFixtureCat = cats[0];
-    currentTablaCat = cats[0];
-    
-    const buildTabs = (id, onClickName) => {
-      const container = document.getElementById(id);
-      if (!container) return;
-      container.innerHTML = Object.keys(G.equipos).sort((a,b)=>a-b).map((cat, i) => 
-        `<button class="cat-tab ${i === 0 ? 'active' : ''}" data-cat="${cat}" onclick="${onClickName}('${cat}',this)">Cat. ${cat}</button>`
-      ).join('');
-    };
-    
-    buildTabs('fixtureCatTabs', 'setFixtureCat');
-    buildTabs('tablaCatTabs', 'setTablaCat');
+function updateLiveUI(hasLive) {
+  const pill = document.getElementById('headerLivePill');
+  const liveBtn = document.getElementById('heroLiveBtn');
+  const fixtureBtn = document.getElementById('heroFixtureBtn');
+
+  if (pill) pill.hidden = !hasLive;
+  if (liveBtn) liveBtn.hidden = !hasLive;
+  if (fixtureBtn) fixtureBtn.hidden = hasLive;
+}
+
+// ═══════════════════════════════════════════════════════════
+// CARGA PRINCIPAL
+// ═══════════════════════════════════════════════════════════
+async function loadAll() {
+  try {
+    const [resEq, resFix] = await Promise.all([
+      fetch(URL_EQUIPOS),
+      fetch(URL_FIXTURE),
+    ]);
+    if (!resEq.ok) throw new Error('No se pudo cargar equipos');
+    if (!resFix.ok) throw new Error('No se pudo cargar fixture');
+
+    G.equipos = parseEquipos(parseCsv(await resEq.text()));
+    G.loaded = parseFixture(parseCsv(await resFix.text()));
+
+    const hasLive = G.loaded.some(m => m.estado === 'en vivo' || m.estado === 'finalizado');
+    updateLiveUI(hasLive);
+
+    buildStandings();
+    renderMatchesPreview();
+
+  } catch (err) {
+    console.error('[Landing]', err);
+    updateLiveUI(false);
   }
 }
 
-async function loadAll() {
-  try {
-    const resEq = await fetch(URL_EQUIPOS);
-    if (!resEq.ok) throw new Error('No se pudo cargar equipos');
-    G.equipos = parseEquipos(parseCsv(await resEq.text()));
-    
-    const resFix = await fetch(URL_FIXTURE);
-    if (!resFix.ok) throw new Error('No se pudo cargar fixture');
-    G.loaded = parseFixture(parseCsv(await resFix.text()));
-    
-    buildStandings();
-    setupTabs();
-    
-    const sortedCats = Object.keys(G.equipos).sort((a,b)=>a-b);
-    const firstCat = sortedCats.length > 0 ? sortedCats[0] : '';
-    
-    if (firstCat) {
-      renderFixture(firstCat);
-      renderTabla(firstCat);
-    }
-    renderMatchesPreview();
-    
-    // Limpiar grid de jugadores ya que se removieron datos demo
-    const playerGrid = document.getElementById('playerGrid');
-    const noPlayers = document.getElementById('noPlayers');
-    if (playerGrid) playerGrid.innerHTML = '';
-    if (noPlayers) noPlayers.hidden = false;
-    
-  } catch (err) {
-    console.error('Error al cargar datos:', err);
-  }
+function initReveal() {
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('revealed');
+        obs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.06 });
+  document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+}
+
+function updateStats() {
+  const totalPartidos = G.loaded.length;
+  const totalEquipos = Object.values(G.equipos).flat().length;
+  const totalCats = Object.keys(G.equipos).length;
+  const elP = document.getElementById('statPartidos');
+  const elE = document.getElementById('statEquipos');
+  const elC = document.getElementById('statCats');
+  if (elP && totalPartidos > 0) elP.textContent = totalPartidos + '+';
+  if (elE && totalEquipos > 0) elE.textContent = totalEquipos + '+';
+  if (elC && totalCats > 0) elC.textContent = totalCats;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  loadAll();
-  
+  initReveal();
+  loadAll().then(() => updateStats());
+
   document.querySelectorAll('a[href^="#"]').forEach(a => {
     a.addEventListener('click', e => {
       const id = a.getAttribute('href').slice(1);

@@ -1,0 +1,320 @@
+/* ================================================================
+   COPA CAJAMARCA 2026 — jugadores.css
+   ================================================================ */
+@import './theme.css';
+
+/* ─── RESET ─── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+[hidden] { display: none !important; }
+body {
+  font-family: 'Barlow', sans-serif;
+  background: var(--bg);
+  color: var(--navy);
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: calc(68px + env(safe-area-inset-bottom));
+}
+img { display: block; max-width: 100%; }
+button { cursor: pointer; font-family: inherit; border: none; background: none; touch-action: manipulation; }
+
+/* ─── HEADER ─── */
+.site-header {
+  background: var(--navy);
+  background-image: repeating-linear-gradient(-45deg,transparent 0px,transparent 20px,rgba(255,255,255,.03) 20px,rgba(255,255,255,.03) 21px);
+  padding: calc(16px + env(safe-area-inset-top)) 16px 0;
+}
+.header-inner { display: flex; align-items: center; gap: 12px; padding-bottom: 12px; }
+.logo {
+  width: 52px; height: 52px; flex-shrink: 0;
+  border-radius: 50%; background: var(--white);
+  box-shadow: 0 2px 6px rgba(0,0,0,.2); object-fit: cover;
+}
+.header-text { flex: 1; min-width: 0; }
+.header-sup {
+  display: block; font-size: .72rem; font-weight: 500;
+  letter-spacing: .06em; color: var(--muted);
+  text-transform: uppercase; margin-bottom: 1px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.header-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 2rem; font-weight: 800;
+  color: var(--white); letter-spacing: .02em;
+  line-height: 1; text-transform: uppercase;
+}
+.page-subtitle {
+  display: flex; align-items: center; gap: 7px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: .78rem; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: rgba(22,163,74,.9);
+  background: rgba(22,163,74,.08);
+  border-top: 1px solid rgba(22,163,74,.15);
+  padding: 8px 16px;
+}
+
+/* ─── CONTROLES STICKY ─── */
+.page-controls {
+  position: sticky; top: 0; z-index: var(--z-sticky);
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px 0;
+  box-shadow: 0 2px 8px rgba(11,31,58,.06);
+}
+
+/* ─── BUSCADOR ─── */
+.search-wrap {
+  position: relative; margin-bottom: 10px;
+}
+.search-input {
+  width: 100%; height: 44px;
+  padding: 0 44px 0 42px;
+  border-radius: 99px;
+  border: 1.5px solid rgba(11,31,58,.12);
+  background: var(--bg);
+  font-family: 'Barlow', sans-serif; font-size: .9rem;
+  color: var(--navy); outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.search-input:focus { border-color: var(--navy); box-shadow: 0 0 0 3px rgba(11,31,58,.08); background: var(--white); }
+.search-icon {
+  position: absolute; left: 14px; top: 50%;
+  transform: translateY(-50%); color: var(--muted); pointer-events: none;
+}
+.search-clear {
+  position: absolute; right: 12px; top: 50%;
+  transform: translateY(-50%);
+  width: 28px; height: 28px; border-radius: 50%;
+  background: rgba(11,31,58,.08); color: var(--muted);
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.search-clear:hover { background: rgba(11,31,58,.14); color: var(--navy); }
+
+/* ─── TABS DE CATEGORÍA ─── */
+.cat-tabs-wrap {
+  overflow-x: auto; overscroll-behavior-x: contain;
+  scrollbar-width: none; -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+.cat-tabs-wrap::-webkit-scrollbar { display: none; }
+.cat-tabs { display: flex; gap: 6px; padding: 0 1px 10px; width: max-content; }
+.cat-tab {
+  height: 32px; padding: 0 14px; border-radius: 99px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: .82rem; font-weight: 700;
+  letter-spacing: .05em; text-transform: uppercase;
+  color: var(--navy); background: var(--bg);
+  border: 1.5px solid transparent;
+  transition: background .15s, color .15s;
+  -webkit-tap-highlight-color: transparent; white-space: nowrap;
+}
+.cat-tab:active { transform: scale(.96); }
+.cat-tab.active { background: var(--navy); color: var(--gold); }
+
+/* ─── BARRA DE RESULTADOS ─── */
+.results-bar {
+  padding: 8px 16px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: .78rem; font-weight: 700;
+  letter-spacing: .05em; text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  background: var(--white);
+}
+
+/* ─── GRILLA DE JUGADORES ─── */
+.main-content { padding: 16px; }
+.player-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+/* ─── TARJETA DE JUGADOR ─── */
+.player-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  border: 1.5px solid rgba(11,31,58,.07);
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(11,31,58,.06);
+  transition: transform .15s, box-shadow .15s, border-color .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.player-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(11,31,58,.12); border-color: rgba(11,31,58,.15); }
+.player-card:active { transform: scale(.98); }
+
+/* Área de foto */
+.player-photo-area {
+  position: relative;
+  height: 110px;
+  background: linear-gradient(135deg, var(--navy-mid) 0%, var(--navy) 100%);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.player-photo-area::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(-45deg,transparent 0,transparent 10px,rgba(255,255,255,.03) 10px,rgba(255,255,255,.03) 11px);
+}
+.player-photo {
+  width: 72px; height: 72px; border-radius: 50%;
+  border: 2.5px solid rgba(245,197,24,.55);
+  background: rgba(255,255,255,.08);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; position: relative; z-index: 1;
+  flex-shrink: 0;
+}
+.player-photo img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.player-photo .initials {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.6rem; color: var(--gold); line-height: 1;
+  user-select: none;
+}
+
+/* Badge de número */
+.num-badge {
+  position: absolute; bottom: 8px; right: 8px;
+  background: var(--gold); color: var(--gold-text);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: .7rem; font-weight: 800;
+  letter-spacing: .04em;
+  padding: 2px 7px; border-radius: 99px;
+  z-index: 2;
+}
+
+/* Info del jugador */
+.player-info { padding: 10px 10px 12px; }
+.player-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: .92rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .02em;
+  color: var(--navy); line-height: 1.15;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+.player-team {
+  font-size: .72rem; color: var(--muted); font-weight: 500;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-bottom: 7px;
+}
+.player-tags { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.cat-tag {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: .62rem; font-weight: 800;
+  letter-spacing: .04em; text-transform: uppercase;
+  background: var(--navy); color: var(--gold);
+  padding: 2px 7px; border-radius: 4px;
+}
+.pos-tag {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: .62rem; font-weight: 700;
+  letter-spacing: .04em; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 4px;
+}
+
+/* ─── LOADER ─── */
+.loader {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 14px; padding: 60px 20px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: .9rem; font-weight: 600;
+  letter-spacing: .05em; text-transform: uppercase;
+  color: var(--muted);
+}
+.spinner {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 3px solid rgba(11,31,58,.1);
+  border-top-color: var(--navy);
+  animation: copa-spin .8s linear infinite;
+}
+
+/* ─── EMPTY STATE ─── */
+.empty-state {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 10px; padding: 60px 20px;
+  text-align: center;
+}
+.empty-state svg { color: rgba(11,31,58,.18); }
+.empty-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 1.1rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .04em; color: var(--navy);
+}
+.empty-sub { font-size: .82rem; color: var(--muted); }
+.btn-clear-filter {
+  margin-top: 4px;
+  padding: 8px 20px; border-radius: 99px;
+  background: var(--navy); color: var(--gold);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: .82rem; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase;
+  transition: opacity .15s;
+}
+.btn-clear-filter:hover { opacity: .85; }
+
+/* ─── TOAST ─── */
+.toast {
+  position: fixed; bottom: calc(80px + env(safe-area-inset-bottom)); left: 50%;
+  transform: translateX(-50%) translateY(12px);
+  background: var(--navy); color: var(--white);
+  font-family: 'Barlow', sans-serif; font-size: .88rem; font-weight: 500;
+  padding: 12px 20px; border-radius: 99px;
+  box-shadow: 0 6px 24px rgba(0,0,0,.22);
+  opacity: 0; pointer-events: none;
+  transition: opacity .28s var(--ease), transform .28s var(--ease);
+  white-space: nowrap; z-index: 400;
+  max-width: calc(100vw - 40px); text-align: center;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ─── BOTTOM NAV — 5 ítems ─── */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--navy);
+  display: flex;
+  border-top: 1px solid rgba(255,255,255,.08);
+  padding-bottom: env(safe-area-inset-bottom);
+  z-index: 300; box-shadow: 0 -4px 20px rgba(0,0,0,.25);
+}
+.bnav-item {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 9px 2px 7px; gap: 3px;
+  color: rgba(255,255,255,.30); text-decoration: none;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: .58rem; font-weight: 800;
+  letter-spacing: .05em; text-transform: uppercase;
+  transition: color .15s; -webkit-tap-highlight-color: transparent; position: relative;
+}
+.bnav-item svg { flex-shrink: 0; }
+.bnav-item:active { opacity: .7; }
+.bnav-active { color: var(--gold) !important; }
+.bnav-active::after {
+  content: ''; position: absolute; top: 0; left: 15%; right: 15%; height: 2px;
+  background: var(--gold); border-radius: 0 0 3px 3px;
+}
+.bnav-live { color: rgba(220,38,38,.5); }
+.bnav-live:hover { color: var(--red); }
+.bnav-live-wrap { position: relative; display: inline-flex; }
+.bnav-live-dot {
+  position: absolute; top: -1px; right: -3px;
+  width: 7px; height: 7px; background: var(--red); border-radius: 50%;
+  border: 1.5px solid var(--navy);
+  animation: copa-pulse 1.3s ease-in-out infinite;
+}
+
+/* ─── RESPONSIVE ─── */
+@media (min-width: 480px) {
+  .player-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (min-width: 640px) {
+  .player-grid { grid-template-columns: repeat(4, 1fr); }
+}
+@media (min-width: 720px) {
+  .main-content { max-width: 700px; margin: 0 auto; }
+}

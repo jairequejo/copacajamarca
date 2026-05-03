@@ -4,32 +4,7 @@
    Tap targets mínimo 48px · Fuente legible a distancia
    ================================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700;1,900&family=Barlow:wght@400;500;600&display=swap');
-
-/* ── VARIABLES ── */
-:root {
-  --navy:        #0b1f3a;
-  --navy-mid:    #132b52;
-  --navy-card:   #f7fafd;
-  --gold:        #f5c518;
-  --gold-text:   #7a5e00;
-  --white:       #ffffff;
-  --bg:          #eef2f7;
-  --text-muted:  #6b87a4;
-  --green:       #16a34a;
-  --green-bg:    #dcfce7;
-  --green-text:  #14532d;
-  --red:         #dc2626;
-  --red-bg:      #fee2e2;
-  --red-text:    #991b1b;
-  --amber-bg:    #fef9c3;
-  --amber-text:  #713f12;
-  --slate-bg:    #f1f5f9;
-  --slate-text:  #334155;
-  --radius:      14px;
-  --radius-sm:   8px;
-  --ease:        cubic-bezier(.4,0,.2,1);
-}
+@import './theme.css';
 
 /* ── RESET ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -42,8 +17,7 @@ body {
   color: var(--navy);
   min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
-  /* Respeta notch en iPhones modernos */
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: calc(68px + env(safe-area-inset-bottom));
 }
 
 img { display: block; max-width: 100%; }
@@ -676,4 +650,49 @@ body.capturing .site-header { position: static !important; }
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── BOTTOM NAV — 5 ítems (compartido por vivo y posiciones) ── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--navy);
+  display: flex;
+  border-top: 1px solid rgba(255,255,255,.08);
+  padding-bottom: env(safe-area-inset-bottom);
+  z-index: 300;
+  box-shadow: 0 -4px 20px rgba(0,0,0,.25);
+}
+.bnav-item {
+  flex: 1;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 9px 2px 7px; gap: 3px;
+  color: rgba(255,255,255,.30);
+  text-decoration: none;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: .58rem; font-weight: 800;
+  letter-spacing: .05em; text-transform: uppercase;
+  transition: color .15s;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+}
+.bnav-item svg { flex-shrink: 0; }
+.bnav-item:active { opacity: .7; }
+.bnav-active { color: var(--gold) !important; }
+.bnav-active::after {
+  content: '';
+  position: absolute; top: 0; left: 15%; right: 15%; height: 2px;
+  background: var(--gold); border-radius: 0 0 3px 3px;
+}
+.bnav-live { color: rgba(220,38,38,.5); }
+.bnav-live:hover, .bnav-live.bnav-active { color: var(--red) !important; }
+.bnav-live.bnav-active::after { background: var(--red); }
+.bnav-live-wrap { position: relative; display: inline-flex; }
+.bnav-live-dot {
+  position: absolute; top: -1px; right: -3px;
+  width: 7px; height: 7px;
+  background: var(--red); border-radius: 50%;
+  border: 1.5px solid var(--navy);
+  animation: copa-pulse 1.3s ease-in-out infinite;
 }

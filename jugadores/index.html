@@ -6,15 +6,15 @@
   <meta name="theme-color" content="#0b1f3a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>Copa Cajamarca 2026 — En Vivo</title>
+  <meta name="description" content="Jugadores — Copa Cajamarca 2026 · Campeonato de Menores" />
+  <title>Jugadores — Copa Cajamarca 2026</title>
   <link rel="icon" type="image/x-icon" href="../assets/img/favicon.ico" />
-  <link rel="stylesheet" href="../assets/css/styles.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
-  <script src="../assets/js/vivo.js" defer></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700;1,900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../assets/css/jugadores.css" />
 </head>
 <body>
-  <!-- Precarga Anton para uso en canvas -->
-  <span style="font-family:'Anton';position:absolute;left:-9999px;opacity:0;">.</span>
 
   <header class="site-header">
     <div class="header-inner">
@@ -24,51 +24,61 @@
         <h1 class="header-title">Copa Cajamarca</h1>
       </div>
     </div>
-    <div class="live-pill">
-      <span class="pulse-dot"></span>
-      En Vivo
+    <div class="page-subtitle">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+      </svg>
+      Jugadores del torneo
     </div>
   </header>
 
-  <div class="filters-container" id="filtersContainer">
-    <div class="filter-row">
-      <span class="filter-label">Cat.</span>
-      <nav class="filter-bar" id="filterCat" role="navigation" aria-label="Filtrar por categoría"></nav>
+  <!-- CONTROLES: BUSCADOR + TABS -->
+  <div class="page-controls">
+    <div class="search-wrap">
+      <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="search" class="search-input" id="searchInput"
+             placeholder="Buscar jugador o equipo…" autocomplete="off" />
+      <button class="search-clear" id="searchClear" hidden aria-label="Limpiar búsqueda">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
     </div>
-    <div class="filter-row">
-      <span class="filter-label">Lugar</span>
-      <nav class="filter-bar" id="filterLugar" role="navigation" aria-label="Filtrar por lugar"></nav>
-    </div>
-    <div class="filter-row">
-      <span class="filter-label">Cancha</span>
-      <nav class="filter-bar" id="filterCancha" role="navigation" aria-label="Filtrar por cancha"></nav>
-    </div>
-    <div class="filter-row">
-      <span class="filter-label">Estado</span>
-      <nav class="filter-bar" id="filterEstado" role="navigation" aria-label="Filtrar por estado"></nav>
+    <div class="cat-tabs-wrap">
+      <div class="cat-tabs" id="catTabs">
+        <button class="cat-tab active" data-cat="todos">Todos</button>
+      </div>
     </div>
   </div>
 
-  <div class="refresh-bar" id="refreshBar" hidden>
-    <span class="spin"></span>
-    Actualizando…
+  <!-- BARRA DE RESULTADOS -->
+  <div class="results-bar" id="resultsBar">
+    <span id="countText">Cargando…</span>
   </div>
 
+  <!-- CONTENIDO PRINCIPAL -->
   <main class="main-content">
-    <div class="matches-list" id="matchesList"></div>
-    <div class="empty-state" id="emptyState" hidden>
-      <img src="../assets/img/logo.svg" alt="Copa Cajamarca" style="width: 72px; opacity: 0.25; margin: 0 auto 16px; display: block;" onerror="this.style.display='none'">
-      <p>Sin partidos en esta categoría</p>
-    </div>
-  </main>
 
-  <footer class="site-footer">
-    <button class="btn-download" id="btnDownload">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Descargar Resumen
-    </button>
-    <p class="footer-note">Actualización automática cada 30 s</p>
-  </footer>
+    <div class="loader" id="loader">
+      <div class="spinner"></div>
+      <span>Cargando jugadores…</span>
+    </div>
+
+    <div class="player-grid" id="playerGrid" hidden></div>
+
+    <div class="empty-state" id="emptyState" hidden>
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <p class="empty-title">Sin resultados</p>
+      <p class="empty-sub" id="emptyMsg">Intenta con otro nombre o categoría</p>
+      <button class="btn-clear-filter" id="btnClearFilter" hidden>Limpiar filtros</button>
+    </div>
+
+  </main>
 
   <!-- BARRA DE NAVEGACIÓN INFERIOR — 5 opciones -->
   <nav class="bottom-nav" aria-label="Navegación principal">
@@ -79,7 +89,7 @@
       </svg>
       <span>Inicio</span>
     </a>
-    <a href="index.html" class="bnav-item bnav-live bnav-active" aria-current="page">
+    <a href="../vivo/index.html" class="bnav-item bnav-live">
       <span class="bnav-live-wrap">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"/>
@@ -106,7 +116,7 @@
       </svg>
       <span>Posiciones</span>
     </a>
-    <a href="../jugadores/index.html" class="bnav-item">
+    <a href="index.html" class="bnav-item bnav-active" aria-current="page">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
         <circle cx="12" cy="7" r="4"/>
@@ -116,18 +126,6 @@
   </nav>
 
   <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
-
-  <div id="formatModal" class="modal-overlay" hidden>
-    <div class="modal-content">
-      <h3>Formato de Descarga</h3>
-      <p>Selecciona el tipo de fútbol para el banner:</p>
-      <div class="modal-actions">
-        <button class="btn-format" data-format="7">Fútbol 7</button>
-        <button class="btn-format" data-format="9">Fútbol 9</button>
-      </div>
-      <button class="btn-cancel" id="btnCancelFormat">Cancelar</button>
-    </div>
-  </div>
-
+  <script src="../assets/js/jugadores.js"></script>
 </body>
 </html>

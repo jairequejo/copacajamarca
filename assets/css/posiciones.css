@@ -1,17 +1,5 @@
 /* ─── POSICIONES — ESTILOS EXCLUSIVOS ─── */
-:root {
-  --navy:      #0b1f3a;
-  --navy-mid:  #132b52;
-  --gold:      #f5c518;
-  --gold-text: #7a5e00;
-  --white:     #ffffff;
-  --bg:        #eef2f7;
-  --muted:     #6b87a4;
-  --green:     #16a34a;
-  --red:       #dc2626;
-  --radius:    14px;
-  --ease:      cubic-bezier(.4,0,.2,1);
-}
+@import './theme.css';
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
@@ -22,7 +10,7 @@ body {
   color: var(--navy);
   min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: calc(68px + env(safe-area-inset-bottom));
 }
 img { display: block; max-width: 100%; }
 button { cursor: pointer; font-family: inherit; border: none; background: none; touch-action: manipulation; }

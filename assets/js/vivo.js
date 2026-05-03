@@ -29,10 +29,10 @@ function setupListeners() {
             if (e.target.classList.contains('filter-btn')) {
                 const nav = e.target.closest('.filter-bar');
                 const filterType = nav.id.replace('filter', '').toLowerCase(); // cat, lugar, cancha, estado
-                
+
                 nav.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
                 e.target.classList.add('active');
-                
+
                 currentFilters[filterType] = e.target.dataset.filter;
                 renderMatches();
             }
@@ -131,12 +131,12 @@ async function fetchAndRender(isSilent = false) {
 function parseCSV(text) {
     const lines = text.trim().split('\n');
     if (lines.length < 2) return;
-    
+
     const parsed = [];
     for (let i = 1; i < lines.length; i++) {
         const row = lines[i];
         if (!row.trim()) continue;
-        
+
         const values = [];
         let inQuotes = false;
         let currentValue = '';
@@ -182,7 +182,7 @@ function updateFilters() {
     const buildHtml = (arr, currentValue, prefix = '') => {
         let activeExists = currentValue === 'todos' || arr.includes(currentValue);
         let finalValue = activeExists ? currentValue : 'todos';
-        
+
         let html = `<button class="filter-btn ${finalValue === 'todos' ? 'active' : ''}" data-filter="todos">Todos</button>`;
         arr.forEach(item => {
             html += `<button class="filter-btn ${finalValue === item ? 'active' : ''}" data-filter="${item}">${prefix}${item}</button>`;
@@ -228,19 +228,19 @@ function renderMatches() {
     }
 
     emptyState.hidden = true;
-    
+
     let html = '';
     filtered.forEach(match => {
         const estadoLC = match.estadoStandard.toLowerCase();
         let stateClass = 'pendiente';
-        if (estadoLC === 'en vivo') stateClass = 'en-curso'; 
-        else if (estadoLC === 'finalizado') stateClass = 'finalizado'; 
+        if (estadoLC === 'en vivo') stateClass = 'en-curso';
+        else if (estadoLC === 'finalizado') stateClass = 'finalizado';
 
         let localClass = 'local';
         let visitClass = 'visitante';
         const gl = parseInt(match.golesLocal);
         const gv = parseInt(match.golesVisitante);
-        
+
         if (estadoLC === 'finalizado' && !isNaN(gl) && !isNaN(gv)) {
             if (gl > gv) {
                 localClass += ' winner';
@@ -296,7 +296,7 @@ function renderMatches() {
             </div>
         `;
     });
-    
+
     matchesList.innerHTML = html;
 }
 
@@ -309,99 +309,99 @@ function showToast(msg) {
 }
 
 /* ── HELPER FUNCIONES BANNER ── */
-function fit(ctx,text,maxW,base,w){
-  let s=base;
-  while(s>9){ctx.font=`${w} ${s}px "Barlow Condensed",sans-serif`;if(ctx.measureText(text).width<=maxW)break;s--;}
-  return s;
+function fit(ctx, text, maxW, base, w) {
+    let s = base;
+    while (s > 9) { ctx.font = `${w} ${s}px "Barlow Condensed",sans-serif`; if (ctx.measureText(text).width <= maxW) break; s--; }
+    return s;
 }
 
-function drawBall(ctx,cx,cy,r,alpha){
-  ctx.save();ctx.globalAlpha=alpha;
-  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
-  ctx.fillStyle='#c8d8e8';ctx.fill();
-  const pr=r*0.28;
-  [[0,-0.62],[0.59,-0.19],[0.36,0.5],[-0.36,0.5],[-0.59,-0.19],[0,0]].forEach(([px,py])=>{
-    const bx=cx+px*r,by=cy+py*r,d=Math.sqrt(px*px+py*py),p=pr*(1-d*0.18);
-    ctx.beginPath();
-    for(let a=0;a<5;a++){const ag=-Math.PI/2+a*Math.PI*2/5;a===0?ctx.moveTo(bx+p*Math.cos(ag),by+p*Math.sin(ag)):ctx.lineTo(bx+p*Math.cos(ag),by+p*Math.sin(ag));}
-    ctx.closePath();ctx.fillStyle='#7090b0';ctx.fill();
-  });
-  ctx.restore();
+function drawBall(ctx, cx, cy, r, alpha) {
+    ctx.save(); ctx.globalAlpha = alpha;
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = '#c8d8e8'; ctx.fill();
+    const pr = r * 0.28;
+    [[0, -0.62], [0.59, -0.19], [0.36, 0.5], [-0.36, 0.5], [-0.59, -0.19], [0, 0]].forEach(([px, py]) => {
+        const bx = cx + px * r, by = cy + py * r, d = Math.sqrt(px * px + py * py), p = pr * (1 - d * 0.18);
+        ctx.beginPath();
+        for (let a = 0; a < 5; a++) { const ag = -Math.PI / 2 + a * Math.PI * 2 / 5; a === 0 ? ctx.moveTo(bx + p * Math.cos(ag), by + p * Math.sin(ag)) : ctx.lineTo(bx + p * Math.cos(ag), by + p * Math.sin(ag)); }
+        ctx.closePath(); ctx.fillStyle = '#7090b0'; ctx.fill();
+    });
+    ctx.restore();
 }
 
-const _logo=new Image();_logo.src='../assets/img/logo.svg';_logo.crossOrigin='anonymous';
-function drawLogo(ctx,cx,cy,r){
-  const g=ctx.createRadialGradient(cx-r*.3,cy-r*.3,r*.05,cx,cy,r);
-  g.addColorStop(0,'#1c3da6');g.addColorStop(1,'#040e30');
-  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
-  ctx.strokeStyle='#ffffff';ctx.lineWidth=r*.03;ctx.stroke();
-  ctx.save();ctx.beginPath();ctx.arc(cx,cy,r*.90,0,Math.PI*2);ctx.clip();
-  if(_logo.complete){
-    const s=r*2.05;ctx.drawImage(_logo,cx-s/2,cy-s/2,s,s);
-  } else {
-    ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.font=`900 ${r*.4}px "Barlow Condensed"`;ctx.fillText('CC',cx,cy);
-  }
-  ctx.restore();
+const _logo = new Image(); _logo.src = '../assets/img/logo.svg'; _logo.crossOrigin = 'anonymous';
+function drawLogo(ctx, cx, cy, r) {
+    const g = ctx.createRadialGradient(cx - r * .3, cy - r * .3, r * .05, cx, cy, r);
+    g.addColorStop(0, '#1c3da6'); g.addColorStop(1, '#040e30');
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fillStyle = g; ctx.fill();
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = r * .03; ctx.stroke();
+    ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, r * .90, 0, Math.PI * 2); ctx.clip();
+    if (_logo.complete) {
+        const s = r * 2.05; ctx.drawImage(_logo, cx - s / 2, cy - s / 2, s, s);
+    } else {
+        ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.font = `900 ${r * .4}px "Barlow Condensed"`; ctx.fillText('CC', cx, cy);
+    }
+    ctx.restore();
 }
 
 function drawHorizontalFutbol(ctx, num, cx, cy) {
-  ctx.save();
-  ctx.translate(cx, cy);
-
-  const FONT  = '"Barlow Condensed", Impact, "Arial Narrow", sans-serif';
-  const NAVY  = '#081C4A';
-  const fSize = 82;
-  const nSize = 90;
-  const LS    = 2;
-  const gap   = 14;
-
-  ctx.font = `italic 900 ${fSize}px ${FONT}`;
-  const lettersArr = 'FÚTBOL'.split('');
-  let fW = 0;
-  lettersArr.forEach((l, i) => {
-    fW += ctx.measureText(l).width + (i < lettersArr.length - 1 ? LS : 0);
-  });
-
-  ctx.font = `italic 900 ${nSize}px ${FONT}`;
-  const nW = ctx.measureText(num).width;
-
-  const total  = fW + gap + nW;
-  const startX = -total / 2;
-  const bY     = 0;
-
-  function drawThick(chars, x, y, size, spacing) {
-    ctx.font      = `italic 900 ${size}px ${FONT}`;
-    ctx.textBaseline = 'alphabetic';
-    ctx.textAlign    = 'left';
-
     ctx.save();
-    ctx.shadowColor = 'rgba(0,0,0,0.85)';
-    ctx.shadowBlur = 12;
-    ctx.shadowOffsetX = 3;
-    ctx.shadowOffsetY = 3;
-    ctx.fillStyle = '#ffffff';
-    
-    let px = x;
-    chars.forEach(c => {
-      ctx.fillText(c, px, y);
-      px += ctx.measureText(c).width + spacing;
+    ctx.translate(cx, cy);
+
+    const FONT = '"Barlow Condensed", Impact, "Arial Narrow", sans-serif';
+    const NAVY = '#081C4A';
+    const fSize = 82;
+    const nSize = 90;
+    const LS = 2;
+    const gap = 14;
+
+    ctx.font = `italic 900 ${fSize}px ${FONT}`;
+    const lettersArr = 'FÚTBOL'.split('');
+    let fW = 0;
+    lettersArr.forEach((l, i) => {
+        fW += ctx.measureText(l).width + (i < lettersArr.length - 1 ? LS : 0);
     });
+
+    ctx.font = `italic 900 ${nSize}px ${FONT}`;
+    const nW = ctx.measureText(num).width;
+
+    const total = fW + gap + nW;
+    const startX = -total / 2;
+    const bY = 0;
+
+    function drawThick(chars, x, y, size, spacing) {
+        ctx.font = `italic 900 ${size}px ${FONT}`;
+        ctx.textBaseline = 'alphabetic';
+        ctx.textAlign = 'left';
+
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,0.85)';
+        ctx.shadowBlur = 12;
+        ctx.shadowOffsetX = 3;
+        ctx.shadowOffsetY = 3;
+        ctx.fillStyle = '#ffffff';
+
+        let px = x;
+        chars.forEach(c => {
+            ctx.fillText(c, px, y);
+            px += ctx.measureText(c).width + spacing;
+        });
+        ctx.restore();
+    }
+
+    drawThick('FÚTBOL'.split(''), startX, bY, fSize, LS);
+    const nx = startX + fW + gap;
+    const numY = bY + (nSize - fSize) * 0.52;
+    drawThick(num.split(''), nx, numY, nSize, 0);
+
     ctx.restore();
-  }
-
-  drawThick('FÚTBOL'.split(''), startX, bY, fSize, LS);
-  const nx   = startX + fW + gap;
-  const numY = bY + (nSize - fSize) * 0.52;
-  drawThick(num.split(''), nx, numY, nSize, 0);
-
-  ctx.restore();
 }
 
 async function downloadScreenshot(futbolFormat) {
     btnDownload.classList.add('loading');
     btnDownload.innerHTML = '<span class="spin"></span> Procesando...';
-    
+
     await new Promise(r => setTimeout(r, 50));
 
     try {
@@ -410,10 +410,10 @@ async function downloadScreenshot(futbolFormat) {
             const matchLugar = currentFilters.lugar === 'todos' || m.lugar === currentFilters.lugar;
             const matchCancha = currentFilters.cancha === 'todos' || m.cancha === currentFilters.cancha;
             const matchEstado = currentFilters.estado === 'todos' || m.estadoStandard === currentFilters.estado;
-            
+
             const isF9 = m.categoria === '2013' || m.categoria === '2014';
             const matchFormat = (futbolFormat === '9') ? isF9 : !isF9;
-            
+
             return matchCat && matchLugar && matchCancha && matchEstado && matchFormat;
         });
 
@@ -434,7 +434,7 @@ async function downloadScreenshot(futbolFormat) {
         });
 
         const futbolNum = futbolFormat;
-        
+
         let fechaText = filtered[0].fecha || '';
         if (fechaText.length > 0) fechaText = fechaText.charAt(0).toUpperCase() + fechaText.slice(1);
         const tempText = 'TEMPORADA 2026';
@@ -500,7 +500,7 @@ async function downloadScreenshot(futbolFormat) {
         const tSize1 = fit(ctx, 'COPA CAJAMARCA', TITLE_MAX_W, 68, '800');
         ctx.font = `800 ${tSize1}px "Barlow Condensed",sans-serif`;
         ctx.fillText('COPA CAJAMARCA', TX, HEADER / 2 - 20);
-        
+
         ctx.fillStyle = '#c8d8f0';
         const tSize2 = fit(ctx, 'CAMPEONATO DE MENORES', TITLE_MAX_W, 36, '700');
         ctx.font = `700 ${tSize2}px "Barlow Condensed",sans-serif`;
@@ -542,11 +542,11 @@ async function downloadScreenshot(futbolFormat) {
         const TBL_W = 960;
         const TBL_X = (W - TBL_W) / 2;
         const THEAD = 54;
-        
+
         // Fijar la tabla en la parte superior, cerca de la fecha
-        const TABLE_Y = dy + DATEBAR + 110; 
+        const TABLE_Y = dy + DATEBAR + 110;
         const TABLE_AREA_H = H - TABLE_Y - FOOTER - GAP;
-        
+
         let ROW_H = Math.min(60, (TABLE_AREA_H - THEAD) / rows.length);
         if (ROW_H < 40) ROW_H = 40;
         const TABLE_H = THEAD + rows.length * ROW_H;
@@ -554,10 +554,10 @@ async function downloadScreenshot(futbolFormat) {
         const CC_W = 110, CS_W = 140;
         const TEAMS_W = TBL_W - CC_W - CS_W;
         const TEAM_W = Math.floor(TEAMS_W / 2);
-        const CC = {x: TBL_X, w: CC_W};
-        const CA = {x: TBL_X + CC_W, w: TEAM_W};
-        const CS = {x: TBL_X + CC_W + TEAM_W, w: CS_W};
-        const CB = {x: TBL_X + CC_W + TEAM_W + CS_W, w: TEAM_W};
+        const CC = { x: TBL_X, w: CC_W };
+        const CA = { x: TBL_X + CC_W, w: TEAM_W };
+        const CS = { x: TBL_X + CC_W + TEAM_W, w: CS_W };
+        const CB = { x: TBL_X + CC_W + TEAM_W + CS_W, w: TEAM_W };
 
         // ── 5. TEXTO FÚTBOL X (pegado encima del cuadro) ──
         const futbolY = TABLE_Y - 25;
