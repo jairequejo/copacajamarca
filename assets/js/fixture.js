@@ -240,24 +240,10 @@ function renderFixture() {
     return renderJornada(j, catData[j], byeTeams);
   }).join('');
 
-  // Stats rápidas (partidos en vivo: total global, no solo la cat. activa)
-  const allGrouped = getGrouped();
-  const totalLive = Object.values(allGrouped).reduce((sum, cData) =>
-    sum + Object.values(cData).reduce((s, ms) => s + ms.filter(m => m.estado === 'en vivo').length, 0), 0);
-
   const totalPartidos = jornadas.reduce((s, j) => s + catData[j].length, 0);
   document.getElementById('qsJornadas').textContent = jornadas.length;
   document.getElementById('qsPartidos').textContent = totalPartidos;
-  document.getElementById('qsLive').textContent = totalLive;
   document.getElementById('quickStats').hidden = false;
-
-  // Badge global en header
-  const badge = document.getElementById('liveGlobalBadge');
-  const badgeCount = document.getElementById('liveGlobalCount');
-  if (badge && badgeCount) {
-    badgeCount.textContent = totalLive;
-    badge.style.display = totalLive > 0 ? 'inline-flex' : 'none';
-  }
 }
 
 // ═══════════════════════════════════════════════════════════
