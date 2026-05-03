@@ -8,7 +8,59 @@ function parseEquipos(rows) { if (!rows.length) return {}; const h = rows[0], ca
 function parseFixture(rows) { if (!rows.length) return []; const h = rows[0].map(x => x.trim().toUpperCase()); const col = k => h.findIndex(x => x.includes(k)), exact = k => h.findIndex(x => x === k); const I = { cat: col('CATEG'), lo: exact('LOCAL'), vi: col('VISITANTE'), gl: h.findIndex(x => x.includes('GOLES') && x.includes('LOCAL')), gv: h.findIndex(x => x.includes('GOLES') && x.includes('VISITANTE')), res: col('RESULTADO') }; const out = []; for (let r = 1; r < rows.length; r++) { const row = rows[r]; if (!row[0]) continue; const lo = (row[I.lo] || '').trim().toUpperCase(), vi = (row[I.vi] || '').trim().toUpperCase(); if (!lo || !vi) continue; const rl = (row[I.res] || '').toLowerCase(); out.push({ cat: (row[I.cat] || '').trim(), lo, vi, gl: parseInt(row[I.gl] || '', 10), gv: parseInt(row[I.gv] || '', 10), ok: rl !== '' && rl !== 'pendiente' && rl !== '-' }); } return out; }
 function buildStandings(loaded) { standings = {}; Object.keys(equipos).sort().forEach(cat => { const m = {}; equipos[cat].forEach(t => m[t] = { eq: t, pj: 0, pg: 0, pe: 0, pp: 0, gf: 0, gc: 0, dg: 0, pts: 0 }); loaded.filter(x => String(x.cat) === String(cat) && x.ok).forEach(x => { const gl = x.gl, gv = x.gv; if (isNaN(gl) || isNaN(gv)) return; if (!m[x.lo]) m[x.lo] = { eq: x.lo, pj: 0, pg: 0, pe: 0, pp: 0, gf: 0, gc: 0, dg: 0, pts: 0 }; if (!m[x.vi]) m[x.vi] = { eq: x.vi, pj: 0, pg: 0, pe: 0, pp: 0, gf: 0, gc: 0, dg: 0, pts: 0 }; const L = m[x.lo], V = m[x.vi]; L.pj++; V.pj++; L.gf += gl; L.gc += gv; V.gf += gv; V.gc += gl; if (gl > gv) { L.pg++; L.pts += 3; V.pp++; } else if (gl < gv) { V.pg++; V.pts += 3; L.pp++; } else { L.pe++; L.pts++; V.pe++; V.pts++; } L.dg = L.gf - L.gc; V.dg = V.gf - V.gc; }); standings[cat] = Object.values(m).sort((a, b) => b.pts - a.pts || b.dg - a.dg || b.gf - a.gf || a.eq.localeCompare(b.eq)); }); }
 function renderAll() { const cats = Object.keys(equipos).sort((a, b) => a - b); if (!cats.length) return; if (!activeCat) activeCat = cats[0]; el('catFilterBar').innerHTML = cats.map(c => `<button class="cat-btn${activeCat === c ? ' active' : ''}" data-cat="${c}" onclick="setCat('${c}',this)">Cat. ${c}</button>`).join(''); el('catFilterWrap').hidden = false; renderCat(activeCat); }
-function renderCat(cat) { const rows = standings[cat] || [], mx = rows.reduce((s, r) => Math.max(s, r.pj), 0); let h = `<div class="cat-section"><div class="cat-card"><div class="cat-head"><div class="cat-head-left"><div class="cat-badge">CAT. ${cat}</div><div class="cat-count">⚽ ${rows.length} equipos</div></div><div class="cat-leader">${rows[0]?.eq || ''} · ${rows[0]?.pts || 0} pts</div></div><div style="overflow-x:auto;"><table class="pos-table"><thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>DG</th><th>PTS</th></tr></thead><tbody>`; rows.forEach((r, i) => { const pc = i === 0 ? 'p1' : i === 1 ? 'p2' : i === 2 ? 'p3' : 'pn', dg = r.dg > 0 ? `+${r.dg}` : `${r.dg}`, b = mx > 0 ? Math.round((r.pts / (mx * 3)) * 100) : 0; h += `<tr><td><span class="pos-badge ${pc}">${i + 1}</span></td><td><div class="team-name-pos">${r.eq}</div><div class="pts-bar-wrap"><div class="pts-bar" style="width:${b}%"></div></div></td><td>${r.pj}</td><td class="st-g">${r.pg}</td><td class="st-e">${r.pe}</td><td class="st-p">${r.pp}</td><td>${r.gf}</td><td>${r.gc}</td><td class="${r.dg > 0 ? 'dg-pos' : r.dg < 0 ? 'dg-neg' : ''}">${dg}</td><td><span class="pos-pts">${r.pts}</span></td></tr>`; }); h += `</tbody></table></div></div></div>`; el('standingsContainer').innerHTML = h; }
+function renderCat(cat) {
+  const rows = standings[cat] || [];
+  const maxPts = rows[0]?.pts || 1;
+  const leader = rows[0];
+
+  let h = `<div class="cat-section"><div class="cat-card">`;
+
+  // Encabezado de categoría
+  h += `<div class="cat-head"><div class="cat-head-left"><div class="cat-badge">Cat. ${cat}</div><div class="cat-count">${rows.length} equipos</div></div>`;
+  if (leader) {
+    h += `<div class="cat-leader-wrap"><span class="cat-leader-star">★</span><span class="cat-leader-name">${leader.eq}</span><span class="cat-leader-pts">${leader.pts} pts</span></div>`;
+  }
+  h += `</div>`;
+
+  // Tabla responsive
+  h += `<div class="table-scroll-wrap"><table class="pos-table">`;
+  h += `<thead><tr>`;
+  h += `<th class="col-pos">#</th>`;
+  h += `<th class="col-team">Equipo</th>`;
+  h += `<th class="col-pj">PJ</th>`;
+  h += `<th class="col-g">G</th>`;
+  h += `<th class="col-e">E</th>`;
+  h += `<th class="col-p">P</th>`;
+  h += `<th class="col-gf">GF</th>`;
+  h += `<th class="col-gc">GC</th>`;
+  h += `<th class="col-dg">DG</th>`;
+  h += `<th class="col-pts">PTS</th>`;
+  h += `</tr></thead><tbody>`;
+
+  rows.forEach((r, i) => {
+    const pc = i === 0 ? 'p1' : i === 1 ? 'p2' : i === 2 ? 'p3' : 'pn';
+    const zc = i === 0 ? 'zone-1' : i === 1 ? 'zone-2' : i === 2 ? 'zone-3' : '';
+    const dg = r.dg > 0 ? `+${r.dg}` : `${r.dg}`;
+    const dgClass = r.dg > 0 ? 'dg-pos' : r.dg < 0 ? 'dg-neg' : '';
+    const b = maxPts > 0 ? Math.round((r.pts / maxPts) * 100) : 0;
+
+    h += `<tr class="${zc}">`;
+    h += `<td class="col-pos"><span class="pos-badge ${pc}">${i + 1}</span></td>`;
+    h += `<td class="col-team"><div class="team-name-pos">${r.eq}</div><div class="pts-bar-wrap"><div class="pts-bar" style="width:${b}%"></div></div></td>`;
+    h += `<td class="col-pj">${r.pj}</td>`;
+    h += `<td class="col-g st-g">${r.pg}</td>`;
+    h += `<td class="col-e st-e">${r.pe}</td>`;
+    h += `<td class="col-p st-p">${r.pp}</td>`;
+    h += `<td class="col-gf">${r.gf}</td>`;
+    h += `<td class="col-gc">${r.gc}</td>`;
+    h += `<td class="col-dg ${dgClass}">${dg}</td>`;
+    h += `<td class="col-pts"><span class="pos-pts">${r.pts}</span></td>`;
+    h += `</tr>`;
+  });
+
+  h += `</tbody></table></div></div></div>`;
+  el('standingsContainer').innerHTML = h;
+}
 function setCat(cat, btn) { activeCat = cat; document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); renderCat(cat); }
 
 const _logo = new Image(); _logo.src = '../assets/img/logo.png'; _logo.crossOrigin = 'anonymous';
@@ -140,7 +192,7 @@ async function downloadPNG() {
   } catch (err) { console.error(err); showToast('Error: ' + err.message); }
   finally {
     btn.classList.remove('loading');
-    btn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Descargar Tabla PNG`;
+    btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Descargar PNG`;
   }
 }
 
@@ -177,7 +229,7 @@ async function downloadAllPNGs() {
   } catch (err) { console.error(err); showToast('Error: ' + err.message); }
   finally {
     btn.classList.remove('loading');
-    btn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg> Descargar Todas (ZIP)`;
+    btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg> Descargar ZIP`;
   }
 }
 
