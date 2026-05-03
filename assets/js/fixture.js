@@ -85,8 +85,16 @@ function parseFixture(rows) {
 
     const resLC = (row[IDX.resultado] || '').toLowerCase().trim();
     let estado = 'pendiente';
-    if (resLC.includes('vivo')) estado = 'en vivo';
-    else if (resLC && resLC !== 'pendiente' && resLC !== '-') estado = 'finalizado';
+    if (resLC.includes('vivo') || resLC.includes('live')) {
+      estado = 'en vivo';
+    } else {
+      const golesLTmp = parseInt(row[IDX.golesL] || '', 10);
+      const golesVTmp = parseInt(row[IDX.golesV] || '', 10);
+      const hasScore = !isNaN(golesLTmp) && !isNaN(golesVTmp);
+      const explicitFin = resLC.includes('finaliz') || resLC.includes('terminad') ||
+                          resLC.includes(' fin') || resLC.includes('complet');
+      if (hasScore || explicitFin) estado = 'finalizado';
+    }
 
     const golesL = parseInt(row[IDX.golesL] || '', 10);
     const golesV = parseInt(row[IDX.golesV] || '', 10);
@@ -232,13 +240,24 @@ function renderFixture() {
     return renderJornada(j, catData[j], byeTeams);
   }).join('');
 
-  // Stats rápidas
+  // Stats rápidas (partidos en vivo: total global, no solo la cat. activa)
+  const allGrouped = getGrouped();
+  const totalLive = Object.values(allGrouped).reduce((sum, cData) =>
+    sum + Object.values(cData).reduce((s, ms) => s + ms.filter(m => m.estado === 'en vivo').length, 0), 0);
+
   const totalPartidos = jornadas.reduce((s, j) => s + catData[j].length, 0);
-  const livePartidos = jornadas.reduce((s, j) => s + catData[j].filter(m => m.estado === 'en vivo').length, 0);
   document.getElementById('qsJornadas').textContent = jornadas.length;
   document.getElementById('qsPartidos').textContent = totalPartidos;
-  document.getElementById('qsLive').textContent = livePartidos || '—';
+  document.getElementById('qsLive').textContent = totalLive;
   document.getElementById('quickStats').hidden = false;
+
+  // Badge global en header
+  const badge = document.getElementById('liveGlobalBadge');
+  const badgeCount = document.getElementById('liveGlobalCount');
+  if (badge && badgeCount) {
+    badgeCount.textContent = totalLive;
+    badge.style.display = totalLive > 0 ? 'inline-flex' : 'none';
+  }
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -305,8 +324,8 @@ async function loadAll() {
 
   try {
     const [resEq, resFix] = await Promise.all([
-      fetch(URL_EQUIPOS),
-      fetch(URL_FIXTURE),
+      fetch(`${URL_EQUIPOS}&t=${Date.now()}`, { cache: 'no-store' }),
+      fetch(`${URL_FIXTURE}&t=${Date.now()}`, { cache: 'no-store' }),
     ]);
     if (!resEq.ok) throw new Error('No se pudo cargar equipos');
     if (!resFix.ok) throw new Error('No se pudo cargar fixture');

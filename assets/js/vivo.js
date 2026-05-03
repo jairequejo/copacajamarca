@@ -1,4 +1,5 @@
 const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSw7Sko2trfPzgA6xrE_0Jfs4eK3sTtM7M1SHJmXGb6xqjIEhwWkhHagOWk8otc2dXz6kfcO1Ygz-sF/pub?gid=1021095354&single=true&output=csv';
+const CACHE_KEY = 'copa_vivo_v1';
 
 const matchesList = document.getElementById('matchesList');
 const refreshBar = document.getElementById('refreshBar');
@@ -15,7 +16,6 @@ let currentFilters = {
 };
 let refreshInterval = null;
 
-// Initialization
 async function init() {
     setupListeners();
     await fetchAndRender();
@@ -87,43 +87,77 @@ function setupListeners() {
     });
 }
 
+let countdownInterval = null;
+const REFRESH_SECS = 30;
+
 function startAutoRefresh() {
     if (refreshInterval) clearInterval(refreshInterval);
-    refreshInterval = setInterval(() => {
-        fetchAndRender(true);
-    }, 30000); // 30 seconds
+    if (countdownInterval) clearInterval(countdownInterval);
+
+    let remaining = REFRESH_SECS;
+    updateCountdown(remaining);
+
+    countdownInterval = setInterval(() => {
+        remaining--;
+        if (remaining <= 0) {
+            remaining = REFRESH_SECS;
+            fetchAndRender(true);
+        }
+        updateCountdown(remaining);
+    }, 1000);
+}
+
+function updateCountdown(secs) {
+    const el = document.getElementById('countdownSecs');
+    if (el) el.textContent = secs;
 }
 
 async function fetchAndRender(isSilent = false) {
     if (!isSilent) {
-        matchesList.innerHTML = Array(6).fill().map(() => `
-            <div class="skeleton-card">
-                <div class="skel" style="height: 14px; width: 40%; margin-bottom: 12px;"></div>
-                <div class="skel" style="height: 36px; width: 100%; margin-bottom: 12px;"></div>
-                <div class="skel" style="height: 24px; width: 60%; margin: 0 auto;"></div>
-            </div>
-        `).join('');
-        emptyState.hidden = true;
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (cached) {
+            // Mostrar datos en caché de inmediato — carga instantánea
+            parseCSV(cached);
+            updateFilters();
+            renderMatches();
+        } else {
+            matchesList.innerHTML = Array(3).fill().map(() => `
+                <div class="skeleton-card">
+                    <div class="skel" style="height: 14px; width: 40%; margin-bottom: 12px;"></div>
+                    <div class="skel" style="height: 36px; width: 100%; margin-bottom: 12px;"></div>
+                    <div class="skel" style="height: 24px; width: 60%; margin: 0 auto;"></div>
+                </div>
+            `).join('');
+            emptyState.hidden = true;
+        }
     } else {
         refreshBar.hidden = false;
     }
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
     try {
-        const response = await fetch(SHEET_CSV_URL);
+        const response = await fetch(`${SHEET_CSV_URL}&t=${Date.now()}`, {
+            cache: 'no-store',
+            signal: controller.signal
+        });
         if (!response.ok) throw new Error('Error al obtener datos');
         const text = await response.text();
+        localStorage.setItem(CACHE_KEY, text);
         parseCSV(text);
         updateFilters();
         renderMatches();
     } catch (error) {
-        console.error(error);
+        if (error.name !== 'AbortError') console.error(error);
         showToast('Error de conexión. Reintentando en breve...');
-        if (!isSilent) {
+        if (!isSilent && !localStorage.getItem(CACHE_KEY)) {
             matchesList.innerHTML = '';
             emptyState.innerHTML = '<img src="../assets/img/logo.svg" style="width: 64px; opacity: 0.3; margin: 0 auto 12px; display: block;"> <p>No se pudo cargar la información</p>';
             emptyState.hidden = false;
         }
     } finally {
+        clearTimeout(timeoutId);
         if (isSilent) refreshBar.hidden = true;
     }
 }
@@ -211,7 +245,15 @@ function updateFilters() {
     document.getElementById('filterEstado').innerHTML = estadoData.html;
 }
 
+function updateLivePill() {
+    const hasLive = allMatches.some(m => m.estadoStandard === 'En Vivo');
+    const pill = document.querySelector('.live-pill');
+    if (pill) pill.hidden = !hasLive;
+}
+
 function renderMatches() {
+    updateLivePill();
+
     const filtered = allMatches.filter(m => {
         const matchCat = currentFilters.cat === 'todos' || m.categoria === currentFilters.cat;
         const matchLugar = currentFilters.lugar === 'todos' || m.lugar === currentFilters.lugar;
