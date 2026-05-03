@@ -1,3 +1,7 @@
+// ⚡ URL del Apps Script proxy (SIN caché de Google) — lee directo del Sheet
+const SHEET_API_URL = 'https://script.google.com/macros/s/AKfycbxQAWYotXV2jdZKrWzefio9gF_nDQ78JjjZGDauKT7DuCRGMHDTjIhCTvnXzMShyLVg/exec';
+
+// URL CSV pública (tiene caché de Google de ~60s, solo se usa como fallback)
 const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSw7Sko2trfPzgA6xrE_0Jfs4eK3sTtM7M1SHJmXGb6xqjIEhwWkhHagOWk8otc2dXz6kfcO1Ygz-sF/pub?gid=1021095354&single=true&output=csv';
 const CACHE_KEY = 'copa_vivo_v1';
 
@@ -14,7 +18,6 @@ let currentFilters = {
     cancha: 'todos',
     estado: 'todos'
 };
-let refreshInterval = null;
 
 // Texto CSV más reciente obtenido del servidor (en memoria, no en localStorage)
 let lastFetchedText = null;
@@ -103,7 +106,6 @@ let countdownInterval = null;
 const REFRESH_SECS = 30;
 
 function startAutoRefresh() {
-    if (refreshInterval) clearInterval(refreshInterval);
     if (countdownInterval) clearInterval(countdownInterval);
 
     let remaining = REFRESH_SECS;
@@ -149,35 +151,60 @@ async function fetchAndRender(isSilent = false) {
     }
 
     const controller = new AbortController();
+    // Timeout de 10s total (el proxy Apps Script puede tardar 2-3s en cold start)
     const timeoutId = setTimeout(() => controller.abort(), 10000);
 
     try {
-        // Múltiples parámetros para forzar URL única y evitar caché de Google Sheets
-        const bust = `&nocache=${Date.now()}&r=${Math.random().toString(36).slice(2)}&v=${performance.now().toFixed(0)}`;
-        const url = `${SHEET_CSV_URL}${bust}`;
-        const response = await fetch(url, {
-            cache: 'no-store',
-            headers: {
-                'Cache-Control': 'no-cache, no-store, must-revalidate',
-                'Pragma': 'no-cache',
-                'Expires': '0'
-            },
-            signal: controller.signal
-        });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const text = await response.text();
+        let text = null;
 
-        // Comparar hash del texto nuevo vs el último obtenido del servidor
+        // ── Intento 1: Apps Script proxy (sin caché de Google, pero puede tener cold start) ──
+        if (SHEET_API_URL) {
+            try {
+                const proxyController = new AbortController();
+                const proxyTimeout = setTimeout(() => proxyController.abort(), 5000); // 5s máx para el proxy
+
+                const proxyRes = await fetch(`${SHEET_API_URL}?t=${Date.now()}`, {
+                    cache: 'no-store',
+                    signal: proxyController.signal
+                });
+                clearTimeout(proxyTimeout);
+
+                if (proxyRes.ok) {
+                    const proxyText = await proxyRes.text();
+                    // Verificar que devolvió CSV válido (no un mensaje de error)
+                    if (!proxyText.startsWith('ERROR:') && proxyText.includes(',') && proxyText.split('\n').length > 1) {
+                        text = proxyText;
+                        console.log('[vivo] Datos obtenidos desde Apps Script proxy ✓');
+                    } else {
+                        console.warn('[vivo] Apps Script devolvió datos inválidos, usando CSV fallback:', proxyText.slice(0, 100));
+                    }
+                }
+            } catch (proxyErr) {
+                console.warn('[vivo] Apps Script timeout/error, usando CSV fallback:', proxyErr.message);
+            }
+        }
+
+        // ── Intento 2: CSV público (fallback si proxy falló o no está configurado) ──
+        if (!text) {
+            const bust = `&nocache=${Date.now()}&r=${Math.random().toString(36).slice(2)}`;
+            const csvRes = await fetch(`${SHEET_CSV_URL}${bust}`, {
+                cache: 'no-store',
+                headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' },
+                signal: controller.signal
+            });
+            if (!csvRes.ok) throw new Error(`HTTP ${csvRes.status}`);
+            text = await csvRes.text();
+            console.log('[vivo] Datos obtenidos desde CSV público (puede tener caché de Google)');
+        }
+
+        // ── Comparar y renderizar solo si algo cambió ──
         const newHash = hashText(text);
         const oldHash = lastFetchedText ? hashText(lastFetchedText) : null;
-
         const dataChanged = newHash !== oldHash;
 
-        // Guardar el texto fresco en memoria y en localStorage
         lastFetchedText = text;
         localStorage.setItem(CACHE_KEY, text);
 
-        // Re-renderizar solo si los datos cambiaron (o es la carga inicial)
         if (!isSilent || dataChanged) {
             parseCSV(text);
             updateFilters();
@@ -251,7 +278,6 @@ function parseCSV(text) {
                 jornada: values[8].trim(),
                 golesLocal: values[9].trim(),
                 golesVisitante: values[10].trim(),
-                estadoRaw: rawEstado,
                 estadoStandard: standardEstado
             });
         }
