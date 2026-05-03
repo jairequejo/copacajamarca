@@ -16,6 +16,18 @@ let currentFilters = {
 };
 let refreshInterval = null;
 
+// Texto CSV más reciente obtenido del servidor (en memoria, no en localStorage)
+let lastFetchedText = null;
+
+// Hash simple para comparar si el CSV cambió sin comparar strings largos
+function hashText(str) {
+    let h = 0;
+    for (let i = 0; i < str.length; i++) {
+        h = (Math.imul(31, h) + str.charCodeAt(i)) | 0;
+    }
+    return h;
+}
+
 async function init() {
     setupListeners();
     await fetchAndRender();
@@ -113,14 +125,15 @@ function updateCountdown(secs) {
 }
 
 async function fetchAndRender(isSilent = false) {
+    // En carga inicial, mostrar skeleton solo si no hay nada en memoria
     if (!isSilent) {
-        const cached = localStorage.getItem(CACHE_KEY);
-        if (cached) {
-            // Mostrar datos en caché de inmediato — carga instantánea
-            parseCSV(cached);
+        if (lastFetchedText) {
+            // Ya tenemos datos en memoria de una carga anterior: mostrarlos sin parpadeo
+            parseCSV(lastFetchedText);
             updateFilters();
             renderMatches();
         } else {
+            // Primera carga: mostrar skeleton
             matchesList.innerHTML = Array(3).fill().map(() => `
                 <div class="skeleton-card">
                     <div class="skel" style="height: 14px; width: 40%; margin-bottom: 12px;"></div>
@@ -135,26 +148,59 @@ async function fetchAndRender(isSilent = false) {
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
 
     try {
-        const response = await fetch(`${SHEET_CSV_URL}&t=${Date.now()}`, {
+        // Múltiples parámetros para forzar URL única y evitar caché de Google Sheets
+        const bust = `&nocache=${Date.now()}&r=${Math.random().toString(36).slice(2)}&v=${performance.now().toFixed(0)}`;
+        const url = `${SHEET_CSV_URL}${bust}`;
+        const response = await fetch(url, {
             cache: 'no-store',
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            },
             signal: controller.signal
         });
-        if (!response.ok) throw new Error('Error al obtener datos');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const text = await response.text();
+
+        // Comparar hash del texto nuevo vs el último obtenido del servidor
+        const newHash = hashText(text);
+        const oldHash = lastFetchedText ? hashText(lastFetchedText) : null;
+
+        const dataChanged = newHash !== oldHash;
+
+        // Guardar el texto fresco en memoria y en localStorage
+        lastFetchedText = text;
         localStorage.setItem(CACHE_KEY, text);
-        parseCSV(text);
-        updateFilters();
-        renderMatches();
+
+        // Re-renderizar solo si los datos cambiaron (o es la carga inicial)
+        if (!isSilent || dataChanged) {
+            parseCSV(text);
+            updateFilters();
+            renderMatches();
+        }
     } catch (error) {
-        if (error.name !== 'AbortError') console.error(error);
-        showToast('Error de conexión. Reintentando en breve...');
-        if (!isSilent && !localStorage.getItem(CACHE_KEY)) {
-            matchesList.innerHTML = '';
-            emptyState.innerHTML = '<img src="../assets/img/logo.svg" style="width: 64px; opacity: 0.3; margin: 0 auto 12px; display: block;"> <p>No se pudo cargar la información</p>';
-            emptyState.hidden = false;
+        if (error.name !== 'AbortError') console.error('[vivo] Error fetch:', error);
+
+        if (!isSilent) {
+            // En carga inicial, intentar recuperar desde localStorage como último recurso
+            const cached = localStorage.getItem(CACHE_KEY);
+            if (cached) {
+                lastFetchedText = cached;
+                parseCSV(cached);
+                updateFilters();
+                renderMatches();
+                showToast('Usando datos en caché. Sin conexión.');
+            } else {
+                matchesList.innerHTML = '';
+                emptyState.innerHTML = '<img src="../assets/img/logo.svg" style="width: 64px; opacity: 0.3; margin: 0 auto 12px; display: block;"> <p>No se pudo cargar la información</p>';
+                emptyState.hidden = false;
+            }
+        } else {
+            showToast('Error de conexión. Reintentando en breve...');
         }
     } finally {
         clearTimeout(timeoutId);
