@@ -113,6 +113,9 @@ function startAutoRefresh() {
         remaining--;
         if (remaining <= 0) {
             remaining = REFRESH_SECS;
+            // Limpiar caché de localStorage antes de cada refresco silencioso
+            // para que nunca se compare contra un dato viejo de Google
+            localStorage.removeItem(CACHE_KEY);
             fetchAndRender(true);
         }
         updateCountdown(remaining);
@@ -125,15 +128,13 @@ function updateCountdown(secs) {
 }
 
 async function fetchAndRender(isSilent = false) {
-    // En carga inicial, mostrar skeleton solo si no hay nada en memoria
     if (!isSilent) {
         if (lastFetchedText) {
-            // Ya tenemos datos en memoria de una carga anterior: mostrarlos sin parpadeo
             parseCSV(lastFetchedText);
             updateFilters();
             renderMatches();
         } else {
-            // Primera carga: mostrar skeleton
+            // Primera carga sin datos en memoria: mostrar skeleton
             matchesList.innerHTML = Array(3).fill().map(() => `
                 <div class="skeleton-card">
                     <div class="skel" style="height: 14px; width: 40%; margin-bottom: 12px;"></div>
