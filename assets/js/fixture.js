@@ -176,7 +176,6 @@ function renderMatchRow(m) {
       <div class="${localCls}">${m.local}</div>
       <div class="match-score ${scoreCls}">${scoreHtml}</div>
       <div class="${visitCls}">${m.visitante}</div>
-      <div class="match-chip-wrap">${chipHtml}${cancha}</div>
     </div>`;
 }
 
