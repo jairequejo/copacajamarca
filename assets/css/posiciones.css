@@ -21,82 +21,16 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 /* ════════════════════════════════════
    HEADER
 ════════════════════════════════════ */
-.site-header {
-  background: var(--navy);
-  background-image: repeating-linear-gradient(
-    -45deg, transparent 0px, transparent 20px,
-    rgba(255,255,255,.018) 20px, rgba(255,255,255,.018) 21px
-  );
-  padding: calc(14px + env(safe-area-inset-top)) 16px 0;
-  border-bottom: 3px solid var(--gold);
-  display: block !important;
-  flex-direction: unset !important;
-}
-.header-inner {
-  display: flex; align-items: center; gap: 12px;
-  padding-bottom: 12px;
-}
-.logo {
-  width: 46px; height: 46px; flex-shrink: 0;
-  border-radius: 50%; background: var(--white);
-  box-shadow: 0 0 0 2px rgba(245,197,24,.45), 0 3px 10px rgba(0,0,0,.3);
-  object-fit: cover;
-}
-.header-text { flex: 1; min-width: 0; }
-.header-sup {
-  display: block; font-size: .65rem; font-weight: 600;
-  letter-spacing: .1em; color: rgba(255,255,255,.38);
-  text-transform: uppercase; margin-bottom: 2px;
-}
-.header-title {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 1.75rem; font-weight: 800;
-  color: var(--white); letter-spacing: .02em;
-  line-height: 1; text-transform: uppercase;
-}
-.back-btn {
-  display: inline-flex; align-items: center; gap: 5px;
-  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15);
-  color: var(--white); padding: 7px 13px; border-radius: 99px;
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: .8rem; font-weight: 700; letter-spacing: .06em;
-  text-transform: uppercase; text-decoration: none; flex-shrink: 0;
-  transition: background .15s;
-}
-.back-btn:hover { background: rgba(255,255,255,.18); }
-
-/* ════════════════════════════════════
-   BANNER DORADO
-════════════════════════════════════ */
-.pos-subheader {
-  background: var(--gold);
-  padding: 9px 16px;
-}
-.pos-subheader-inner {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  max-width: 700px; margin: 0 auto;
-}
-.pos-subheader-title {
-  display: flex; align-items: center; gap: 8px;
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: .88rem; font-weight: 800;
-  letter-spacing: .06em; text-transform: uppercase;
-  color: var(--navy);
-}
-.pos-updated {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: .68rem; font-weight: 600;
-  letter-spacing: .04em; color: var(--gold-text);
-  white-space: nowrap;
-}
+/* HEADER y franja dorada → definidos en theme.css
+   (.site-header / .page-bar) para que sean idénticos en todas las pestañas. */
 
 /* ════════════════════════════════════
    FILTROS (sticky)
 ════════════════════════════════════ */
 .cat-filter-wrap {
   background: var(--white);
-  border-bottom: 1px solid rgba(11,31,58,.08);
-  box-shadow: 0 2px 8px rgba(11,31,58,.07);
+  border-bottom: 1px solid rgba(0,26,77,.08);
+  box-shadow: 0 2px 8px rgba(0,26,77,.07);
   position: sticky; top: 0; z-index: 10;
 }
 .cat-filter-scroll {
@@ -110,14 +44,14 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   font-family: 'Barlow Condensed', sans-serif;
   font-size: .85rem; font-weight: 700;
   letter-spacing: .05em; text-transform: uppercase;
-  color: var(--muted); background: rgba(11,31,58,.06);
+  color: var(--muted); background: rgba(0,26,77,.06);
   border: 1.5px solid transparent;
   transition: all .15s; -webkit-tap-highlight-color: transparent;
   white-space: nowrap;
 }
 .cat-btn.active {
   background: var(--navy); color: var(--gold);
-  box-shadow: 0 2px 8px rgba(11,31,58,.25);
+  box-shadow: 0 2px 8px rgba(0,26,77,.25);
 }
 .cat-btn:active { transform: scale(.95); }
 
@@ -130,7 +64,7 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 }
 .loader-spin {
   width: 36px; height: 36px; border-radius: 50%;
-  border: 3px solid rgba(11,31,58,.1); border-top-color: var(--navy);
+  border: 3px solid rgba(0,26,77,.1); border-top-color: var(--navy);
   animation: spin 0.9s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -140,11 +74,11 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   text-transform: uppercase; color: var(--muted);
 }
 .pos-error {
-  text-align: center; padding: 48px 20px;
-  background: var(--white); border-radius: var(--radius);
-  border: 1px solid rgba(220,38,38,.15);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 10px; padding: 64px 20px; text-align: center;
 }
-.error-icon { font-size: 2rem; margin-bottom: 12px; }
+.pos-error svg { color: rgba(0,26,77,.12); }
 .error-title {
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 1.1rem; font-weight: 800; text-transform: uppercase;
@@ -162,7 +96,7 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 /* ════════════════════════════════════
    MAIN
 ════════════════════════════════════ */
-.pos-main { padding: 14px 12px; max-width: 700px; margin: 0 auto; }
+.pos-main { padding: 14px 10px; max-width: 700px; margin: 0 auto; }
 
 /* ════════════════════════════════════
    CARD DE CATEGORÍA
@@ -174,8 +108,8 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 .cat-card {
   background: var(--white);
   border-radius: 12px;
-  border: 1px solid rgba(11,31,58,.07);
-  box-shadow: 0 2px 12px rgba(11,31,58,.09);
+  border: 1px solid rgba(0,26,77,.07);
+  box-shadow: 0 2px 12px rgba(0,26,77,.09);
   overflow: hidden;
 }
 
@@ -183,7 +117,7 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 .cat-head {
   display: flex; align-items: center; justify-content: space-between;
   padding: 12px 14px;
-  background: linear-gradient(135deg, #0d2244 0%, #0b1f3a 100%);
+  background: linear-gradient(135deg, #002b75 0%, #001a4d 100%);
   gap: 10px;
 }
 .cat-head-left { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; }
@@ -192,8 +126,8 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   font-size: .82rem; font-weight: 800;
   letter-spacing: .1em; text-transform: uppercase;
   color: var(--gold);
-  background: rgba(245,197,24,.14);
-  border: 1px solid rgba(245,197,24,.32);
+  background: rgba(255,186,0,.14);
+  border: 1px solid rgba(255,186,0,.32);
   padding: 4px 12px; border-radius: 99px;
   flex-shrink: 0;
 }
@@ -206,8 +140,8 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 .cat-leader-wrap {
   display: flex; align-items: center; gap: 6px;
   flex-shrink: 0;
-  background: rgba(245,197,24,.1);
-  border: 1px solid rgba(245,197,24,.22);
+  background: rgba(255,186,0,.1);
+  border: 1px solid rgba(255,186,0,.22);
   border-radius: 99px; padding: 4px 10px 4px 8px;
 }
 .cat-leader-star { color: var(--gold); font-size: .68rem; line-height: 1; flex-shrink: 0; }
@@ -241,114 +175,103 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 
 /* ─── Cabecera de la tabla ─── */
 .pos-table thead tr {
-  background: rgba(11,31,58,.04);
-  border-bottom: 2px solid rgba(11,31,58,.09);
+  background: rgba(0,26,77,.04);
+  border-bottom: 2px solid rgba(0,26,77,.09);
 }
 .pos-table thead th {
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: .64rem; font-weight: 800; letter-spacing: .1em;
-  text-transform: uppercase; color: rgba(11,31,58,.45);
-  padding: 8px 5px; text-align: center; white-space: nowrap;
+  font-size: .74rem; font-weight: 800; letter-spacing: .06em;
+  text-transform: uppercase; color: rgba(0,26,77,.6);
+  padding: 10px 3px; text-align: center; white-space: nowrap;
 }
 .pos-table thead th.col-team { text-align: left; padding-left: 10px; }
 .pos-table thead th.col-pts {
   color: var(--navy);
-  background: rgba(245,197,24,.06);
-  border-left: 1px solid rgba(245,197,24,.15);
+  background: rgba(255,186,0,.06);
+  border-left: 1px solid rgba(255,186,0,.15);
 }
 
 /* ─── Filas ─── */
 .pos-table tbody tr {
-  border-bottom: 1px solid rgba(11,31,58,.05);
+  border-bottom: 1px solid rgba(0,26,77,.05);
   transition: background .12s;
 }
 .pos-table tbody tr:last-child { border-bottom: none; }
-.pos-table tbody tr:hover { background: rgba(11,31,58,.03); }
+.pos-table tbody tr:hover { background: rgba(0,26,77,.03); }
 
 /* Alternado muy sutil */
-.pos-table tbody tr:nth-child(even) { background: rgba(11,31,58,.018); }
-.pos-table tbody tr:nth-child(even):hover { background: rgba(11,31,58,.04); }
+.pos-table tbody tr:nth-child(even) { background: rgba(0,26,77,.018); }
+.pos-table tbody tr:nth-child(even):hover { background: rgba(0,26,77,.04); }
 
 /* ─── Celdas ─── */
 .pos-table tbody td {
-  padding: 12px 5px;          /* filas más altas */
-  font-size: .82rem;
-  text-align: center; font-weight: 500; color: var(--navy);
+  padding: 13px 3px;          /* filas altas, cómodas para tocar */
+  font-size: .92rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: center; color: var(--navy);
   vertical-align: middle;
 }
 .pos-table tbody td.col-team { text-align: left; padding-left: 10px; }
 .pos-table tbody td.col-pts {
-  background: rgba(245,197,24,.04);
-  border-left: 1px solid rgba(245,197,24,.12);
+  background: rgba(255,186,0,.04);
+  border-left: 1px solid rgba(255,186,0,.12);
 }
 
-/* ─── Anchos de columna ─── */
-.pos-table .col-pos  { width: 40px; min-width: 40px; }
-.pos-table .col-team { min-width: 110px; }
+/* ─── Anchos de columna ───
+   Equipo es flexible (toma el espacio sobrante); el resto, fijo y angosto.
+   GF/GC se ocultan en móvil (patrón estándar Sofascore/Promiedos). */
+.pos-table .col-pos  { width: 38px; min-width: 38px; }
+.pos-table .col-team { width: auto; min-width: 96px; }
 .pos-table .col-pj,
 .pos-table .col-g,
 .pos-table .col-e,
-.pos-table .col-p   { width: 26px; min-width: 24px; }
+.pos-table .col-p   { width: 30px; min-width: 28px; }
 .pos-table .col-gf,
 .pos-table .col-gc  { display: none; }           /* oculto en móvil */
-.pos-table .col-dg  { width: 32px; min-width: 28px; }
-.pos-table .col-pts { width: 44px; min-width: 40px; }
+.pos-table .col-dg  { width: 36px; min-width: 32px; }
+.pos-table .col-pts { width: 48px; min-width: 44px; }
 
 /* GF/GC visibles desde 440px */
 @media (min-width: 440px) {
   .pos-table .col-gf,
-  .pos-table .col-gc { display: table-cell; width: 28px; min-width: 26px; }
-  .pos-table .col-team { min-width: 130px; }
-}
-@media (min-width: 560px) {
-  .pos-table .col-team { min-width: 160px; }
+  .pos-table .col-gc { display: table-cell; width: 30px; min-width: 28px; }
 }
 
 /* ─── Indicadores de zona (borde izquierdo de la fila) ─── */
-.pos-table tbody tr.zone-1 > td.col-pos { box-shadow: inset 4px 0 0 #f5c518; }
+.pos-table tbody tr.zone-1 > td.col-pos { box-shadow: inset 4px 0 0 #ffba00; }
 .pos-table tbody tr.zone-2 > td.col-pos { box-shadow: inset 3px 0 0 #94a3b8; }
 .pos-table tbody tr.zone-3 > td.col-pos { box-shadow: inset 3px 0 0 #c97b3a; }
 
 /* ─── Líder: fila con fondo dorado visible ─── */
 .pos-table tbody tr.zone-1            { background: #fffbeb !important; }
 .pos-table tbody tr.zone-1:hover      { background: #fef3c7 !important; }
-.pos-table tbody tr.zone-1 > td.col-pts { background: rgba(245,197,24,.14); }
+.pos-table tbody tr.zone-1 > td.col-pts { background: rgba(255,186,0,.14); }
 
 /* ─── Badges de posición ─── */
 .pos-badge {
-  display: inline-flex; width: 28px; height: 28px;
+  display: inline-flex; width: 26px; height: 26px;
   border-radius: 50%; align-items: center; justify-content: center;
   font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 800; font-size: .75rem; line-height: 1;
+  font-weight: 800; font-size: .82rem; line-height: 1;
 }
 .pos-badge.p1 {
-  background: var(--gold); color: #7a5e00;
-  box-shadow: 0 2px 8px rgba(245,197,24,.5);
+  background: var(--gold); color: #5a4400;
+  box-shadow: 0 2px 8px rgba(255,186,0,.5);
 }
 .pos-badge.p2 { background: #dde3ec; color: #334155; }
 .pos-badge.p3 { background: #ede8e3; color: #7c5c3e; }
-.pos-badge.pn { background: rgba(11,31,58,.07); color: rgba(11,31,58,.4); font-size: .72rem; }
+.pos-badge.pn { background: rgba(0,26,77,.07); color: rgba(0,26,77,.4); font-size: .72rem; }
 
 /* ─── Celda del equipo ─── */
 .team-name-pos {
   font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 700; font-size: .92rem;    /* más grande y legible */
+  font-weight: 700; font-size: .98rem;    /* legible, igual que el fixture */
   text-transform: uppercase; white-space: nowrap;
   overflow: hidden; text-overflow: ellipsis;
-  line-height: 1.2; max-width: 160px;
+  line-height: 1.2;
 }
 .zone-1 .team-name-pos { font-weight: 800; color: #7a3f00; }
-
-/* Barra de progreso de puntos */
-.pts-bar-wrap {
-  height: 2px; background: rgba(11,31,58,.08);
-  border-radius: 99px; margin-top: 4px; overflow: hidden;
-}
-.pts-bar {
-  height: 100%; background: var(--gold);
-  border-radius: 99px; transition: width .5s var(--ease);
-}
-.zone-1 .pts-bar { background: #e8a000; }
 
 /* ─── Colores de estadísticas ─── */
 .st-g { color: #15803d; font-weight: 700; }
@@ -360,14 +283,14 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 /* ─── Puntos — badge visual ─── */
 .pos-pts {
   display: inline-flex; align-items: center; justify-content: center;
-  min-width: 32px; height: 26px;
+  min-width: 34px; height: 28px;
   background: var(--navy); color: var(--white);
-  border-radius: 99px; padding: 0 7px;
+  border-radius: 99px; padding: 0 8px;
   font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 800; font-size: .92rem; line-height: 1;
+  font-weight: 800; font-size: 1rem; line-height: 1;
 }
 .zone-1 .pos-pts {
-  background: var(--gold); color: #7a5e00;
+  background: var(--gold); color: #5a4400;
 }
 
 /* ════════════════════════════════════
@@ -394,15 +317,15 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   display: flex !important; align-items: center; justify-content: center; gap: 8px;
   width: 100% !important; height: 50px;
   max-width: 100% !important;
-  background: var(--gold) !important; color: #7a5e00 !important;
+  background: var(--gold) !important; color: #5a4400 !important;
   font-family: 'Barlow Condensed', sans-serif;
   font-size: .92rem; font-weight: 800;
   letter-spacing: .07em; text-transform: uppercase;
   border-radius: 99px; border: none;
-  box-shadow: 0 4px 16px rgba(245,197,24,.4);
+  box-shadow: 0 4px 16px rgba(255,186,0,.4);
   transition: transform .15s var(--ease), box-shadow .15s, opacity .15s;
 }
-.btn-download:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(245,197,24,.55); }
+.btn-download:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(255,186,0,.55); }
 .btn-download:active { transform: scale(.97); }
 .btn-download.loading { opacity: .6; pointer-events: none; }
 
@@ -418,7 +341,7 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 /* Spinner */
 .spin {
   display: inline-block; width: 16px; height: 16px; border-radius: 50%;
-  border: 2px solid rgba(0,0,0,.2); border-top-color: #7a5e00;
+  border: 2px solid rgba(0,0,0,.2); border-top-color: #5a4400;
   animation: spin 0.8s linear infinite;
 }
 .btn-download-zip .spin { border-color: rgba(255,255,255,.2); border-top-color: var(--white); }

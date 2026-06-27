@@ -8,25 +8,27 @@
 
 :root {
 
-  /* ── PALETA PRINCIPAL ── */
-  --navy:           #0b1f3a;   /* Azul oscuro — fondo header, textos oscuros  */
-  --navy-mid:       #132b52;   /* Azul medio — gradientes, variantes           */
-  --navy-light:     #1e3a6e;   /* Azul claro — hover en contextos oscuros      */
-  --navy-card:      #f7fafd;   /* Azul casi blanco — fondo tarjetas            */
+  /* ── PALETA OFICIAL COPA CAJAMARCA (banners 2026) ── */
+  --navy:           #001a4d;   /* Azul eléctrico oscuro — base de header/footer */
+  --navy-mid:       #002b75;   /* Azul medio — gradientes, variantes            */
+  --navy-light:     #2456b0;   /* Azul claro — hover en contextos oscuros       */
+  --navy-deep:      #011232;   /* Azul marino base — sombras y contraste máximo */
+  --navy-card:      #f7fafd;   /* Azul casi blanco — fondo tarjetas             */
 
-  /* ── DORADO (acento primario) ── */
-  --gold:           #f5c518;   /* Dorado — botones, badges, acentos            */
-  --gold-dark:      #d4a800;   /* Dorado oscuro — hover de botón dorado        */
-  --gold-text:      #7a5e00;   /* Dorado texto — sobre fondos dorados          */
-  --gold-subtle:    rgba(245, 197, 24, 0.15);  /* Dorado tenue — fondos suaves */
-  --gold-border:    rgba(245, 197, 24, 0.35);  /* Dorado borde — pills, rings  */
+  /* ── DORADO / ORO (acento primario) ── */
+  --gold:           #ffba00;   /* Amarillo oro — botones, badges, acentos       */
+  --gold-dark:      #f1a200;   /* Oro oscuro — hover de botón dorado            */
+  --gold-text:      #5a4400;   /* Oro texto — sobre fondos dorados (AA)         */
+  --gold-subtle:    rgba(255, 186, 0, 0.15);  /* Oro tenue — fondos suaves      */
+  --gold-border:    rgba(255, 186, 0, 0.38);  /* Oro borde — pills, rings       */
 
   /* ── SEMÁNTICOS ── */
   --green:          #16a34a;
   --green-bg:       #dcfce7;
   --green-text:     #14532d;
 
-  --red:            #dc2626;
+  --red:            #d60d0d;   /* Rojo deportivo — días, urgencia, EN VIVO      */
+  --red-dark:       #b80000;   /* Rojo oscuro — hover / acentos profundos       */
   --red-bg:         #fee2e2;
   --red-text:       #991b1b;
 
@@ -39,9 +41,10 @@
   /* ── NEUTROS ── */
   --white:          #ffffff;
   --bg:             #eef2f7;   /* Fondo de página                              */
-  --text-muted:     #6b87a4;   /* Texto secundario / subtítulos                */
+  --text-muted:     #6b87a4;   /* Texto secundario sobre fondos oscuros        */
   --muted:          #6b87a4;   /* Alias para compatibilidad                    */
-  --border:         rgba(11, 31, 58, 0.10);  /* Bordes sutiles                 */
+  --text-soft:      #475569;   /* Texto secundario sobre BLANCO (legible AA)   */
+  --border:         rgba(0, 26, 77, 0.12);  /* Bordes sutiles                  */
 
   /* ── TIPOGRAFÍA — Familias ── */
   --font-display:   'Bebas Neue', sans-serif;   /* Títulos hero, marcadores    */
@@ -176,3 +179,119 @@
   animation: copa-shimmer 1.5s ease-in-out infinite;
   border-radius: var(--radius-sm);
 }
+
+/* ================================================================
+   HEADER UNIFICADO — IDÉNTICO en Vivo · Fixture · Posiciones · Jugadores
+   Este es el ÚNICO lugar donde se define el header. No redefinir en
+   las hojas de página: así todas las pestañas se ven exactamente igual.
+   ================================================================ */
+
+/* Barra azul marino con logo + nombre del torneo */
+.site-header {
+  background: var(--navy);
+  background-image: repeating-linear-gradient(
+    -45deg, transparent 0 20px, rgba(255,255,255,.03) 20px, rgba(255,255,255,.03) 21px);
+  padding: calc(16px + env(safe-area-inset-top)) 16px 0;
+}
+.header-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 4px 0 14px;
+}
+.logo {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--white);
+  object-fit: cover;
+  box-shadow: 0 0 0 2px var(--gold-border), 0 3px 10px rgba(0,0,0,.35);
+}
+.header-text { flex: 1; min-width: 0; }
+.header-sup {
+  display: block;
+  font-family: var(--font-condensed);
+  font-size: .82rem;
+  font-weight: 600;
+  letter-spacing: .07em;
+  color: rgba(255,255,255,.66);
+  text-transform: uppercase;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.header-title {
+  font-family: var(--font-condensed);
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--white);
+  letter-spacing: .02em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+/* Franja DORADA de sección — dice en qué pestaña estás (igual en todas) */
+.page-bar {
+  background: var(--gold);
+  border-bottom: 3px solid var(--gold-dark);
+}
+.page-bar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 11px 16px;
+}
+.page-bar-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--font-condensed);
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--navy);
+  min-width: 0;
+}
+.page-bar-title svg { flex-shrink: 0; }
+.page-bar-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-condensed);
+  font-size: .84rem;
+  font-weight: 700;
+  letter-spacing: .03em;
+  color: var(--gold-text);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.page-bar-meta[hidden], .page-bar-meta.hidden { display: none; }
+
+/* Indicador EN VIVO dentro de la franja (solo Vivo) */
+.live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--red);
+  color: #fff;
+  font-family: var(--font-condensed);
+  font-size: .82rem;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+.live-pill .pulse-dot { background: #fff; width: 7px; height: 7px; }
+
+/* Utilidad compartida */
+.hidden { display: none !important; }

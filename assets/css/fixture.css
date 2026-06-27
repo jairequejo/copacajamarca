@@ -20,44 +20,9 @@ img { display: block; max-width: 100%; }
 button { cursor: pointer; font-family: inherit; border: none; background: none; touch-action: manipulation; }
 
 /* ══════════════════════════════════════════════════
-   HEADER
+   HEADER → definido en theme.css (.site-header / .page-bar)
+   para que sea idéntico en todas las pestañas.
 ══════════════════════════════════════════════════ */
-.site-header {
-  background: var(--navy);
-  background-image: repeating-linear-gradient(
-    -45deg, transparent 0px, transparent 20px,
-    rgba(255,255,255,.018) 20px, rgba(255,255,255,.018) 21px
-  );
-  padding: calc(14px + env(safe-area-inset-top)) 16px 0;
-  border-bottom: 3px solid var(--gold);
-}
-.header-inner { display: flex; align-items: center; gap: 12px; padding-bottom: 12px; }
-.logo {
-  width: 46px; height: 46px; flex-shrink: 0;
-  border-radius: 50%; background: var(--white);
-  box-shadow: 0 0 0 2px rgba(245,197,24,.45), 0 3px 10px rgba(0,0,0,.3);
-  object-fit: cover;
-}
-.header-text { flex: 1; min-width: 0; }
-.header-sup {
-  display: block; font-size: .65rem; font-weight: 600;
-  letter-spacing: .1em; color: rgba(255,255,255,.38);
-  text-transform: uppercase; margin-bottom: 2px;
-}
-.header-title {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 1.75rem; font-weight: 800;
-  color: var(--white); letter-spacing: .02em;
-  line-height: 1; text-transform: uppercase;
-}
-.page-subtitle {
-  display: flex; align-items: center; gap: 7px;
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: .74rem; font-weight: 700;
-  letter-spacing: .1em; text-transform: uppercase;
-  color: rgba(255,255,255,.42);
-  padding: 8px 0;
-}
 
 /* ══════════════════════════════════════════════════
    FILTROS STICKY
@@ -65,15 +30,15 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 .filters-wrap {
   position: sticky; top: 0; z-index: var(--z-sticky);
   background: var(--white);
-  border-bottom: 1px solid rgba(11,31,58,.08);
-  box-shadow: 0 2px 16px rgba(11,31,58,.09);
+  border-bottom: 1px solid rgba(0,26,77,.08);
+  box-shadow: 0 2px 16px rgba(0,26,77,.09);
 }
 .filter-row {
   display: flex; align-items: center; gap: 8px;
   padding: 9px 14px;
 }
 .filter-row + .filter-row {
-  border-top: 1px solid rgba(11,31,58,.05);
+  border-top: 1px solid rgba(0,26,77,.05);
   padding-top: 7px; padding-bottom: 7px;
 }
 .filter-label {
@@ -95,14 +60,14 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   font-family: 'Barlow Condensed', sans-serif;
   font-size: .78rem; font-weight: 700;
   letter-spacing: .04em; text-transform: uppercase;
-  color: var(--muted); background: rgba(11,31,58,.05);
+  color: var(--muted); background: rgba(0,26,77,.05);
   border: 1.5px solid transparent;
   transition: all .15s; -webkit-tap-highlight-color: transparent; white-space: nowrap;
 }
 .cat-tab:active { transform: scale(.94); }
 .cat-tab.active {
   background: var(--navy); color: var(--gold);
-  box-shadow: 0 2px 8px rgba(11,31,58,.22);
+  box-shadow: 0 2px 8px rgba(0,26,77,.22);
 }
 
 /* ─── PILLS DE JORNADA ─── */
@@ -117,7 +82,7 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   font-family: 'Barlow Condensed', sans-serif;
   font-size: .74rem; font-weight: 700;
   letter-spacing: .03em; text-transform: uppercase;
-  color: var(--muted); background: rgba(11,31,58,.05);
+  color: var(--muted); background: rgba(0,26,77,.05);
   border: 1.5px solid transparent;
   transition: all .15s; -webkit-tap-highlight-color: transparent; white-space: nowrap;
 }
@@ -125,7 +90,7 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 .jornada-pill.active { background: var(--navy); color: var(--white); }
 .jornada-pill.has-live {
   background: var(--red-bg); color: var(--red-text);
-  border-color: rgba(220,38,38,.2);
+  border-color: rgba(214,13,13,.2);
   display: inline-flex; align-items: center; gap: 4px;
 }
 .jornada-pill.has-live.active { background: var(--red); color: var(--white); border-color: var(--red); }
@@ -138,14 +103,14 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 .quick-stats {
   display: flex; align-items: center;
   background: var(--white);
-  border-bottom: 1px solid rgba(11,31,58,.07);
+  border-bottom: 1px solid rgba(0,26,77,.07);
   padding: 9px 14px; gap: 0;
 }
 .qs-item {
   flex: 1; text-align: center;
   display: flex; flex-direction: column; gap: 1px;
 }
-.qs-sep { width: 1px; height: 22px; background: rgba(11,31,58,.1); }
+.qs-sep { width: 1px; height: 22px; background: rgba(0,26,77,.1); }
 .qs-num {
   font-family: 'Bebas Neue', sans-serif;
   font-size: 1.35rem; line-height: 1; color: var(--navy);
@@ -186,7 +151,7 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   content: '';
   flex: 1;
   height: 1px;
-  background: rgba(11,31,58,.12);
+  background: rgba(0,26,77,.12);
 }
 .jornada-title {
   font-family: 'Barlow Condensed', sans-serif;
@@ -208,7 +173,7 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   letter-spacing: .08em; text-transform: uppercase;
   color: var(--muted);
   background: var(--white);
-  border: 1px solid rgba(11,31,58,.1);
+  border: 1px solid rgba(0,26,77,.1);
   padding: 2px 8px; border-radius: 99px;
   white-space: nowrap;
 }
@@ -230,8 +195,8 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   background: var(--white);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 1px 6px rgba(11,31,58,.07), 0 4px 16px rgba(11,31,58,.05);
-  border: 1px solid rgba(11,31,58,.07);
+  box-shadow: 0 1px 6px rgba(0,26,77,.07), 0 4px 16px rgba(0,26,77,.05);
+  border: 1px solid rgba(0,26,77,.07);
 }
 
 /* ══════════════════════════════════════════════════
@@ -243,12 +208,12 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   grid-template-columns: 1fr auto 1fr;
   align-items: stretch;
   min-height: 62px;
-  border-bottom: 1px solid rgba(11,31,58,.05);
+  border-bottom: 1px solid rgba(0,26,77,.05);
   position: relative;
   transition: background .1s;
 }
 .match-row:last-child { border-bottom: none; }
-.match-row:active { background: rgba(11,31,58,.025); }
+.match-row:active { background: rgba(0,26,77,.025); }
 
 /* Indicador lateral izquierdo de estado */
 .match-row::before {
@@ -258,12 +223,12 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   z-index: 1;
 }
 .match-row[data-estado="en vivo"]::before   { background: var(--red); }
-.match-row[data-estado="finalizado"]::before { background: rgba(11,31,58,.18); }
+.match-row[data-estado="finalizado"]::before { background: rgba(0,26,77,.18); }
 .match-row[data-estado="pendiente"]::before  { background: var(--gold); }
 
 /* Fondo sutil en partidos en vivo */
 .match-row[data-estado="en vivo"] {
-  background: linear-gradient(90deg, rgba(220,38,38,.035) 0%, transparent 40%);
+  background: linear-gradient(90deg, rgba(214,13,13,.035) 0%, transparent 40%);
 }
 
 /* ─── CELDA DE EQUIPO ─── */
@@ -272,7 +237,7 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   align-items: center;
   padding: 12px 10px;
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: .92rem; font-weight: 700;
+  font-size: .98rem; font-weight: 700;
   text-transform: uppercase;
   color: var(--navy);
   line-height: 1.15;
@@ -320,14 +285,14 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 }
 .score-nums {
   font-family: 'Bebas Neue', sans-serif;
-  font-size: 1.6rem;
+  font-size: 1.75rem;
   line-height: 1;
   letter-spacing: .02em;
   color: var(--navy);
 }
 .score-label {
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: .52rem; font-weight: 800;
+  font-size: .58rem; font-weight: 800;
   letter-spacing: .12em; text-transform: uppercase;
   color: var(--muted);
 }
@@ -336,7 +301,7 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 
 /* ── Score "LIVE" — En vivo ── */
 .match-score.live {
-  background: rgba(220,38,38,.06);
+  background: rgba(214,13,13,.06);
 }
 .match-score.live .score-nums { color: var(--red); }
 .match-score.live .score-label {
@@ -353,7 +318,7 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   font-size: .88rem; font-weight: 800;
   letter-spacing: .08em; text-transform: uppercase;
   color: var(--muted);
-  background: rgba(11,31,58,.06);
+  background: rgba(0,26,77,.06);
   border-radius: 6px;
   padding: 6px 10px;
   text-align: center;
@@ -384,8 +349,8 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
    DESCANSO (BYE TEAMS)
 ══════════════════════════════════════════════════ */
 .descanso-section {
-  background: rgba(11,31,58,.018);
-  border-top: 1px dashed rgba(11,31,58,.1);
+  background: rgba(0,26,77,.018);
+  border-top: 1px dashed rgba(0,26,77,.1);
   padding: 9px 12px 11px;
 }
 .descanso-title {
@@ -401,7 +366,7 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   font-size: .7rem; font-weight: 700;
   letter-spacing: .02em; text-transform: uppercase;
   background: var(--white); color: #93a8bf;
-  border: 1px solid rgba(11,31,58,.1);
+  border: 1px solid rgba(0,26,77,.1);
   padding: 3px 9px; border-radius: 99px;
 }
 
@@ -418,7 +383,7 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 }
 .spinner {
   width: 34px; height: 34px; border-radius: 50%;
-  border: 3px solid rgba(11,31,58,.07);
+  border: 3px solid rgba(0,26,77,.07);
   border-top-color: var(--navy);
   animation: copa-spin .75s linear infinite;
 }
@@ -431,7 +396,7 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   align-items: center; justify-content: center;
   gap: 10px; padding: 64px 20px; text-align: center;
 }
-.empty-state svg { color: rgba(11,31,58,.12); }
+.empty-state svg { color: rgba(0,26,77,.12); }
 .empty-title {
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 1.1rem; font-weight: 800;
@@ -484,7 +449,7 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
   content: ''; position: absolute; top: 0; left: 15%; right: 15%; height: 2px;
   background: var(--gold); border-radius: 0 0 3px 3px;
 }
-.bnav-live { color: rgba(220,38,38,.5); }
+.bnav-live { color: rgba(214,13,13,.5); }
 .bnav-live:hover { color: var(--red); }
 .bnav-live-wrap { position: relative; display: inline-flex; }
 .bnav-live-dot {
