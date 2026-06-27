@@ -318,15 +318,14 @@ async function loadAll() {
       fetch(`${URL_EQUIPOS}&t=${Date.now()}`, { cache: 'no-store' }),
       fetch(`${URL_FIXTURE}&t=${Date.now()}`, { cache: 'no-store' }),
     ]);
-    if (!resEq.ok) throw new Error('No se pudo cargar equipos');
-    if (!resFix.ok) throw new Error('No se pudo cargar fixture');
+    if (!resEq.ok || !resFix.ok) throw new Error('NO_CONN');
 
     G.equipos = parseEquipos(parseCsv(await resEq.text()));
     G.fixture = parseFixture(parseCsv(await resFix.text()));
 
     // Categorías con al menos un partido
     const catsConPartidos = [...new Set(G.fixture.map(m => m.cat).filter(Boolean))].sort((a, b) => a - b);
-    if (catsConPartidos.length === 0) throw new Error('No hay partidos en el fixture');
+    if (catsConPartidos.length === 0) throw new Error('SIN_DATOS');
 
     currentCat = catsConPartidos[0];
     buildCatTabs(catsConPartidos);
@@ -338,7 +337,9 @@ async function loadAll() {
   } catch (err) {
     loader.hidden = true;
     empty.hidden = false;
-    document.querySelector('#emptyState .empty-sub').textContent = err.message;
+    const noData = err.message === 'SIN_DATOS';
+    document.querySelector('#emptyState .empty-title').textContent = noData ? 'NO DISPONIBLE' : 'ERROR DE CONEXIÓN';
+    document.querySelector('#emptyState .empty-sub').textContent = noData ? 'La información no está disponible en este momento.' : 'Intente nuevamente más tarde.';
     console.error('[Fixture]', err);
   }
 }
