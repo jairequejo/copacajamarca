@@ -46,7 +46,7 @@ function renderCat(cat) {
 
     h += `<tr class="${zc}">`;
     h += `<td class="col-pos"><span class="pos-badge ${pc}">${i + 1}</span></td>`;
-    h += `<td class="col-team"><div class="team-name-pos">${r.eq}</div><div class="pts-bar-wrap"><div class="pts-bar" style="width:${b}%"></div></div></td>`;
+    h += `<td class="col-team"><div class="team-name-pos">${r.eq}</div></td>`;
     h += `<td class="col-pj">${r.pj}</td>`;
     h += `<td class="col-g st-g">${r.pg}</td>`;
     h += `<td class="col-e st-e">${r.pe}</td>`;
@@ -75,7 +75,7 @@ async function generateCanvasForCat(cat) {
   if (!rows || !rows.length) return null;
   const W = 1080, H = 1080, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
   const ctx = cv.getContext('2d');
-  const NAVY = '#0d1117', RED = '#b91c1c', RED2 = '#dc2626', GOLD = '#f5c518', GOLD2 = '#c8a012', WHITE = '#fff', OFFWH = '#eef2ff', MUTED = 'rgba(255,255,255,0.38)';
+  const NAVY = '#001a4d', RED = '#b80000', RED2 = '#d60d0d', GOLD = '#ffba00', GOLD2 = '#f1a200', WHITE = '#fff', OFFWH = '#eef2ff', MUTED = 'rgba(255,255,255,0.38)';
 
   // FONDO
   if (_bgPos.complete && _bgPos.naturalWidth > 0) {
@@ -96,14 +96,14 @@ async function generateCanvasForCat(cat) {
   const ts = fit(ctx, 'TABLA DE POSICIONES', TW, 92, '900');
   ctx.font = `900 ${ts}px "Barlow Condensed",sans-serif`; ctx.fillText('TABLA DE POSICIONES', TX, TY); ctx.restore();
 
-  // FILA 2: CATEGORIA pill rojo + ETAPA APERTURA dorado derecha
+  // FILA 2: CATEGORIA pill rojo + ETAPA REGIONAL 2026 dorado derecha
   const R2 = TY + ts + 8;
   const catTxt = `CATEGORÍA ${cat}`;
   ctx.font = `italic 800 42px "Barlow Condensed",sans-serif`;
   const cW = ctx.measureText(catTxt).width + 34;
   pill(ctx, TX, R2, cW, 54, 8); ctx.fillStyle = RED; ctx.fill(); ctx.strokeStyle = GOLD; ctx.lineWidth = 1.5; ctx.stroke();
   ctx.fillStyle = WHITE; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(catTxt, TX + 17, R2 + 27);
-  ctx.fillStyle = GOLD; ctx.textAlign = 'right'; ctx.font = `italic 800 44px "Barlow Condensed",sans-serif`; ctx.fillText('ETAPA APERTURA', W - 26, R2 + 27);
+  ctx.fillStyle = GOLD; ctx.textAlign = 'right'; ctx.font = `italic 800 44px "Barlow Condensed",sans-serif`; ctx.fillText('ETAPA REGIONAL 2026', W - 26, R2 + 27);
 
   // SEPARADOR DEBAJO DEL TEXTO
   const SEP = R2 + 62; ctx.fillStyle = gG; ctx.fillRect(0, SEP, W, 3);
@@ -114,7 +114,7 @@ async function generateCanvasForCat(cat) {
   const lg = ctx.createRadialGradient(LX, LY, 0, LX, LY, LR); lg.addColorStop(0, '#1e3a8a'); lg.addColorStop(1, '#060d1f');
   ctx.beginPath(); ctx.arc(LX, LY, LR, 0, Math.PI * 2); ctx.fillStyle = lg; ctx.fill();
   ctx.shadowColor = 'transparent'; ctx.strokeStyle = GOLD; ctx.lineWidth = 4; ctx.stroke();
-  ctx.strokeStyle = 'rgba(245,197,24,0.28)'; ctx.lineWidth = 9; ctx.stroke(); ctx.restore();
+  ctx.strokeStyle = 'rgba(255,186,0,0.28)'; ctx.lineWidth = 9; ctx.stroke(); ctx.restore();
   ctx.save(); ctx.beginPath(); ctx.arc(LX, LY, LR * .89, 0, Math.PI * 2); ctx.clip();
   if (_logo.complete && _logo.naturalWidth > 0) { const ls = LR * 2.1; ctx.drawImage(_logo, LX - ls / 2, LY - ls / 2, ls, ls); }
   else { ctx.fillStyle = WHITE; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `900 ${LR * .38}px "Barlow Condensed"`; ctx.fillText('CC', LX, LY); }
@@ -154,7 +154,7 @@ async function generateCanvasForCat(cat) {
     const fw = [600, 700, 600, 600, 600, 600, 600, 800];
     st.forEach((n, ni) => { ctx.fillStyle = sc[ni]; ctx.font = `${fw[ni]} ${ni === 7 ? fs + 3 : fs}px "Barlow Condensed",sans-serif`; ctx.textAlign = 'center'; ctx.fillText(n, C[2 + ni].x + C[2 + ni].w / 2, my); });
   });
-  ctx.strokeStyle = 'rgba(245,197,24,0.28)'; ctx.lineWidth = 2; ctx.strokeRect(TX2, TY2, TW2, TH + MAX * RH);
+  ctx.strokeStyle = 'rgba(255,186,0,0.28)'; ctx.lineWidth = 2; ctx.strokeRect(TX2, TY2, TW2, TH + MAX * RH);
   ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(C[2].x, TY2); ctx.lineTo(C[2].x, TY2 + TH + MAX * RH); ctx.stroke();
 
   // FOOTER
@@ -240,14 +240,19 @@ async function loadAll() {
   try {
     el('loaderText').textContent = 'Cargando equipos…';
     const rE = await fetch(URL_EQ); if (!rE.ok) throw new Error(`HTTP ${rE.status}`);
-    equipos = parseEquipos(parseCsv(await rE.text())); if (!Object.keys(equipos).length) throw new Error('Sin datos en EQUIPOS');
+    equipos = parseEquipos(parseCsv(await rE.text())); if (!Object.keys(equipos).length) throw new Error('SIN_DATOS');
     el('loaderText').textContent = 'Cargando fixture…';
     const rF = await fetch(URL_FIX); if (!rF.ok) throw new Error(`HTTP ${rF.status}`);
     buildStandings(parseFixture(parseCsv(await rF.text()))); renderAll();
     const now = new Date(), upd = el('lastUpdated');
     upd.textContent = `Actualizado ${now.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}`; upd.classList.remove('hidden');
     el('posContent').classList.remove('hidden');
-  } catch (err) { el('errorTitle').textContent = 'Error al conectar con Google Sheets'; el('errorMsg').textContent = err.message; el('posError').classList.remove('hidden'); }
+  } catch (err) {
+    const noData = err.message === 'SIN_DATOS';
+    el('errorTitle').textContent = noData ? 'NO DISPONIBLE' : 'ERROR DE CONEXIÓN';
+    el('errorMsg').textContent = noData ? 'La información no está disponible en este momento.' : 'Intente nuevamente más tarde.';
+    el('posError').classList.remove('hidden');
+  }
   finally { el('posLoader').style.display = 'none'; }
 }
 

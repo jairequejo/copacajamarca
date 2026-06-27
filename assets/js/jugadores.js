@@ -203,14 +203,12 @@ async function loadJugadores() {
 
   try {
     const res = await fetch(URL_JUGADORES);
-    if (!res.ok) throw new Error(`Error HTTP ${res.status}`);
+    if (!res.ok) throw new Error('NO_CONN');
     const text = await res.text();
 
     allPlayers = parseJugadores(parseCsv(text));
 
-    if (allPlayers.length === 0) {
-      throw new Error('La hoja está vacía o el GID_JUGADORES no es correcto. Actualiza la constante en jugadores.js.');
-    }
+    if (allPlayers.length === 0) throw new Error('SIN_DATOS');
 
     buildCatTabs(allPlayers);
     loader.hidden = true;
@@ -220,8 +218,10 @@ async function loadJugadores() {
   } catch (err) {
     loader.hidden = true;
     empty.hidden = false;
-    document.getElementById('emptyMsg').textContent = err.message;
-    document.getElementById('countText').textContent = 'Error al cargar';
+    const noData = err.message === 'SIN_DATOS';
+    document.querySelector('#emptyState .empty-title').textContent = noData ? 'NO DISPONIBLE' : 'ERROR DE CONEXIÓN';
+    document.getElementById('emptyMsg').textContent = noData ? 'La información no está disponible en este momento.' : 'Intente nuevamente más tarde.';
+    document.getElementById('countText').textContent = noData ? 'No disponible' : 'Error de conexión';
     console.error('[Jugadores]', err);
   }
 }
