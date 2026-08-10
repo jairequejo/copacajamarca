@@ -1,10 +1,4 @@
-// ═══════════════════════════════════════════════════════════
-// CONFIGURACIÓN — mismo spreadsheet que el resto de la app
-// ═══════════════════════════════════════════════════════════
-const PUB_ID = '2PACX-1vTOWEsF51iU6PUh4zJ2GGhMJGJGICjYwIpoIAUiWSR6Rbl6P2WsN--YBVsVhwVtuZQdEs1ijtBngaHJ';
-
-const URL_EQUIPOS = `https://docs.google.com/spreadsheets/d/e/${PUB_ID}/pub?gid=1862807827&single=true&output=csv`;
-const URL_FIXTURE = `https://docs.google.com/spreadsheets/d/e/${PUB_ID}/pub?gid=1171502194&single=true&output=csv`;
+import { supabase } from './supabase.js';
 
 // ═══════════════════════════════════════════════════════════
 // ESTADO
@@ -14,115 +8,29 @@ let currentCat = null;
 let currentJornada = 'todas';
 
 // ═══════════════════════════════════════════════════════════
-// PARSEO CSV
-// ═══════════════════════════════════════════════════════════
-function parseCsv(text) {
-  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
-  return lines.map(line => {
-    const cols = [];
-    let cur = '', inQ = false;
-    for (let i = 0; i < line.length; i++) {
-      const c = line[i];
-      if (c === '"') {
-        if (inQ && line[i + 1] === '"') { cur += '"'; i++; }
-        else inQ = !inQ;
-      } else if (c === ',' && !inQ) {
-        cols.push(cur.trim()); cur = '';
-      } else cur += c;
-    }
-    cols.push(cur.trim());
-    return cols;
-  }).filter(r => r.some(c => c));
-}
-
-function parseEquipos(rows) {
-  if (!rows.length) return {};
-  const header = rows[0];
-  const cats = {};
-  for (let c = 1; c < header.length; c++) {
-    const yr = header[c].trim();
-    if (yr && !isNaN(yr)) cats[yr] = [];
-  }
-  for (let r = 1; r < rows.length; r++) {
-    const team = (rows[r][0] || '').trim().toUpperCase();
-    if (!team) continue;
-    for (let c = 1; c < header.length; c++) {
-      const yr = header[c].trim();
-      const val = (rows[r][c] || '').trim();
-      if (cats[yr] && (val === '1' || val.toLowerCase() === 'x' || val === '✓')) {
-        cats[yr].push(team);
-      }
-    }
-  }
-  Object.keys(cats).forEach(k => { if (!cats[k].length) delete cats[k]; });
-  return cats;
-}
-
-function parseFixture(rows) {
-  if (!rows.length) return [];
-  const hdr = rows[0].map(h => h.trim().toUpperCase());
-  const col = key => hdr.findIndex(h => h.includes(key));
-  const exact = key => hdr.findIndex(h => h === key);
-
-  const IDX = {
-    jornada: col('JORNADA'),
-    cat: col('CATEG'),
-    local: exact('LOCAL'),
-    visitante: col('VISITANTE'),
-    golesL: hdr.findIndex(h => h.includes('GOLES') && h.includes('LOCAL')),
-    golesV: hdr.findIndex(h => h.includes('GOLES') && h.includes('VISITANTE')),
-    score: exact('SCORE'),
-    resultado: col('RESULTADO'),
-    hora: col('HORA'),
-    cancha: col('CANCHA'),
-  };
-
-  return rows.slice(1).map(row => {
-    if (!row[0]) return null;
-    const local = (row[IDX.local] || '').trim().toUpperCase();
-    const visitante = (row[IDX.visitante] || '').trim().toUpperCase();
-    if (!local || !visitante) return null;
-
-    const resLC = (row[IDX.resultado] || '').toLowerCase().trim();
-    let estado = 'pendiente';
-    if (resLC.includes('vivo') || resLC.includes('live')) {
-      estado = 'en vivo';
-    } else {
-      const golesLTmp = parseInt(row[IDX.golesL] || '', 10);
-      const golesVTmp = parseInt(row[IDX.golesV] || '', 10);
-      const hasScore = !isNaN(golesLTmp) && !isNaN(golesVTmp);
-      const explicitFin = resLC.includes('finaliz') || resLC.includes('terminad') ||
-                          resLC.includes(' fin') || resLC.includes('complet');
-      if (hasScore || explicitFin) estado = 'finalizado';
-    }
-
-    const golesL = parseInt(row[IDX.golesL] || '', 10);
-    const golesV = parseInt(row[IDX.golesV] || '', 10);
-
-    return {
-      jornada: (row[IDX.jornada] || '').trim(),
-      cat: (row[IDX.cat] || '').trim(),
-      local, visitante, estado,
-      golesL: isNaN(golesL) ? null : golesL,
-      golesV: isNaN(golesV) ? null : golesV,
-      score: (row[IDX.score] || '').trim(),
-      hora: IDX.hora >= 0 ? (row[IDX.hora] || '').trim() : '',
-      cancha: IDX.cancha >= 0 ? (row[IDX.cancha] || '').trim() : '',
-    };
-  }).filter(Boolean);
-}
-
-// ═══════════════════════════════════════════════════════════
 // AGRUPADO POR CAT → JORNADA
 // ═══════════════════════════════════════════════════════════
 function getGrouped() {
-  const grouped = {}; // { cat: { jornada: [matches] } }
-  for (const m of G.fixture) {
-    if (!grouped[m.cat]) grouped[m.cat] = {};
-    if (!grouped[m.cat][m.jornada]) grouped[m.cat][m.jornada] = [];
-    grouped[m.cat][m.jornada].push(m);
-  }
-  return grouped;
+  const g = {};
+  G.fixture.forEach(m => {
+    // Si tiene grupos (y no es inter-grupo)
+    if (m.grupoLocal && m.grupoLocal === m.grupoVisita) {
+      const tabId = m.cat + '_' + m.grupoLocal;
+      if (!g[tabId]) g[tabId] = {};
+      if (!g[tabId][m.jornada]) g[tabId][m.jornada] = [];
+      g[tabId][m.jornada].push(m);
+    } 
+    // Inter-grupo: El usuario pidió OMITIRLOS por completo de las pestañas
+    else if (m.grupoLocal || m.grupoVisita) {
+      // No hacemos nada, el partido simplemente no se mostrará en las pestañas de grupos
+    } else {
+      // Categoría normal
+      if (!g[m.cat]) g[m.cat] = {};
+      if (!g[m.cat][m.jornada]) g[m.cat][m.jornada] = [];
+      g[m.cat][m.jornada].push(m);
+    }
+  });
+  return g;
 }
 
 // Equipos que no juegan en esta jornada de esta categoría
@@ -131,8 +39,11 @@ function getByeTeams(cat, jornada) {
   if (allTeams.length === 0) return [];
   const playing = new Set();
   G.fixture
-    .filter(m => String(m.cat) === String(cat) && String(m.jornada) === String(jornada))
-    .forEach(m => { playing.add(m.local); playing.add(m.visitante); });
+    .filter(m => String(m.cat || m.categoria) === String(cat) && String(m.jornada) === String(jornada))
+    .forEach(m => {
+      if (m.local) playing.add(m.local);
+      if (m.visitante) playing.add(m.visitante);
+    });
   return allTeams.filter(t => !playing.has(t));
 }
 
@@ -175,9 +86,9 @@ function renderMatchRow(m) {
 
   return `
     <div class="match-row" data-estado="${m.estado}">
-      <div class="${localCls}">${m.local}</div>
+      <div class="${localCls}">${m.local || 'Descanso'}</div>
       <div class="match-score ${scoreCls}">${scoreInner}</div>
-      <div class="${visitCls}">${m.visitante}</div>${canchaRow}
+      <div class="${visitCls}">${m.visitante || 'Descanso'}</div>${canchaRow}
     </div>`;
 }
 
@@ -256,9 +167,14 @@ function renderFixture() {
 // ═══════════════════════════════════════════════════════════
 function buildCatTabs(cats) {
   const wrap = document.getElementById('catTabs');
-  wrap.innerHTML = cats.map((c, i) =>
-    `<button class="cat-tab ${i === 0 ? 'active' : ''}" data-cat="${c}">Cat. ${c}</button>`
-  ).join('');
+  wrap.innerHTML = cats.map((c, i) => {
+    let label = 'Cat. ' + c;
+    if (c.includes('_')) {
+      const [cat, grp] = c.split('_');
+      label = `Cat. ${cat} GRP ${grp}`;
+    }
+    return `<button class="cat-tab ${c === currentCat ? 'active' : ''}" data-cat="${c}">${label}</button>`;
+  }).join('');
 
   wrap.addEventListener('click', e => {
     const btn = e.target.closest('.cat-tab');
@@ -298,7 +214,6 @@ function buildJornadaPills() {
     currentJornada = btn.dataset.j;
     renderFixture();
 
-    // Scroll al bloque si es una jornada específica
     if (currentJornada !== 'todas') {
       const el = document.getElementById(`jornada-${currentJornada}`);
       if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
@@ -307,24 +222,103 @@ function buildJornadaPills() {
 }
 
 // ═══════════════════════════════════════════════════════════
-// CARGA DE DATOS
+// CARGA DE DATOS DESDE SUPABASE
 // ═══════════════════════════════════════════════════════════
 async function loadAll() {
   const loader = document.getElementById('loader');
   const empty = document.getElementById('emptyState');
 
   try {
-    const [resEq, resFix] = await Promise.all([
-      fetch(`${URL_EQUIPOS}&t=${Date.now()}`, { cache: 'no-store' }),
-      fetch(`${URL_FIXTURE}&t=${Date.now()}`, { cache: 'no-store' }),
+    const [resEquipos, resPartidos, resInsc] = await Promise.all([
+      supabase.from('equipos').select('id, nombre'),
+      supabase.from('partidos').select('id, categoria, jornada, estado, equipo_local_id, equipo_visitante_id, equipo_local:equipos!partidos_equipo_local_id_fkey(nombre), equipo_visitante:equipos!partidos_equipo_visitante_id_fkey(nombre), goles_local, goles_visitante, cancha, fecha_hora'),
+      supabase.from('inscripciones').select('equipo_id, categoria, grupo')
     ]);
-    if (!resEq.ok || !resFix.ok) throw new Error('NO_CONN');
 
-    G.equipos = parseEquipos(parseCsv(await resEq.text()));
-    G.fixture = parseFixture(parseCsv(await resFix.text()));
+    if (resPartidos.error) throw resPartidos.error;
+    if (resEquipos.error) throw resEquipos.error;
+    if (resInsc.error) throw resInsc.error;
 
-    // Categorías con al menos un partido
-    const catsConPartidos = [...new Set(G.fixture.map(m => m.cat).filter(Boolean))].sort((a, b) => a - b);
+    const matches = resPartidos.data || [];
+    if (matches.length === 0) throw new Error('SIN_DATOS');
+
+    const inscripciones = resInsc.data || [];
+    const getGrupo = (eqId, cat) => {
+      const ins = inscripciones.find(i => String(i.equipo_id) === String(eqId) && String(i.categoria) === String(cat));
+      return ins ? ins.grupo : null;
+    };
+
+    // Mapear equipos por categoría a partir de partidos
+    G.equipos = {};
+    matches.forEach(m => {
+      const cat = String(m.categoria || '').trim();
+      if (!cat) return;
+      if (!G.equipos[cat]) G.equipos[cat] = new Set();
+      const loc = m.equipo_local?.nombre?.trim().toUpperCase();
+      const vis = m.equipo_visitante?.nombre?.trim().toUpperCase();
+      if (loc) G.equipos[cat].add(loc);
+      if (vis) G.equipos[cat].add(vis);
+    });
+    Object.keys(G.equipos).forEach(cat => {
+      G.equipos[cat] = Array.from(G.equipos[cat]);
+    });
+
+    // Mapear partidos a G.fixture
+    G.fixture = matches.map(m => {
+      const catStr = String(m.categoria || '').trim();
+      const jorStr = String(m.jornada || '').trim();
+      const localName = m.equipo_local?.nombre?.trim().toUpperCase() || '';
+      const visitanteName = m.equipo_visitante?.nombre?.trim().toUpperCase() || '';
+      const isFree = !m.equipo_local || !m.equipo_visitante;
+
+      const rawEstado = (m.estado || '').toString().toLowerCase();
+      let estado = 'pendiente';
+      if (rawEstado.includes('vivo') || rawEstado.includes('live')) {
+        estado = 'en vivo';
+      } else {
+        const gl = m.goles_local != null ? parseInt(m.goles_local, 10) : NaN;
+        const gv = m.goles_visitante != null ? parseInt(m.goles_visitante, 10) : NaN;
+        const hasScore = !isNaN(gl) && !isNaN(gv);
+        const explicitFin = rawEstado.includes('finaliz') || rawEstado.includes('terminad') ||
+                            rawEstado.includes('fin') || rawEstado.includes('complet') ||
+                            rawEstado === 'oficial' || rawEstado === 'en_revision';
+        if (hasScore || explicitFin) estado = 'finalizado';
+      }
+
+      const golesL = m.goles_local != null && !isNaN(parseInt(m.goles_local, 10)) ? parseInt(m.goles_local, 10) : null;
+      const golesV = m.goles_visitante != null && !isNaN(parseInt(m.goles_visitante, 10)) ? parseInt(m.goles_visitante, 10) : null;
+
+      let hora = '';
+      if (m.fecha_hora) {
+        try {
+          const d = new Date(m.fecha_hora);
+          hora = d.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: true });
+        } catch (e) {}
+      }
+
+      return {
+        id: m.id,
+        cat: catStr,
+        categoria: catStr,
+        jornada: jorStr,
+        local: localName,
+        visitante: visitanteName,
+        golesL,
+        golesV,
+        golesLocal: golesL,
+        golesVisitante: golesV,
+        estado,
+        isFree,
+        score: (golesL !== null && golesV !== null) ? `${golesL} - ${golesV}` : '',
+        hora,
+        cancha: m.cancha || '',
+        grupoLocal:   getGrupo(m.equipo_local_id, m.categoria),
+        grupoVisita:  getGrupo(m.equipo_visitante_id, m.categoria),
+      };
+    });
+
+    const groupedInit = getGrouped();
+    const catsConPartidos = Object.keys(groupedInit).sort();
     if (catsConPartidos.length === 0) throw new Error('SIN_DATOS');
 
     currentCat = catsConPartidos[0];

@@ -345,6 +345,28 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 }
 .match-cancha-row svg { flex-shrink: 0; opacity: .6; }
 
+/* Chips de grupo (Sub 2014) */
+.grupo-chip {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 0 6px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: .65rem; font-weight: 800;
+  letter-spacing: .1em; text-transform: uppercase;
+}
+.grupo-chip span {
+  padding: 2px 10px;
+  border-radius: 999px;
+}
+.grupo-a { color: #ffba00; }
+.grupo-a::before { content: '⬤ GRUPO A'; color: #ffba00; }
+.grupo-b { color: #a78bfa; }
+.grupo-b::before { content: '⬤ GRUPO B'; color: #a78bfa; }
+.grupo-inter { color: rgba(255,255,255,.35); }
+
+
 /* ══════════════════════════════════════════════════
    DESCANSO (BYE TEAMS)
 ══════════════════════════════════════════════════ */

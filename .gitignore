@@ -1,0 +1,27 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Scripts internos de generación (no van al repo público)
+scratch/
+
+# CSVs de exportación temporales
+*.csv
+
+# SQL de actualizaciones temporales
+actualizar_fixture.sql
+
+# Entornos Python
+.env
+.venv/
+venv/
+
+# Editores
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
