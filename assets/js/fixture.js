@@ -157,6 +157,8 @@ function renderFixture() {
   }).join('');
 
   const totalPartidos = jornadas.reduce((s, j) => s + catData[j].length, 0);
+  const totalEquipos = G.equipos[currentCat] ? G.equipos[currentCat].length : 0;
+  document.getElementById('qsEquipos').textContent = totalEquipos;
   document.getElementById('qsJornadas').textContent = jornadas.length;
   document.getElementById('qsPartidos').textContent = totalPartidos;
   document.getElementById('quickStats').hidden = false;
