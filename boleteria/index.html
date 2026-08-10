@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#001a4d" />
+  <meta name="description" content="Boletería QR - Copa Cajamarca 2026. Validación de carnets de jugadores, delegados y entrenadores." />
+  <title>Boletería QR · Copa Cajamarca 2026</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="../assets/img/favicon-32.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="../assets/img/apple-touch-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js"></script>
+  <style>
+    :root { --navy:#001a4d; --gold:#ffba00; --red:#d60d0d; --green:#16a34a; --white:#ffffff; }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html{-webkit-text-size-adjust:100%;}
+    *{-webkit-tap-highlight-color:transparent;}
+    body{font-family:'Barlow',sans-serif;background:var(--navy);background-image:repeating-linear-gradient(-45deg,transparent 0,transparent 28px,rgba(255,255,255,.014) 28px,rgba(255,255,255,.014) 29px);min-height:100dvh;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased;color:var(--white);}
+    .site-header{background:rgba(0,26,77,0.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,0.05);width:100%;}
+    #pin-view{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
+    .vault-card{width:100%;max-width:400px;background:linear-gradient(160deg,rgba(255,255,255,0.06),rgba(0,0,0,0.5));border:1px solid rgba(255,186,0,0.2);border-bottom:4px solid var(--gold);border-radius:20px;padding:44px 32px 40px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.1);backdrop-filter:blur(12px);}
+    .vault-ring{width:100px;height:100px;margin:0 auto 24px;border-radius:50%;padding:4px;background:linear-gradient(135deg,var(--gold),#f1a200,var(--red));box-shadow:0 0 24px rgba(255,186,0,0.4);}
+    .vault-ring img{width:100%;height:100%;border-radius:50%;object-fit:cover;border:4px solid var(--navy);background:var(--white);}
+    .vault-badge{display:inline-flex;align-items:center;gap:7px;font-family:'Barlow Condensed',sans-serif;font-size:.8rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);background:rgba(255,186,0,.1);border:1px solid rgba(255,186,0,.28);padding:5px 14px;border-radius:999px;margin-bottom:16px;}
+    .pulse-dot{width:7px;height:7px;border-radius:50%;background:var(--gold);flex-shrink:0;animation:pulse 1.3s ease-in-out infinite;}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.65)}}
+    .vault-title{font-family:'Bebas Neue',sans-serif;font-size:3rem;color:var(--white);letter-spacing:.05em;line-height:.95;text-shadow:0 4px 16px rgba(0,0,0,0.6);}
+    .vault-title span{color:var(--gold);}
+    .vault-sub{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:32px;margin-top:6px;}
+    .pin-grid{display:flex;justify-content:center;gap:12px;margin-bottom:28px;}
+    .pin-box{width:68px;height:80px;background:rgba(0,0,0,0.5);border:2px solid rgba(255,255,255,0.15);color:var(--gold);border-radius:12px;font-family:'Bebas Neue',sans-serif;font-size:2.8rem;text-align:center;outline:none;transition:all .2s;}
+    .pin-box:focus{border-color:var(--gold);box-shadow:0 0 0 4px rgba(255,186,0,.15);transform:translateY(-3px);}
+    .pin-box.filled{border-color:rgba(255,186,0,.5);background:rgba(255,186,0,.08);}
+    .btn-pin-submit{width:100%;background:linear-gradient(to bottom,#ffc933,#ffba00);color:#3d2e00;border:none;padding:18px;font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase;border-radius:12px;cursor:pointer;transition:all .2s;box-shadow:0 8px 24px rgba(255,186,0,.3),inset 0 1px 0 rgba(255,255,255,.4);}
+    .btn-pin-submit:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(255,186,0,.4);}
+    .content-wrapper{max-width:600px;margin:0 auto;padding:24px 16px 60px;width:100%;flex:1;}
+    .section-card{background:rgba(255,255,255,0.06);border:1px solid rgba(255,186,0,0.18);border-radius:16px;backdrop-filter:blur(8px);padding:24px;margin-bottom:20px;box-shadow:0 8px 32px rgba(0,0,0,.2);}
+    .section-title{font-family:'Barlow Condensed',sans-serif;font-size:1.2rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:8px;}
+    .scanner-wrap{position:relative;width:100%;max-width:320px;margin:0 auto 16px;border-radius:16px;overflow:hidden;background:rgba(0,0,0,0.8);aspect-ratio:1/1;border:2px solid rgba(255,186,0,.25);}
+    #video-preview{width:100%;height:100%;object-fit:cover;display:block;}
+    .scanner-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;}
+    .scan-frame{width:68%;height:68%;position:relative;}
+    .scan-frame::before,.scan-frame::after,.scan-line::before,.scan-line::after{content:'';position:absolute;width:22px;height:22px;border-color:var(--gold);border-style:solid;}
+    .scan-frame::before{top:0;left:0;border-width:3px 0 0 3px;}
+    .scan-frame::after{top:0;right:0;border-width:3px 3px 0 0;}
+    .scan-line::before{bottom:0;left:0;border-width:0 0 3px 3px;}
+    .scan-line::after{bottom:0;right:0;border-width:0 3px 3px 0;}
+    .scan-line{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 49%,rgba(255,186,0,.6) 50%,transparent 51%);animation:scanAnim 2.5s ease-in-out infinite;}
+    @keyframes scanAnim{0%{background-position:center 0%}50%{background-position:center 100%}100%{background-position:center 0%}}
+    .scanner-status{display:flex;align-items:center;gap:10px;padding:12px 16px;background:rgba(0,0,0,0.35);border-radius:10px;margin-bottom:16px;font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;color:rgba(255,255,255,.7);}
+    .status-dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.25);flex-shrink:0;transition:background .3s;}
+    .status-dot.active{background:var(--green);box-shadow:0 0 8px rgba(22,163,74,.6);animation:pulse 1.3s ease-in-out infinite;}
+    .status-dot.error{background:var(--red);box-shadow:0 0 8px rgba(214,13,13,.5);}
+    .btn-iniciar{width:100%;background:linear-gradient(to bottom,#ffc933,#ffba00);color:#3d2e00;border:none;padding:18px;font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase;border-radius:12px;cursor:pointer;transition:all .2s;box-shadow:0 8px 24px rgba(255,186,0,.3);min-height:60px;}
+    .btn-iniciar:hover{transform:translateY(-2px);}
+    .btn-iniciar.activo{background:linear-gradient(to bottom,#ef4444,#dc2626) !important;color:white !important;}
+    #resultado{margin-bottom:20px;}
+    .result-header{padding:16px 20px;border-radius:12px 12px 0 0;font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:.08em;}
+    .result-header.ok{background:linear-gradient(135deg,#14532d,#16a34a);color:#fff;}
+    .result-header.err{background:linear-gradient(135deg,#7f1d1d,#d60d0d);color:#fff;}
+    .result-body{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,.12);border-top:none;border-radius:0 0 12px 12px;padding:20px;}
+    .result-persona{display:flex;align-items:center;gap:16px;margin-bottom:16px;}
+    .result-foto{width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--gold);background:rgba(255,255,255,.1);flex-shrink:0;}
+    .result-info-name{font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:900;text-transform:uppercase;color:var(--white);line-height:1.1;}
+    .result-info-detail{font-size:.9rem;color:rgba(255,255,255,.6);margin-top:4px;font-family:'Barlow Condensed',sans-serif;letter-spacing:.05em;}
+    .result-badges{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+    .badge{padding:6px 14px;border-radius:999px;font-family:'Barlow Condensed',sans-serif;font-size:.9rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;}
+    .badge-ok{background:rgba(22,163,74,.2);color:#4ade80;border:1px solid rgba(22,163,74,.4);}
+    .badge-gold{background:rgba(255,186,0,.15);color:var(--gold);border:1px solid rgba(255,186,0,.3);}
+    .badge-navy{background:rgba(255,255,255,.1);color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.2);}
+    .result-error-msg{font-family:'Barlow Condensed',sans-serif;font-size:1.2rem;color:#fca5a5;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;}
+    .btn-nuevo-scan{width:100%;padding:14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:var(--white);border-radius:10px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;transition:background .15s;min-height:52px;}
+    .btn-nuevo-scan:hover{background:rgba(255,255,255,.15);}
+    .historial-wrap{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;overflow:hidden;}
+    .historial-title{padding:14px 18px;font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.5);border-bottom:1px solid rgba(255,255,255,.07);display:flex;justify-content:space-between;align-items:center;}
+    .historial-count{background:rgba(255,186,0,.15);color:var(--gold);border-radius:999px;padding:3px 12px;font-size:.85rem;}
+    .historial-list{max-height:260px;overflow-y:auto;}
+    .historial-list::-webkit-scrollbar{width:4px;}
+    .historial-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:2px;}
+    .historial-item{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid rgba(255,255,255,.05);gap:12px;}
+    .historial-item:last-child{border-bottom:none;}
+    .hist-name{font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:800;text-transform:uppercase;color:rgba(255,255,255,.85);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .hist-rol{font-size:.8rem;color:rgba(255,255,255,.4);font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;flex-shrink:0;}
+    .hist-ok{color:#4ade80;font-size:1rem;font-weight:900;flex-shrink:0;}
+    .hist-err{color:#f87171;font-size:1rem;font-weight:900;flex-shrink:0;}
+    #toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--navy);color:var(--white);padding:16px 32px;border-radius:12px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.1rem;letter-spacing:.05em;text-transform:uppercase;box-shadow:0 12px 40px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,255,255,.1);transition:transform .3s cubic-bezier(0.4,0,0.2,1),opacity .3s;opacity:0;z-index:9999;white-space:nowrap;pointer-events:none;}
+    #toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+  </style>
+</head>
+<body>
+
+  <!-- LOGIN PIN -->
+  <div id="pin-view">
+    <div class="vault-card">
+      <div class="vault-ring">
+        <img src="../assets/img/logo.png" alt="Copa Cajamarca" onerror="this.style.display='none';">
+      </div>
+      <div class="vault-badge"><span class="pulse-dot"></span>Sistema de Boletería</div>
+      <h1 class="vault-title">COPA<br><span>CAJAMARCA</span></h1>
+      <p class="vault-sub">Ingresa el PIN de acceso</p>
+      <form id="form-pin" onsubmit="event.preventDefault();">
+        <div class="pin-grid">
+          <input type="tel" class="pin-box" maxlength="1" pattern="[0-9]" inputmode="numeric" autocomplete="off">
+          <input type="tel" class="pin-box" maxlength="1" pattern="[0-9]" inputmode="numeric" autocomplete="off">
+          <input type="tel" class="pin-box" maxlength="1" pattern="[0-9]" inputmode="numeric" autocomplete="off">
+          <input type="tel" class="pin-box" maxlength="1" pattern="[0-9]" inputmode="numeric" autocomplete="off">
+        </div>
+        <button type="submit" class="btn-pin-submit" id="btn-pin-enter">INGRESAR</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- DASHBOARD (tras PIN) -->
+  <header class="site-header" id="app-header" style="display:none;">
+    <div style="max-width:600px;margin:0 auto;display:flex;align-items:center;gap:14px;padding:16px;">
+      <img src="../assets/img/logo.png" alt="Logo" style="width:52px;height:52px;border-radius:50%;background:#fff;object-fit:cover;box-shadow:0 0 0 2px rgba(255,186,0,.5),0 3px 10px rgba(0,0,0,.35);" onerror="this.style.display='none'">
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:.1em;color:rgba(255,255,255,.55);text-transform:uppercase;">Copa Cajamarca 2026</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.9rem;color:#fff;letter-spacing:.04em;line-height:1;">BOLETERÍA QR</div>
+      </div>
+    </div>
+    <div style="background:var(--gold);border-bottom:3px solid #f1a200;">
+      <div style="max-width:600px;margin:0 auto;padding:10px 16px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1rem;letter-spacing:.06em;text-transform:uppercase;color:var(--navy);">VALIDACIÓN DE CARNETS</div>
+    </div>
+  </header>
+
+  <div class="main-wrap" id="app-main" style="display:none;flex:1;">
+    <div class="content-wrapper">
+
+      <div class="section-card">
+        <div class="section-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9V5a2 2 0 0 1 2-2h4M15 3h4a2 2 0 0 1 2 2v4M3 15v4a2 2 0 0 1 2 2h4M21 15v4a2 2 0 0 1-2 2h-4"/></svg>
+          CÁMARA DE ESCANEO
+        </div>
+        <div class="scanner-wrap">
+          <video id="video-preview" playsinline muted></video>
+          <div class="scanner-overlay">
+            <div class="scan-frame"><div class="scan-line"></div></div>
+          </div>
+        </div>
+        <div class="scanner-status" id="scanner-status">
+          <span class="status-dot" id="status-dot"></span>
+          <span id="status-text">Cámara detenida. Presiona Iniciar.</span>
+        </div>
+        <button class="btn-iniciar" id="btn-scanner">INICIAR ESCÁNER</button>
+      </div>
+
+      <div id="resultado"></div>
+
+      <div class="historial-wrap">
+        <div class="historial-title">
+          <span>Historial de Escaneos</span>
+          <span class="historial-count" id="hist-count">0</span>
+        </div>
+        <div class="historial-list" id="historial-list">
+          <div style="padding:20px;text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.08em;">Ningún escaneo aún</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="boleteria.js"></script>
+</body>
+</html>

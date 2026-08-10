@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#001a4d" />
+  <title>Admin · Copa Cajamarca</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="../assets/img/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="../assets/img/favicon-192.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="../assets/img/apple-touch-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy: #001a4d;
+      --gold: #ffba00;
+      --red: #d60d0d;
+      --white: #ffffff;
+      --bg: #eef2f7;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; }
+    * { -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: 'Barlow', sans-serif;
+      background: var(--navy);
+      background-image: repeating-linear-gradient(-45deg, transparent 0, transparent 28px, rgba(255,255,255,.014) 28px, rgba(255,255,255,.014) 29px);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+      color: var(--white);
+    }
+
+    ::placeholder { color: rgba(255,255,255,0.4); }
+
+    /* Login View */
+    #login-view {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      width: 100%;
+      z-index: 10;
+    }
+
+    .vault-card {
+      width: 100%;
+      max-width: 420px;
+      background: linear-gradient(160deg, rgba(255,255,255,0.06), rgba(0,0,0,0.5));
+      border: 1px solid rgba(255,186,0,0.2);
+      border-top: 1px solid rgba(255,255,255,0.1);
+      border-bottom: 4px solid var(--gold);
+      border-radius: 20px;
+      padding: 48px 32px;
+      text-align: center;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .vault-ring {
+      width: 110px;
+      height: 110px;
+      margin: 0 auto 24px;
+      border-radius: 50%;
+      padding: 4px;
+      background: linear-gradient(135deg, var(--gold), #f1a200, var(--red));
+      box-shadow: 0 0 24px rgba(255,186,0,0.4), inset 0 0 10px rgba(0,0,0,0.5);
+      position: relative;
+    }
+    
+    .vault-ring img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 4px solid var(--navy);
+      background: var(--white);
+    }
+
+    .vault-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 3.5rem;
+      color: var(--white);
+      margin: 0;
+      line-height: 0.9;
+      letter-spacing: 0.05em;
+      text-shadow: 0 4px 16px rgba(0,0,0,0.6);
+    }
+
+    .vault-title span { color: var(--gold); }
+
+    .vault-subtitle {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.1rem;
+      color: rgba(255,255,255,0.7);
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      margin-bottom: 36px;
+      font-weight: 800;
+      margin-top: 8px;
+    }
+
+    .vault-input {
+      width: 100%;
+      background: rgba(0,0,0,0.4);
+      border: 2px solid rgba(255,255,255,0.1);
+      color: var(--white);
+      border-radius: 12px;
+      padding: 16px 20px;
+      font-size: 1.1rem;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      outline: none;
+      transition: all 0.3s ease;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .vault-input:focus {
+      border-color: var(--gold);
+      background: rgba(0,0,0,0.6);
+      box-shadow: 0 0 0 4px rgba(255,186,0,0.1), inset 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .input-group {
+      position: relative;
+      margin-bottom: 16px;
+    }
+
+    .btn-reveal {
+      position: absolute; right: 16px; top: 50%;
+      transform: translateY(-50%);
+      background: none; border: none;
+      color: rgba(255,255,255,0.5); cursor: pointer;
+      padding: 4px;
+      transition: color 0.2s;
+    }
+    .btn-reveal:hover { color: var(--gold); }
+
+    .vault-btn {
+      width: 100%;
+      background: linear-gradient(to bottom, #ffc933, #ffba00);
+      color: #3d2e00;
+      border: none;
+      padding: 18px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 8px 24px rgba(255,186,0,0.3), inset 0 1px 0 rgba(255,255,255,0.4);
+      margin-top: 8px;
+    }
+
+    .vault-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(255,186,0,0.4), inset 0 1px 0 rgba(255,255,255,0.5);
+    }
+
+    .vault-btn:active {
+      transform: translateY(1px);
+      box-shadow: 0 4px 12px rgba(255,186,0,0.3);
+    }
+
+    /* Dashboard */
+    #dashboard {
+      width: 100%;
+      display: none;
+      flex: 1;
+    }
+
+    .site-header {
+      background: rgba(0, 26, 77, 0.95);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .btn-logout-header {
+      background: rgba(214,13,13,0.15);
+      color: #ff6b6b;
+      border: 1px solid rgba(214,13,13,0.4);
+      padding: 10px 20px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-logout-header:hover {
+      background: var(--red);
+      color: var(--white);
+      border-color: var(--red);
+    }
+
+    .content-wrapper {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 24px 16px 60px;
+    }
+
+    .tabs-container {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      background: rgba(255,255,255,0.04);
+      padding: 8px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.08);
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .tabs-container::-webkit-scrollbar { display: none; }
+
+    .tab-btn {
+      flex: 1;
+      min-width: max-content;
+      padding: 14px 20px;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.5);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tab-btn:hover {
+      color: var(--white);
+      background: rgba(255,255,255,0.05);
+    }
+
+    .tab-btn.active {
+      background: var(--gold);
+      color: #3d2e00;
+      box-shadow: 0 4px 16px rgba(255,186,0,0.2);
+    }
+
+    .tab-content { display: none; animation: fadeIn 0.3s ease; }
+    .tab-content.active { display: block; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Card Style */
+    .card {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,186,0,0.18);
+      border-radius: 16px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    }
+
+    .card-header-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      text-transform: uppercase;
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--gold);
+      margin-bottom: 20px;
+      letter-spacing: 0.06em;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Partido Card */
+    .partido-card {
+      background: linear-gradient(145deg, rgba(255,255,255,0.08), rgba(0,0,0,0.3)) !important;
+      border: 1px solid rgba(255,255,255,0.1) !important;
+      border-left: 4px solid var(--gold) !important;
+      border-radius: 16px !important;
+      padding: 20px !important;
+      margin-bottom: 16px !important;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2) !important;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .partido-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.3) !important;
+    }
+
+    .partido-header {
+      border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+      color: rgba(255,255,255,0.6) !important;
+      font-size: 1rem !important;
+      margin-bottom: 16px !important;
+      padding-bottom: 12px !important;
+      letter-spacing: 0.1em !important;
+      display: flex !important;
+      justify-content: space-between !important;
+    }
+
+    .score-row {
+      color: var(--white) !important;
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+    }
+    
+    .team-name {
+      color: var(--white) !important;
+      font-size: 1.4rem !important;
+      font-weight: 800 !important;
+      letter-spacing: 0.05em !important;
+      white-space: normal !important;
+      overflow: visible !important;
+      flex: 1 !important;
+    }
+
+    .score-row > div:nth-child(2) {
+      background: rgba(0,0,0,0.4) !important;
+      border: 1px solid rgba(255,186,0,0.3) !important;
+      color: var(--gold) !important;
+      font-size: 2.5rem !important;
+      padding: 8px 20px !important;
+      border-radius: 12px !important;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.5) !important;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5) !important;
+      font-family: 'Bebas Neue', sans-serif !important;
+    }
+
+    /* Primary buttons */
+    .btn-primary, .btn-aprobar, .btn-guardar, .btn-inyectar {
+      background: linear-gradient(to bottom, #ffc933, #ffba00) !important;
+      color: #3d2e00 !important;
+      font-family: 'Barlow Condensed', sans-serif !important;
+      font-weight: 900 !important;
+      font-size: 1.2rem !important;
+      letter-spacing: 0.08em !important;
+      text-transform: uppercase !important;
+      padding: 16px 24px !important;
+      border-radius: 12px !important;
+      border: none !important;
+      cursor: pointer !important;
+      min-height: 56px !important;
+      transition: transform 0.15s, box-shadow 0.15s !important;
+      box-shadow: 0 4px 16px rgba(255,186,0,0.2) !important;
+      width: 100% !important;
+      display: block !important;
+      text-align: center !important;
+      margin-top: 16px !important;
+    }
+    
+    .btn-primary:hover, .btn-aprobar:hover, .btn-guardar:hover, .btn-inyectar:hover { 
+      transform: translateY(-2px) !important; 
+      box-shadow: 0 8px 24px rgba(255,186,0,0.4) !important; 
+    }
+    .btn-primary:active, .btn-aprobar:active, .btn-guardar:active, .btn-inyectar:active { 
+      transform: translateY(1px) !important; 
+    }
+
+    /* Programar tab inputs */
+    .prog-row {
+      display: flex; gap: 12px; margin-bottom: 24px;
+    }
+    
+    .input-dark, .input-brutal, .form-group select, .form-group input, #sel-jornada {
+      width: 100%;
+      padding: 16px 20px !important;
+      background: rgba(0,0,0,0.4) !important;
+      border: 2px solid rgba(255,255,255,0.1) !important;
+      color: var(--white) !important;
+      border-radius: 12px !important;
+      font-size: 1.1rem !important;
+      font-family: 'Barlow Condensed', sans-serif !important;
+      font-weight: 600 !important;
+      letter-spacing: 0.05em !important;
+      outline: none !important;
+      transition: all 0.3s ease !important;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.3) !important;
+    }
+
+    .input-dark:focus, .input-brutal:focus, .form-group select:focus, .form-group input:focus, #sel-jornada:focus {
+      border-color: var(--gold) !important;
+      background: rgba(0,0,0,0.6) !important;
+    }
+
+    .form-group select option { background: var(--navy); color: var(--white); }
+
+    .btn-buscar {
+      background: rgba(255,255,255,0.1) !important;
+      color: var(--white) !important;
+      border: 1px solid rgba(255,255,255,0.2) !important;
+      padding: 0 24px !important;
+      border-radius: 12px !important;
+      font-family: 'Barlow Condensed', sans-serif !important;
+      font-weight: 800 !important;
+      font-size: 1.1rem !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.08em !important;
+      cursor: pointer !important;
+      transition: all 0.2s !important;
+      min-height: 56px !important;
+    }
+    .btn-buscar:hover { background: rgba(255,255,255,0.2) !important; border-color: rgba(255,255,255,0.4) !important; }
+
+    /* Form groups */
+    .form-group { margin-bottom: 20px; }
+    .form-group label {
+      display: block;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 8px;
+    }
+
+    /* Import Textarea */
+    #import-data {
+      width: 100% !important; 
+      padding: 20px !important; 
+      border-radius: 12px !important; 
+      border: 2px solid rgba(255,255,255,0.1) !important; 
+      background: rgba(0,0,0,0.4) !important; 
+      color: var(--white) !important; 
+      font-family: monospace !important; 
+      font-size: 0.9rem !important; 
+      margin-bottom: 20px !important; 
+      white-space: pre !important; 
+      overflow-x: auto !important; 
+      outline: none !important; 
+      resize: vertical !important;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.3) !important;
+    }
+    #import-data:focus {
+      border-color: var(--gold) !important;
+    }
+
+    #import-preview {
+      background: rgba(0,0,0,0.6) !important; 
+      padding: 20px !important; 
+      border-radius: 12px !important; 
+      border: 1px solid rgba(255,255,255,0.1) !important; 
+      font-size: 0.9rem !important; 
+      overflow: auto !important; 
+      max-height: 300px !important; 
+      margin-top: 20px !important; 
+      font-family: monospace !important; 
+      color: rgba(255,255,255,0.8) !important;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.5) !important;
+    }
+    #import-preview div {
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    #import-preview strong { color: var(--gold) !important; }
+
+    .help-text {
+      color: rgba(255,255,255,0.6) !important; 
+      font-size: 0.95rem !important; 
+      margin-bottom: 16px !important; 
+      font-family: 'Barlow', sans-serif !important;
+      line-height: 1.5 !important;
+    }
+
+    /* Toast */
+    #toast {
+      position: fixed;
+      bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--navy);
+      color: var(--white);
+      padding: 16px 32px;
+      border-radius: 16px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      font-size: 1.1rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.1);
+      transition: transform .3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity .3s;
+      opacity: 0; z-index: 9999;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════ LOGIN ═══════════ -->
+  <div id="login-view">
+    <div class="vault-card">
+      <div class="vault-ring">
+        <img src="../assets/img/logo.png" alt="Copa Cajamarca"
+             onerror="this.style.display='none';document.getElementById('logo-fb-admin').style.display='flex';">
+        <div id="logo-fb-admin" style="display:none; width: 100%; height: 100%; border-radius: 50%; background: var(--navy); border: 4px solid var(--gold); align-items: center; justify-content: center; font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; color: var(--gold);">CC</div>
+      </div>
+      
+      <h1 class="vault-title">COPA<br><span>CAJAMARCA</span></h1>
+      <p class="vault-subtitle">Panel de Control 2026</p>
+
+      <form id="form-login" action="#" onsubmit="event.preventDefault();" style="display: flex; flex-direction: column;">
+        <div class="input-group">
+          <input type="email" id="email-input" name="email" class="vault-input"
+                 placeholder="CORREO ELECTRÓNICO" autocomplete="username">
+        </div>
+
+        <div class="input-group">
+          <input type="password" id="pass-input" name="password" class="vault-input"
+                 placeholder="CONTRASEÑA" autocomplete="current-password">
+          <button type="button" class="btn-reveal"
+                  onclick="const p=document.getElementById('pass-input');p.type=p.type==='password'?'text':'password';">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+
+        <button type="submit" id="btn-login" class="vault-btn">Desbloquear Sistema</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══════════ DASHBOARD ═══════════ -->
+  <div id="dashboard">
+    <!-- Header -->
+    <header class="site-header">
+      <div class="header-inner" style="max-width:860px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:14px; padding:16px;">
+        <div style="display:flex; align-items:center; gap:14px;">
+          <img src="../assets/img/logo.png" alt="Copa Cajamarca" style="width:56px;height:56px;border-radius:50%;background:#fff;object-fit:cover;box-shadow:0 0 0 2px rgba(255,186,0,.5),0 4px 12px rgba(0,0,0,.4);" onerror="this.style.display='none'">
+          <div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.8rem;font-weight:800;letter-spacing:0.15em;color:rgba(255,255,255,.6);text-transform:uppercase;">Copa Cajamarca 2026</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:2.2rem;color:#fff;letter-spacing:0.04em;line-height:0.95;">PANEL DE CONTROL</div>
+          </div>
+        </div>
+        <button id="btn-logout" class="btn-logout-header">SALIR</button>
+      </div>
+      <!-- Gold bar -->
+      <div style="background:var(--gold);border-bottom:3px solid #e0a300;">
+        <div style="max-width:860px;margin:0 auto;padding:12px 16px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--navy);">
+          ADMINISTRACIÓN CENTRAL
+        </div>
+      </div>
+    </header>
+
+    <div class="content-wrapper">
+      <div class="tabs-container">
+        <button class="tab-btn active" data-target="tab-revision">En Revisión</button>
+        <button class="tab-btn" data-target="tab-programar">Programar</button>
+        <button class="tab-btn" data-target="tab-importar">Importar</button>
+        <button class="tab-btn" data-target="tab-salvavidas">Salvavidas</button>
+        <button class="tab-btn" data-target="tab-boleteria">Boletería</button>
+      </div>
+
+      <!-- Pestaña Revisión -->
+      <div id="tab-revision" class="tab-content active">
+        <div class="card">
+          <h2 class="card-header-title">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            PARTIDOS POR APROBAR
+          </h2>
+          <div id="lista-revision" style="color: rgba(255,255,255,0.7); font-size: 1.1rem; text-align: center; padding: 20px 0;">Cargando partidos...</div>
+        </div>
+      </div>
+
+      <!-- Pestaña Programar -->
+      <div id="tab-programar" class="tab-content">
+        <div class="card">
+          <h2 class="card-header-title">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            PROGRAMAR JORNADA
+          </h2>
+          <div class="prog-row">
+            <input type="number" id="input-jornada" class="input-dark" placeholder="N° DE JORNADA (EJ: 2)">
+            <button id="btn-buscar-jornada" class="btn-buscar">BUSCAR</button>
+          </div>
+          <div id="lista-programacion" style="color: rgba(255,255,255,0.7); font-size: 1.1rem; text-align: center; padding: 10px 0;"></div>
+          <button id="btn-guardar-programacion" class="btn-guardar" style="display: none; margin-top: 24px;">GUARDAR PROGRAMACIÓN</button>
+        </div>
+      </div>
+
+      <!-- Pestaña Importar -->
+      <div id="tab-importar" class="tab-content">
+        <div class="card" style="border-left: 4px solid #22c55e;">
+          <h2 class="card-header-title" style="color: #22c55e; border-bottom-color: rgba(34, 197, 94, 0.2);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            IMPORTAR FIXTURE
+          </h2>
+          <p class="help-text">Pega los datos directamente desde Excel. Asume el formato estricto:<br><strong style="color:var(--white);">FECHA, HORA, LUGAR, CANCHA, LOCAL, VS/RES, VISITANTE, CAT, JORNADA.</strong></p>
+          <textarea id="import-data" rows="8" placeholder="Sábado, 18 de Julio del 2026&#9;8:50 a. m.&#9;EL GOLAZO&#9;PRINCIPAL&#9;AAC RETOÑITOS&#9;2 - 2&#9;JR STARS&#9;2014&#9;1"></textarea>
+          <button id="btn-analizar-excel" class="btn-inyectar" style="background: linear-gradient(to bottom, #22c55e, #16a34a) !important; color: white !important;">Analizar Datos</button>
+          <div id="import-preview" style="display:none;"></div>
+          <button id="btn-guardar-excel" class="btn-guardar" style="display: none; margin-top:24px;">CONFIRMAR E IMPORTAR BD</button>
+        </div>
+      </div>
+
+      <!-- Pestaña Salvavidas -->
+      <div id="tab-salvavidas" class="tab-content">
+        <div class="card" style="border-left: 4px solid var(--red);">
+          <h2 class="card-header-title" style="color: var(--red); border-bottom-color: rgba(214, 13, 13, 0.2);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            CREAR PARTIDO URGENTE
+          </h2>
+          
+          <div class="form-group">
+            <label>Equipo Local</label>
+            <select id="sel-local"><option>Cargando...</option></select>
+          </div>
+          <div class="form-group">
+            <label>Equipo Visitante</label>
+            <select id="sel-visita"><option>Cargando...</option></select>
+          </div>
+          <div class="form-group">
+            <label>Categoría</label>
+            <select id="sel-cat">
+              <option value="2011">2011</option>
+              <option value="2012">2012</option>
+              <option value="2013">2013</option>
+              <option value="2014">2014</option>
+              <option value="2015">2015</option>
+              <option value="2016">2016</option>
+              <option value="2017">2017</option>
+              <option value="2018">2018</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Fecha y Hora (Opcional)</label>
+            <input type="datetime-local" id="sel-fecha">
+          </div>
+
+          <div class="form-group">
+            <label>Jornada</label>
+            <input type="number" id="sel-jornada" min="1" max="99" placeholder="EJ: 3">
+          </div>
+
+          <button id="btn-crear" class="btn-inyectar" style="background: linear-gradient(to bottom, #ef4444, #dc2626) !important; color: white !important; margin-top: 32px;">INYECTAR A LA BD</button>
+      <!-- Pestaña Boletería -->
+      <div id="tab-boleteria" class="tab-content">
+        <div class="card" style="border-left: 4px solid #7c3aed;">
+          <h2 class="card-header-title" style="color: #a78bfa; border-bottom-color: rgba(124,58,237,0.2);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            CONFIGURAR PIN DE BOLETERÍA
+          </h2>
+          <p class="help-text" style="margin-bottom:28px;">
+            Este PIN de <strong style="color:#fff;">4 dígitos</strong> protege el acceso al escáner QR de la boletería. 
+            Cámbialo antes de cada jornada para mayor seguridad.
+          </p>
+
+          <!-- PIN actual -->
+          <div class="form-group">
+            <label>PIN Actual (en base de datos)</label>
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div id="pin-display" style="
+                font-family:'Bebas Neue',sans-serif; font-size:3rem; letter-spacing:.4em;
+                color:var(--gold); background:rgba(0,0,0,0.5); border:2px solid rgba(255,186,0,0.3);
+                border-radius:12px; padding:12px 28px; min-width:140px; text-align:center;
+              ">••••</div>
+              <button id="btn-ver-pin" style="
+                background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.2);
+                padding:14px 20px; border-radius:10px; font-family:'Barlow Condensed',sans-serif;
+                font-weight:800; font-size:1rem; text-transform:uppercase; letter-spacing:.08em;
+                cursor:pointer; transition:background .2s; min-height:52px;
+              ">Ver PIN</button>
+            </div>
+          </div>
+
+          <!-- Nuevo PIN -->
+          <div class="form-group" style="margin-top:8px;">
+            <label>Nuevo PIN (4 dígitos)</label>
+            <div style="display:flex; gap:10px; margin-bottom:16px;" id="new-pin-grid">
+              <input type="tel" class="new-pin-box" maxlength="1" pattern="[0-9]" inputmode="numeric" autocomplete="off"
+                style="width:64px;height:72px;background:rgba(0,0,0,0.5);border:2px solid rgba(255,255,255,0.15);
+                color:var(--gold);border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:2.4rem;
+                text-align:center;outline:none;transition:all .2s;">
+              <input type="tel" class="new-pin-box" maxlength="1" pattern="[0-9]" inputmode="numeric" autocomplete="off"
+                style="width:64px;height:72px;background:rgba(0,0,0,0.5);border:2px solid rgba(255,255,255,0.15);
+                color:var(--gold);border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:2.4rem;
+                text-align:center;outline:none;transition:all .2s;">
+              <input type="tel" class="new-pin-box" maxlength="1" pattern="[0-9]" inputmode="numeric" autocomplete="off"
+                style="width:64px;height:72px;background:rgba(0,0,0,0.5);border:2px solid rgba(255,255,255,0.15);
+                color:var(--gold);border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:2.4rem;
+                text-align:center;outline:none;transition:all .2s;">
+              <input type="tel" class="new-pin-box" maxlength="1" pattern="[0-9]" inputmode="numeric" autocomplete="off"
+                style="width:64px;height:72px;background:rgba(0,0,0,0.5);border:2px solid rgba(255,255,255,0.15);
+                color:var(--gold);border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:2.4rem;
+                text-align:center;outline:none;transition:all .2s;">
+            </div>
+            <button id="btn-guardar-pin" style="
+              background: linear-gradient(to bottom, #8b5cf6, #7c3aed) !important;
+              color: white !important; border: none !important;
+              font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:1.2rem;
+              letter-spacing:.08em; text-transform:uppercase; padding:16px 24px;
+              border-radius:12px; cursor:pointer; min-height:56px;
+              transition:transform .15s, box-shadow .15s; box-shadow:0 4px 16px rgba(124,58,237,.3);
+              width:100%; display:block; text-align:center;
+            ">GUARDAR NUEVO PIN</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="admin.js?v=12"></script>
+</body>
+</html>
