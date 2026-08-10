@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#001a4d" />
+  <title>Mesa de Control · Copa Cajamarca</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="../assets/img/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="../assets/img/favicon-192.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="../assets/img/apple-touch-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy: #001a4d;
+      --gold: #ffba00;
+      --gold-dark: #f1a200;
+      --red: #d60d0d;
+      --white: #ffffff;
+      --bg-color: #eef2f7;
+    }
+    
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; }
+    * { -webkit-tap-highlight-color: transparent; }
+
+    body {
+      background: var(--navy);
+      background-image: repeating-linear-gradient(-45deg, transparent 0, transparent 28px, rgba(255,255,255,.014) 28px, rgba(255,255,255,.014) 29px);
+      min-height: 100dvh;
+      font-family: 'Barlow', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    ::placeholder { color: rgba(255,255,255,0.4); }
+
+    /* ── LOGIN ── */
+    #login-view {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 420px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,186,0,0.18);
+      border-radius: 14px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      padding: 40px 30px;
+      text-align: center;
+      margin: auto;
+      margin-top: max(10vh, 40px);
+    }
+
+    .login-logo {
+      width: 90px; height: 90px;
+      border-radius: 50%;
+      background: #fff;
+      object-fit: cover;
+      margin: 0 auto 20px;
+      display: block;
+      box-shadow: 0 0 0 3px rgba(255,186,0,.5), 0 8px 24px rgba(0,0,0,.4);
+    }
+    .logo-fallback {
+      width: 90px; height: 90px;
+      border-radius: 50%;
+      background: var(--navy);
+      border: 3px solid var(--gold);
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2rem;
+      color: var(--gold);
+      box-shadow: 0 8px 24px rgba(0,0,0,.4);
+    }
+
+    .role-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: .8rem;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--gold);
+      background: rgba(255,186,0,.15);
+      border: 1px solid rgba(255,186,0,.3);
+      padding: 6px 16px;
+      border-radius: 999px;
+      margin-bottom: 20px;
+    }
+    .pulse-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--gold);
+      flex-shrink: 0;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.7)} }
+
+    .login-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 3.2rem;
+      color: #fff;
+      letter-spacing: .04em;
+      line-height: .9;
+      margin-bottom: 6px;
+    }
+    .login-title span { color: var(--gold); }
+    .login-sub {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: .85rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.5);
+      margin-bottom: 32px;
+    }
+
+    #email-input, #pass-input {
+      display: block;
+      width: 100%;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,.15);
+      color: #fff;
+      border-radius: 10px;
+      padding: 16px 48px 16px 20px;
+      font-size: 1.05rem;
+      font-family: 'Barlow', sans-serif;
+      outline: none;
+      margin-bottom: 16px;
+      transition: border-color .2s, background .2s;
+    }
+    #email-input:focus, #pass-input:focus { 
+      border-color: var(--gold); 
+      background: rgba(0,0,0,0.5); 
+    }
+
+    .field-wrap { position: relative; margin-bottom: 16px; }
+    .field-wrap #pass-input { margin-bottom: 0; }
+    .btn-reveal {
+      position: absolute; right: 16px; top: 50%;
+      transform: translateY(-50%);
+      background: none; border: none;
+      color: rgba(255,255,255,.4); cursor: pointer;
+    }
+
+    #btn-login {
+      display: block; width: 100%; margin-top: 24px;
+      background: var(--gold); color: #5a4400; border: none;
+      padding: 18px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.25rem; font-weight: 900;
+      letter-spacing: .08em; text-transform: uppercase;
+      border-radius: 10px; cursor: pointer;
+      min-height: 56px;
+      transition: transform .15s, box-shadow .15s;
+      box-shadow: 0 4px 16px rgba(255,186,0,.25);
+    }
+    #btn-login:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(255,186,0,.4); }
+    #btn-login:active { transform: translateY(0) scale(0.98); }
+
+    /* ── DASHBOARD ── */
+    #dashboard {
+      display: none;
+      width: 100%;
+      position: relative;
+      z-index: 1;
+    }
+
+    .site-header { width: 100%; }
+    .btn-logout {
+      background: rgba(214,13,13,.15);
+      color: #ff6b6b;
+      border: 1px solid rgba(214,13,13,.4);
+      padding: 10px 20px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: .95rem; font-weight: 800;
+      letter-spacing: .08em; text-transform: uppercase;
+      border-radius: 8px; cursor: pointer; transition: background .15s;
+    }
+    .btn-logout:hover { background: var(--red); color: #fff; }
+
+    .content-wrapper {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 30px 16px 60px;
+      width: 100%;
+    }
+
+    /* Partido Cards */
+    .partido-card {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,186,0,0.18);
+      border-radius: 14px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      transition: transform 0.2s ease;
+    }
+    .partido-card:hover { transform: translateY(-2px); }
+
+    .partido-header {
+      display: flex; justify-content: space-between;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.05rem; font-weight: 800;
+      text-transform: uppercase; letter-spacing: .08em; color: var(--gold);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding-bottom: 12px; margin-bottom: 20px;
+    }
+    .partido-header span {
+      background: rgba(255,255,255,0.1);
+      padding: 4px 10px;
+      border-radius: 6px;
+      color: #fff;
+    }
+    
+    .equipo-row {
+      display: flex; align-items: center;
+      justify-content: space-between; margin-bottom: 24px;
+      background: rgba(0,0,0,0.2);
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .equipo-name {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.8rem; font-weight: 800;
+      text-transform: uppercase; color: #fff;
+      width: 50%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+    
+    .score-controls { display: flex; align-items: center; gap: 16px; }
+    .btn-score {
+      width: 60px; height: 60px; font-size: 2rem;
+      border-radius: 12px; border: none; cursor: pointer; color: #fff;
+      font-weight: 900;
+      display: flex; align-items: center; justify-content: center;
+      transition: transform .15s, background .15s;
+    }
+    .btn-score:active { transform: scale(0.9); }
+    .btn-score.minus { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); }
+    .btn-score.minus:hover { background: rgba(255,255,255,0.25); }
+    .btn-score.plus  { background: var(--gold); color: #5a4400; box-shadow: 0 4px 16px rgba(255,186,0,.3); }
+    .btn-score.plus:hover { background: var(--gold-dark); }
+    
+    .score-display {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 4rem; color: #fff;
+      width: 72px; text-align: center; line-height: 1;
+      text-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      background: rgba(0,26,77,0.5);
+      border-radius: 10px;
+      padding: 10px 0;
+      border: 2px solid rgba(255,186,0,0.3);
+    }
+
+    .btn-envivo {
+      background: var(--navy); color: #fff; width: 100%; padding: 16px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.15rem; font-weight: 900;
+      letter-spacing: .08em; text-transform: uppercase;
+      border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; cursor: pointer;
+      min-height: 56px;
+      transition: transform .15s, background .2s, border-color .2s;
+    }
+    .btn-envivo:hover { border-color: #fff; background: rgba(0,26,77,0.8); }
+    .btn-envivo:active { transform: scale(0.98); }
+    .btn-envivo[disabled], .btn-envivo[style*="16a34a"] {
+      background: #16a34a !important;
+      border-color: #15803d !important;
+      color: #fff !important;
+      opacity: 1 !important;
+      box-shadow: 0 4px 16px rgba(22,163,74,0.3);
+    }
+    
+    .btn-finalizar {
+      background: var(--red); color: #fff; width: 100%; padding: 18px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.25rem; font-weight: 900;
+      letter-spacing: .08em; text-transform: uppercase;
+      border: none; border-radius: 10px; cursor: pointer;
+      margin-top: 16px; transition: transform .15s, box-shadow .15s;
+      min-height: 56px;
+    }
+    .btn-finalizar:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(214,13,13,.4); }
+    .btn-finalizar:active { transform: scale(0.98); }
+
+    /* Toast */
+    #toast {
+      position: fixed; bottom: 32px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--navy); color: #fff;
+      padding: 14px 28px; border-radius: 999px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700; font-size: 1.1rem;
+      letter-spacing: 0.05em; text-transform: uppercase;
+      box-shadow: 0 8px 32px rgba(0,0,0,.4), 0 0 0 2px rgba(255,255,255,0.1);
+      transition: transform .4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity .3s;
+      opacity: 0; z-index: 9999;
+      white-space: nowrap; pointer-events: none;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════ LOGIN ═══════════ -->
+  <div id="login-view">
+    <img src="../assets/img/logo.png" alt="Copa Cajamarca" class="login-logo"
+         onerror="this.style.display='none';document.getElementById('logo-fb-mesa').style.display='flex';">
+    <div class="logo-fallback" id="logo-fb-mesa" style="display:none;">CC</div>
+
+    <div class="role-badge">
+      <span class="pulse-dot"></span>
+      Mesa de Control
+    </div>
+
+    <h1 class="login-title">Copa<br><span>Cajamarca</span></h1>
+    <p class="login-sub">Staff Oficial · 2026</p>
+
+    <form id="form-login" action="#" onsubmit="event.preventDefault();">
+      <input type="email" id="email-input" name="email"
+             placeholder="Correo de Mesa" autocomplete="username">
+
+      <div class="field-wrap">
+        <input type="password" id="pass-input" name="password"
+               placeholder="Contraseña" autocomplete="current-password">
+        <button type="button" class="btn-reveal"
+                onclick="const p=document.getElementById('pass-input');p.type=p.type==='password'?'text':'password';">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </div>
+
+      <button type="submit" id="btn-login">Ingresar al Sistema</button>
+    </form>
+  </div>
+
+  <!-- ═══════════ DASHBOARD ═══════════ -->
+  <div id="dashboard">
+    <header class="site-header">
+      <div class="header-inner" style="max-width:860px; margin:0 auto; display:flex; align-items:center; gap:14px; padding:16px;">
+        <img src="../assets/img/logo.png" alt="Copa Cajamarca" style="width:52px;height:52px;border-radius:50%;background:#fff;object-fit:cover;box-shadow:0 0 0 2px rgba(255,186,0,.5),0 3px 10px rgba(0,0,0,.35);" onerror="this.style.display='none'">
+        <div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:.1em;color:rgba(255,255,255,.55);text-transform:uppercase;">Copa Cajamarca 2026</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.9rem;color:#fff;letter-spacing:.04em;line-height:1;">MESA DE CONTROL</div>
+        </div>
+        <div style="margin-left:auto;">
+           <button id="btn-logout" class="btn-logout">SALIR</button>
+        </div>
+      </div>
+      <!-- Gold bar -->
+      <div style="background:#ffba00;border-bottom:3px solid #f1a200;">
+        <div style="max-width:860px;margin:0 auto;padding:10px 16px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1rem;letter-spacing:.06em;text-transform:uppercase;color:#001a4d;">PARTIDOS DE HOY</div>
+      </div>
+    </header>
+
+    <div class="content-wrapper">
+      <div id="partidos-list"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="mesa.js?v=11"></script>
+</body>
+</html>

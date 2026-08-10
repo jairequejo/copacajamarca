@@ -1,29 +1,117 @@
-const PUB_ID = '2PACX-1vTOWEsF51iU6PUh4zJ2GGhMJGJGICjYwIpoIAUiWSR6Rbl6P2WsN--YBVsVhwVtuZQdEs1ijtBngaHJ';
-const URL_EQ = `https://docs.google.com/spreadsheets/d/e/${PUB_ID}/pub?gid=1862807827&single=true&output=csv`;
-const URL_FIX = `https://docs.google.com/spreadsheets/d/e/${PUB_ID}/pub?gid=1171502194&single=true&output=csv`;
-let equipos = {}, standings = {}, activeCat = '';
+import { supabase } from './supabase.js';
+
+let equipos = {}, standings = {}, standingsByGrupo = {}, grupoMap = {}, activeCat = '';
 const el = id => document.getElementById(id);
-function parseCsv(t) { const rows = []; for (const ln of t.replace(/\r/g, '\n').split('\n')) { if (!ln.trim()) continue; const cols = []; let c = '', q = false; for (let i = 0; i < ln.length; i++) { const ch = ln[i]; if (ch === '"') { if (q && ln[i + 1] === '"') { c += '"'; i++; } else q = !q; } else if (ch === ',' && !q) { cols.push(c.trim()); c = ''; } else c += ch; } cols.push(c.trim()); rows.push(cols); } return rows; }
-function parseEquipos(rows) { if (!rows.length) return {}; const h = rows[0], cats = {}; for (let c = 1; c < h.length; c++) { const y = h[c].trim(); if (y && !isNaN(y)) cats[y] = []; } for (let r = 1; r < rows.length; r++) { const t = (rows[r][0] || '').trim().toUpperCase(); if (!t) continue; for (let c = 1; c < h.length; c++) { const y = h[c].trim(), v = (rows[r][c] || '').trim(); if (cats[y] && (v === '1' || v.toLowerCase() === 'x' || v === '✓')) cats[y].push(t); } } Object.keys(cats).forEach(k => { if (!cats[k].length) delete cats[k]; }); return cats; }
-function parseFixture(rows) { if (!rows.length) return []; const h = rows[0].map(x => x.trim().toUpperCase()); const col = k => h.findIndex(x => x.includes(k)), exact = k => h.findIndex(x => x === k); const I = { cat: col('CATEG'), lo: exact('LOCAL'), vi: col('VISITANTE'), gl: h.findIndex(x => x.includes('GOLES') && x.includes('LOCAL')), gv: h.findIndex(x => x.includes('GOLES') && x.includes('VISITANTE')), res: col('RESULTADO') }; const out = []; for (let r = 1; r < rows.length; r++) { const row = rows[r]; if (!row[0]) continue; const lo = (row[I.lo] || '').trim().toUpperCase(), vi = (row[I.vi] || '').trim().toUpperCase(); if (!lo || !vi) continue; const rl = (row[I.res] || '').toLowerCase(); out.push({ cat: (row[I.cat] || '').trim(), lo, vi, gl: parseInt(row[I.gl] || '', 10), gv: parseInt(row[I.gv] || '', 10), ok: rl !== '' && rl !== 'pendiente' && rl !== '-' }); } return out; }
-function buildStandings(loaded) { standings = {}; Object.keys(equipos).sort().forEach(cat => { const m = {}; equipos[cat].forEach(t => m[t] = { eq: t, pj: 0, pg: 0, pe: 0, pp: 0, gf: 0, gc: 0, dg: 0, pts: 0 }); loaded.filter(x => String(x.cat) === String(cat) && x.ok).forEach(x => { const gl = x.gl, gv = x.gv; if (isNaN(gl) || isNaN(gv)) return; if (!m[x.lo]) m[x.lo] = { eq: x.lo, pj: 0, pg: 0, pe: 0, pp: 0, gf: 0, gc: 0, dg: 0, pts: 0 }; if (!m[x.vi]) m[x.vi] = { eq: x.vi, pj: 0, pg: 0, pe: 0, pp: 0, gf: 0, gc: 0, dg: 0, pts: 0 }; const L = m[x.lo], V = m[x.vi]; L.pj++; V.pj++; L.gf += gl; L.gc += gv; V.gf += gv; V.gc += gl; if (gl > gv) { L.pg++; L.pts += 3; V.pp++; } else if (gl < gv) { V.pg++; V.pts += 3; L.pp++; } else { L.pe++; L.pts++; V.pe++; V.pts++; } L.dg = L.gf - L.gc; V.dg = V.gf - V.gc; }); standings[cat] = Object.values(m).sort((a, b) => b.pts - a.pts || b.dg - a.dg || b.gf - a.gf || a.eq.localeCompare(b.eq)); }); }
-function renderAll() { const cats = Object.keys(equipos).sort((a, b) => a - b); if (!cats.length) return; if (!activeCat) activeCat = cats[0]; el('catFilterBar').innerHTML = cats.map(c => `<button class="cat-btn${activeCat === c ? ' active' : ''}" data-cat="${c}" onclick="setCat('${c}',this)">Cat. ${c}</button>`).join(''); el('catFilterWrap').hidden = false; renderCat(activeCat); }
-function renderCat(cat) {
-  const rows = standings[cat] || [];
+
+function buildStandings(matches, inscripciones) {
+  standings = {};
+  standingsByGrupo = {};
+  grupoMap = {};
+  equipos = {};
+
+  // Extraer categorías, equipos y grupos desde los partidos
+  matches.forEach(x => {
+    const cat = x.categoria;
+    const lo = x.equipo_local?.nombre?.trim().toUpperCase();
+    const vi = x.equipo_visitante?.nombre?.trim().toUpperCase();
+    if (!cat || !lo || !vi) return;
+    if (!equipos[cat]) equipos[cat] = new Set();
+    equipos[cat].add(lo);
+    equipos[cat].add(vi);
+    // Capturar grupo de cada equipo desde las inscripciones
+    const getGrupo = (eqId, c) => {
+      const ins = inscripciones.find(i => String(i.equipo_id) === String(eqId) && String(i.categoria) === String(c));
+      return ins ? ins.grupo : null;
+    };
+    const gL = getGrupo(x.equipo_local_id, cat);
+    const gV = getGrupo(x.equipo_visitante_id, cat);
+    if (!grupoMap[cat]) grupoMap[cat] = {};
+    if (gL) grupoMap[cat][lo] = gL;
+    if (gV) grupoMap[cat][vi] = gV;
+  });
+
+  const validEstados = ['FINALIZADO', 'OFICIAL', 'EN_REVISION'];
+  const validMatches = matches.filter(x => validEstados.includes(x.estado));
+
+  Object.keys(equipos).sort().forEach(cat => {
+    // Detectar si esta categoría tiene grupos
+    const teamsInCat = Array.from(equipos[cat]);
+    const gruposEnCat = [...new Set(teamsInCat.map(t => grupoMap[cat] ? grupoMap[cat][t] : null).filter(Boolean))].sort();
+    const hasGrupos = gruposEnCat.length > 1 && (teamsInCat.filter(t => grupoMap[cat] && grupoMap[cat][t]).length / teamsInCat.length >= 0.5);
+
+    if (hasGrupos) {
+      // Construir standings separados por grupo (solo partidos intra-grupo)
+      standingsByGrupo[cat] = {};
+      gruposEnCat.forEach(g => {
+        const teamsInGrupo = teamsInCat.filter(t => grupoMap[cat] && grupoMap[cat][t] === g);
+        const mg = {};
+        teamsInGrupo.forEach(t => mg[t] = { eq: t, pj: 0, pg: 0, pe: 0, pp: 0, gf: 0, gc: 0, dg: 0, pts: 0 });
+        validMatches.filter(x => String(x.categoria) === String(cat)).forEach(x => {
+          const lo = x.equipo_local?.nombre?.trim().toUpperCase();
+          const vi = x.equipo_visitante?.nombre?.trim().toUpperCase();
+          const gl = parseInt(x.goles_local, 10);
+          const gv = parseInt(x.goles_visitante, 10);
+          if (isNaN(gl) || isNaN(gv)) return;
+          if (!mg[lo] || !mg[vi]) return; // partido inter-grupo: no cuenta en standings
+          const L = mg[lo], V = mg[vi];
+          L.pj++; V.pj++;
+          L.gf += gl; L.gc += gv;
+          V.gf += gv; V.gc += gl;
+          if (gl > gv)       { L.pg++; L.pts += 3; V.pp++; }
+          else if (gl < gv)  { V.pg++; V.pts += 3; L.pp++; }
+          else               { L.pe++; L.pts++; V.pe++; V.pts++; }
+          L.dg = L.gf - L.gc; V.dg = V.gf - V.gc;
+        });
+        standingsByGrupo[cat][g] = Object.values(mg).sort((a, b) => b.pts - a.pts || b.dg - a.dg || b.gf - a.gf || a.eq.localeCompare(b.eq));
+      });
+    }
+
+    // Standings globales (todos los equipos de la categoría, para canvas/descarga)
+    const m = {};
+    teamsInCat.forEach(t => m[t] = { eq: t, pj: 0, pg: 0, pe: 0, pp: 0, gf: 0, gc: 0, dg: 0, pts: 0 });
+    validMatches.filter(x => String(x.categoria) === String(cat)).forEach(x => {
+      const lo = x.equipo_local?.nombre?.trim().toUpperCase();
+      const vi = x.equipo_visitante?.nombre?.trim().toUpperCase();
+      const gl = parseInt(x.goles_local, 10);
+      const gv = parseInt(x.goles_visitante, 10);
+      if (isNaN(gl) || isNaN(gv)) return;
+      if (!m[lo] || !m[vi]) return;
+      const L = m[lo], V = m[vi];
+      L.pj++; V.pj++;
+      L.gf += gl; L.gc += gv;
+      V.gf += gv; V.gc += gl;
+      if (gl > gv)       { L.pg++; L.pts += 3; V.pp++; }
+      else if (gl < gv)  { V.pg++; V.pts += 3; L.pp++; }
+      else               { L.pe++; L.pts++; V.pe++; V.pts++; }
+      L.dg = L.gf - L.gc; V.dg = V.gf - V.gc;
+    });
+    standings[cat] = Object.values(m).sort((a, b) => b.pts - a.pts || b.dg - a.dg || b.gf - a.gf || a.eq.localeCompare(b.eq));
+  });
+}
+function renderAll() {
+  const tabs = [];
+  Object.keys(equipos).sort((a, b) => a - b).forEach(c => {
+    if (standingsByGrupo[c]) {
+      Object.keys(standingsByGrupo[c]).sort().forEach(g => {
+        tabs.push({ id: c + '_' + g, label: 'Cat. ' + c + ' GRP ' + g, cat: c, grupo: g });
+      });
+    } else {
+      tabs.push({ id: c, label: 'Cat. ' + c, cat: c, grupo: null });
+    }
+  });
+  if (!tabs.length) return;
+  if (!activeCat) activeCat = tabs[0].id;
+  
+  el('catFilterBar').innerHTML = tabs.map(t => `<button class="cat-btn${activeCat === t.id ? ' active' : ''}" data-cat="${t.id}">${t.label}</button>`).join('');
+  el('catFilterWrap').hidden = false;
+  
+  const activeTab = tabs.find(t => t.id === activeCat);
+  renderCat(activeTab.cat, activeTab.grupo);
+}
+// Helper: genera el HTML de una tabla de standings
+function buildTableHTML(rows, cat) {
   const maxPts = rows[0]?.pts || 1;
-  const leader = rows[0];
-
-  let h = `<div class="cat-section"><div class="cat-card">`;
-
-  // Encabezado de categoría
-  h += `<div class="cat-head"><div class="cat-head-left"><div class="cat-badge">Cat. ${cat}</div><div class="cat-count">${rows.length} equipos</div></div>`;
-  if (leader) {
-    h += `<div class="cat-leader-wrap"><span class="cat-leader-star">★</span><span class="cat-leader-name">${leader.eq}</span><span class="cat-leader-pts">${leader.pts} pts</span></div>`;
-  }
-  h += `</div>`;
-
-  // Tabla responsive
-  h += `<div class="table-scroll-wrap"><table class="pos-table">`;
+  let h = `<div class="table-scroll-wrap"><table class="pos-table">`;
   h += `<thead><tr>`;
   h += `<th class="col-pos">#</th>`;
   h += `<th class="col-team">Equipo</th>`;
@@ -36,14 +124,11 @@ function renderCat(cat) {
   h += `<th class="col-dg">DG</th>`;
   h += `<th class="col-pts">PTS</th>`;
   h += `</tr></thead><tbody>`;
-
   rows.forEach((r, i) => {
     const pc = i === 0 ? 'p1' : i === 1 ? 'p2' : i === 2 ? 'p3' : 'pn';
     const zc = i === 0 ? 'zone-1' : i === 1 ? 'zone-2' : i === 2 ? 'zone-3' : '';
     const dg = r.dg > 0 ? `+${r.dg}` : `${r.dg}`;
     const dgClass = r.dg > 0 ? 'dg-pos' : r.dg < 0 ? 'dg-neg' : '';
-    const b = maxPts > 0 ? Math.round((r.pts / maxPts) * 100) : 0;
-
     h += `<tr class="${zc}">`;
     h += `<td class="col-pos"><span class="pos-badge ${pc}">${i + 1}</span></td>`;
     h += `<td class="col-team"><div class="team-name-pos">${r.eq}</div></td>`;
@@ -57,11 +142,50 @@ function renderCat(cat) {
     h += `<td class="col-pts"><span class="pos-pts">${r.pts}</span></td>`;
     h += `</tr>`;
   });
-
-  h += `</tbody></table></div></div></div>`;
+  h += `</tbody></table></div>`;
+  return h;
+}
+function renderCat(cat, grupoId) {
+  let h = `<div class="cat-section">`;
+  
+  if (grupoId && standingsByGrupo[cat] && standingsByGrupo[cat][grupoId]) {
+    // ── TABLA DE UN GRUPO ESPECÍFICO ──
+    const rows = standingsByGrupo[cat][grupoId];
+    const leader = rows[0];
+    h += `<div class="cat-card">`;
+    h += `<div class="cat-head"><div class="cat-head-left"><div class="cat-badge">Cat. ${cat} - GRUPO ${grupoId}</div><div class="cat-count">${rows.length} equipos</div></div></div>`;
+    
+    if (leader) h += `<div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:12px;"><div style="font-family:'Barlow Condensed',sans-serif;font-size:.85rem;font-weight:700;color:rgba(255,255,255,.55);">★ LÍDER: ${leader.eq} · ${leader.pts} pts</div></div>`;
+    h += buildTableHTML(rows, cat);
+    h += `</div>`;
+  } else {
+    // ── CATEGORÍA NORMAL (Sin grupos) ──
+    const rows = standings[cat] || [];
+    h += `<div class="cat-card">`;
+    h += `<div class="cat-head"><div class="cat-head-left"><div class="cat-badge">Cat. ${cat}</div><div class="cat-count">${rows.length} equipos</div></div></div>`;
+    h += buildTableHTML(rows, cat);
+    h += `</div>`;
+  }
+  
+  h += `</div>`;
   el('standingsContainer').innerHTML = h;
 }
-function setCat(cat, btn) { activeCat = cat; document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); renderCat(cat); }
+function setCat(id, btn) { 
+  activeCat = id; 
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active')); 
+  btn.classList.add('active'); 
+  renderAll(); // Re-render everything to easily map the new activeCat
+}
+// Expose setCat globally for delegation via catFilterBar click
+document.addEventListener('DOMContentLoaded', () => {
+  const bar = el('catFilterBar');
+  if (bar) {
+    bar.addEventListener('click', e => {
+      const btn = e.target.closest('.cat-btn');
+      if (btn) setCat(btn.dataset.cat, btn);
+    });
+  }
+});
 
 const _logo = new Image(); _logo.src = '../assets/img/logo.png'; _logo.crossOrigin = 'anonymous';
 const _bgPos = new Image(); _bgPos.src = '../assets/img/fondo-posiciones.png'; _bgPos.crossOrigin = 'anonymous';
@@ -238,16 +362,27 @@ function showToast(msg) { const t = el('toast'); t.textContent = msg; t.classLis
 async function loadAll() {
   el('posLoader').style.display = 'flex'; el('posError').classList.add('hidden'); el('posContent').classList.add('hidden'); el('catFilterWrap').hidden = true;
   try {
-    el('loaderText').textContent = 'Cargando equipos…';
-    const rE = await fetch(URL_EQ); if (!rE.ok) throw new Error(`HTTP ${rE.status}`);
-    equipos = parseEquipos(parseCsv(await rE.text())); if (!Object.keys(equipos).length) throw new Error('SIN_DATOS');
-    el('loaderText').textContent = 'Cargando fixture…';
-    const rF = await fetch(URL_FIX); if (!rF.ok) throw new Error(`HTTP ${rF.status}`);
-    buildStandings(parseFixture(parseCsv(await rF.text()))); renderAll();
+    el('loaderText').textContent = 'Cargando datos...';
+    
+    const [resPartidos, resInsc] = await Promise.all([
+      supabase.from('partidos').select('categoria, goles_local, goles_visitante, estado, equipo_local_id, equipo_visitante_id, equipo_local:equipos!partidos_equipo_local_id_fkey(nombre), equipo_visitante:equipos!partidos_equipo_visitante_id_fkey(nombre)'),
+      supabase.from('inscripciones').select('equipo_id, categoria, grupo')
+    ]);
+    if (resPartidos.error) throw resPartidos.error;
+    if (resInsc.error) throw resInsc.error;
+
+    const matches = resPartidos.data || [];
+    const inscripciones = resInsc.data || [];
+
+    if (!matches.length) throw new Error('SIN_DATOS');
+    buildStandings(matches, inscripciones); 
+    renderAll();
+    
     const now = new Date(), upd = el('lastUpdated');
     upd.textContent = `Actualizado ${now.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}`; upd.classList.remove('hidden');
     el('posContent').classList.remove('hidden');
   } catch (err) {
+    console.error(err);
     const noData = err.message === 'SIN_DATOS';
     el('errorTitle').textContent = noData ? 'NO DISPONIBLE' : 'ERROR DE CONEXIÓN';
     el('errorMsg').textContent = noData ? 'La información no está disponible en este momento.' : 'Intente nuevamente más tarde.';
@@ -256,4 +391,10 @@ async function loadAll() {
   finally { el('posLoader').style.display = 'none'; }
 }
 
-document.addEventListener('DOMContentLoaded', () => { loadAll(); el('btnDownload').addEventListener('click', downloadPNG); el('btnDownloadAll').addEventListener('click', downloadAllPNGs); });
+document.addEventListener('DOMContentLoaded', () => {
+  loadAll();
+  el('btnDownload').addEventListener('click', downloadPNG);
+  el('btnDownloadAll').addEventListener('click', downloadAllPNGs);
+  // Expose loadAll globally for the retry button onclick="loadAll()"
+  window.loadAll = loadAll;
+});

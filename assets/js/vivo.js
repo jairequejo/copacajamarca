@@ -1,9 +1,4 @@
-// ⚡ URL del Apps Script proxy (SIN caché de Google) — lee directo del Sheet
-const SHEET_API_URL = 'https://script.google.com/macros/s/AKfycbxQAWYotXV2jdZKrWzefio9gF_nDQ78JjjZGDauKT7DuCRGMHDTjIhCTvnXzMShyLVg/exec';
-
-// URL CSV pública (tiene caché de Google de ~60s, solo se usa como fallback)
-const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSw7Sko2trfPzgA6xrE_0Jfs4eK3sTtM7M1SHJmXGb6xqjIEhwWkhHagOWk8otc2dXz6kfcO1Ygz-sF/pub?gid=1021095354&single=true&output=csv';
-const CACHE_KEY = 'copa_vivo_v1';
+import { supabase } from './supabase.js';
 
 const matchesList = document.getElementById('matchesList');
 const refreshBar = document.getElementById('refreshBar');
@@ -19,17 +14,7 @@ let currentFilters = {
     estado: 'todos'
 };
 
-// Texto CSV más reciente obtenido del servidor (en memoria, no en localStorage)
-let lastFetchedText = null;
-
-// Hash simple para comparar si el CSV cambió sin comparar strings largos
-function hashText(str) {
-    let h = 0;
-    for (let i = 0; i < str.length; i++) {
-        h = (Math.imul(31, h) + str.charCodeAt(i)) | 0;
-    }
-    return h;
-}
+let lastMatchesJson = null;
 
 async function init() {
     setupListeners();
@@ -115,9 +100,6 @@ function startAutoRefresh() {
         remaining--;
         if (remaining <= 0) {
             remaining = REFRESH_SECS;
-            // Limpiar caché de localStorage antes de cada refresco silencioso
-            // para que nunca se compare contra un dato viejo de Google
-            localStorage.removeItem(CACHE_KEY);
             fetchAndRender(true);
         }
         updateCountdown(remaining);
@@ -131,8 +113,7 @@ function updateCountdown(secs) {
 
 async function fetchAndRender(isSilent = false) {
     if (!isSilent) {
-        if (lastFetchedText) {
-            parseCSV(lastFetchedText);
+        if (lastMatchesJson) {
             updateFilters();
             renderMatches();
         } else {
@@ -150,77 +131,59 @@ async function fetchAndRender(isSilent = false) {
         refreshBar.hidden = false;
     }
 
-    const controller = new AbortController();
-    // Timeout de 10s total (el proxy Apps Script puede tardar 2-3s en cold start)
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
-
     try {
-        let text = null;
+        const { data, error } = await supabase
+            .from('partidos')
+            .select('id, fecha_hora, lugar, cancha, categoria, jornada, goles_local, goles_visitante, estado, equipo_local:equipos!partidos_equipo_local_id_fkey(nombre), equipo_visitante:equipos!partidos_equipo_visitante_id_fkey(nombre)')
+            .order('fecha_hora', { ascending: false });
 
-        // ── Intento 1: Apps Script proxy (sin caché de Google, pero puede tener cold start) ──
-        if (SHEET_API_URL) {
-            try {
-                const proxyController = new AbortController();
-                const proxyTimeout = setTimeout(() => proxyController.abort(), 3000); // 3s máx para el proxy
+        if (error) throw error;
 
-                const proxyRes = await fetch(`${SHEET_API_URL}?t=${Date.now()}`, {
-                    cache: 'no-store',
-                    signal: proxyController.signal
-                });
-                clearTimeout(proxyTimeout);
-
-                if (proxyRes.ok) {
-                    const proxyText = await proxyRes.text();
-                    // Verificar que devolvió CSV válido (no un mensaje de error)
-                    if (!proxyText.startsWith('ERROR:') && proxyText.includes(',') && proxyText.split('\n').length > 1) {
-                        text = proxyText;
-                        console.log('[vivo] Datos obtenidos desde Apps Script proxy ✓');
-                    } else {
-                        console.warn('[vivo] Apps Script devolvió datos inválidos, usando CSV fallback:', proxyText.slice(0, 100));
-                    }
-                }
-            } catch (proxyErr) {
-                console.warn('[vivo] Apps Script timeout/error, usando CSV fallback:', proxyErr.message);
+        const parsed = (data || []).map(m => {
+            let standardEstado = 'Pendiente';
+            if (m.estado === 'EN_VIVO') standardEstado = 'En Vivo';
+            else if (m.estado === 'FINALIZADO' || m.estado === 'OFICIAL' || m.estado === 'EN_REVISION') standardEstado = 'Finalizado';
+            
+            let fechaStr = '', horaStr = '';
+            if (m.fecha_hora) {
+                // Keep it simple for dates
+                const d = new Date(m.fecha_hora);
+                fechaStr = d.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                horaStr = d.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: true });
             }
+
+            return {
+                fecha: fechaStr,
+                hora: horaStr,
+                lugar: m.lugar || '',
+                cancha: m.cancha || '',
+                local: m.equipo_local?.nombre || 'Por definir',
+                visitante: m.equipo_visitante?.nombre || 'Por definir',
+                categoria: m.categoria?.toString() || '',
+                jornada: m.jornada || '',
+                golesLocal: m.goles_local?.toString() || '',
+                golesVisitante: m.goles_visitante?.toString() || '',
+                estadoStandard: standardEstado
+            };
+        });
+
+        const newJson = JSON.stringify(parsed);
+        const dataChanged = newJson !== lastMatchesJson;
+        lastMatchesJson = newJson;
+
+        if (dataChanged) {
+            allMatches = parsed;
         }
-
-        // ── Intento 2: CSV público (fallback si proxy falló o no está configurado) ──
-        if (!text) {
-            const bust = `&nocache=${Date.now()}&r=${Math.random().toString(36).slice(2)}`;
-            const csvRes = await fetch(`${SHEET_CSV_URL}${bust}`, {
-                cache: 'no-store',
-                headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' },
-                signal: controller.signal
-            });
-            if (!csvRes.ok) throw new Error(`HTTP ${csvRes.status}`);
-            text = await csvRes.text();
-            console.log('[vivo] Datos obtenidos desde CSV público (puede tener caché de Google)');
-        }
-
-        // ── Comparar y renderizar solo si algo cambió ──
-        const newHash = hashText(text);
-        const oldHash = lastFetchedText ? hashText(lastFetchedText) : null;
-        const dataChanged = newHash !== oldHash;
-
-        lastFetchedText = text;
-        localStorage.setItem(CACHE_KEY, text);
 
         if (!isSilent || dataChanged) {
-            parseCSV(text);
             updateFilters();
             renderMatches();
         }
     } catch (error) {
-        if (error.name !== 'AbortError') console.error('[vivo] Error fetch:', error);
+        console.error('[vivo] Error fetch:', error);
 
         if (!isSilent) {
-            // En carga inicial, intentar recuperar desde localStorage como último recurso
-            const cached = localStorage.getItem(CACHE_KEY);
-            if (cached) {
-                lastFetchedText = cached;
-                parseCSV(cached);
-                updateFilters();
-                renderMatches();
+            if (allMatches.length > 0) {
                 showToast('Usando datos en caché. Sin conexión.');
             } else {
                 matchesList.innerHTML = '';
@@ -231,58 +194,8 @@ async function fetchAndRender(isSilent = false) {
             showToast('Error de conexión. Reintentando en breve...');
         }
     } finally {
-        clearTimeout(timeoutId);
         if (isSilent) refreshBar.hidden = true;
     }
-}
-
-function parseCSV(text) {
-    const lines = text.trim().split('\n');
-    if (lines.length < 2) return;
-
-    const parsed = [];
-    for (let i = 1; i < lines.length; i++) {
-        const row = lines[i];
-        if (!row.trim()) continue;
-
-        const values = [];
-        let inQuotes = false;
-        let currentValue = '';
-        for (let char of row) {
-            if (char === '"') {
-                inQuotes = !inQuotes;
-            } else if (char === ',' && !inQuotes) {
-                values.push(currentValue);
-                currentValue = '';
-            } else {
-                currentValue += char;
-            }
-        }
-        values.push(currentValue);
-
-        if (values.length >= 12) {
-            const rawEstado = values[11].trim();
-            const estadoLC = rawEstado.toLowerCase();
-            let standardEstado = 'Pendiente';
-            if (estadoLC.includes('vivo')) standardEstado = 'En Vivo';
-            else if (estadoLC.includes('finalizado')) standardEstado = 'Finalizado';
-
-            parsed.push({
-                fecha: values[0].trim(),
-                hora: values[1].trim(),
-                lugar: values[2].trim(),
-                cancha: values[3].trim(),
-                local: values[4].trim(),
-                visitante: values[6].trim(),
-                categoria: values[7].trim(),
-                jornada: values[8].trim(),
-                golesLocal: values[9].trim(),
-                golesVisitante: values[10].trim(),
-                estadoStandard: standardEstado
-            });
-        }
-    }
-    allMatches = parsed;
 }
 
 function updateFilters() {
