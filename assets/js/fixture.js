@@ -39,7 +39,7 @@ function getByeTeams(cat, jornada) {
   if (allTeams.length === 0) return [];
   const playing = new Set();
   G.fixture
-    .filter(m => String(m.cat || m.categoria) === String(cat) && String(m.jornada) === String(jornada))
+    .filter(m => String(m.tabId) === String(cat) && String(m.jornada) === String(jornada))
     .forEach(m => {
       if (m.local) playing.add(m.local);
       if (m.visitante) playing.add(m.visitante);
@@ -248,19 +248,27 @@ async function loadAll() {
       return ins ? ins.grupo : null;
     };
 
-    // Mapear equipos por categoría a partir de partidos
+    // Mapear equipos por pestaña (tabId) a partir de partidos
     G.equipos = {};
     matches.forEach(m => {
-      const cat = String(m.categoria || '').trim();
-      if (!cat) return;
-      if (!G.equipos[cat]) G.equipos[cat] = new Set();
       const loc = m.equipo_local?.nombre?.trim().toUpperCase();
       const vis = m.equipo_visitante?.nombre?.trim().toUpperCase();
-      if (loc) G.equipos[cat].add(loc);
-      if (vis) G.equipos[cat].add(vis);
+      
+      const grpLoc = getGrupo(m.equipo_local_id, m.categoria);
+      const grpVis = getGrupo(m.equipo_visitante_id, m.categoria);
+      
+      // Determinar a qué tabId pertenece
+      let tabId = String(m.categoria || '').trim();
+      if (grpLoc && grpLoc === grpVis) {
+        tabId = tabId + '_' + grpLoc;
+      }
+      
+      if (!G.equipos[tabId]) G.equipos[tabId] = new Set();
+      if (loc) G.equipos[tabId].add(loc);
+      if (vis) G.equipos[tabId].add(vis);
     });
-    Object.keys(G.equipos).forEach(cat => {
-      G.equipos[cat] = Array.from(G.equipos[cat]);
+    Object.keys(G.equipos).forEach(tabId => {
+      G.equipos[tabId] = Array.from(G.equipos[tabId]);
     });
 
     // Mapear partidos a G.fixture
@@ -296,9 +304,17 @@ async function loadAll() {
         } catch (e) {}
       }
 
+      let tabId = catStr;
+      const grpLocal = getGrupo(m.equipo_local_id, m.categoria);
+      const grpVisita = getGrupo(m.equipo_visitante_id, m.categoria);
+      if (grpLocal && grpLocal === grpVisita) {
+        tabId = tabId + '_' + grpLocal;
+      }
+
       return {
         id: m.id,
         cat: catStr,
+        tabId: tabId,
         categoria: catStr,
         jornada: jorStr,
         local: localName,
@@ -312,8 +328,8 @@ async function loadAll() {
         score: (golesL !== null && golesV !== null) ? `${golesL} - ${golesV}` : '',
         hora,
         cancha: m.cancha || '',
-        grupoLocal:   getGrupo(m.equipo_local_id, m.categoria),
-        grupoVisita:  getGrupo(m.equipo_visitante_id, m.categoria),
+        grupoLocal:   grpLocal,
+        grupoVisita:  grpVisita,
       };
     });
 
