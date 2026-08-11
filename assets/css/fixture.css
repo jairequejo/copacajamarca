@@ -503,3 +503,30 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 @media (min-width: 720px) {
   .main-content { padding: 20px 16px 36px; }
 }
+
+/* ── DESKTOP ADAPTATION FOR INTERNAL PAGES (min-width: 1024px) ── */
+@media (min-width: 1024px) {
+  body {
+    padding-bottom: 0;
+  }
+  
+  /* Delete Bottom Nav */
+  .bottom-nav {
+    display: none !important;
+  }
+
+  .main-content {
+    max-width: 1000px;
+    padding-top: 40px;
+  }
+
+  .matches-list {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px;
+  }
+
+  .filters-wrap {
+    padding: 16px 40px;
+  }
+}
