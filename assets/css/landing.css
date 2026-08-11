@@ -143,25 +143,25 @@ a { text-decoration: none; }
   position: relative; z-index: 2;
 }
 
-/* ─── LOGOS MARQUEE ──────────────────────────────────────────── */
 .marquee-container {
   background: transparent;
   overflow: hidden;
   padding-top: 22px;
   display: flex;
-  align-items: center;
   position: relative;
   z-index: 2;
   margin: 0 -20px;
+  width: calc(100% + 40px);
 }
-.marquee-track {
-  display: inline-block;
+.marquee-content {
+  flex: 0 0 auto;
+  display: flex;
   white-space: nowrap;
-  animation: scroll-marquee 8s linear infinite;
-  -webkit-animation: scroll-marquee 8s linear infinite;
+  animation: scroll-marquee 10s linear infinite;
+  -webkit-animation: scroll-marquee 10s linear infinite;
   will-change: transform;
 }
-.marquee-track img {
+.marquee-content img {
   display: inline-block;
   width: 44px;
   height: 44px;
@@ -173,11 +173,11 @@ a { text-decoration: none; }
 
 @-webkit-keyframes scroll-marquee {
   0% { -webkit-transform: translateX(0); transform: translateX(0); }
-  100% { -webkit-transform: translateX(-50%); transform: translateX(-50%); }
+  100% { -webkit-transform: translateX(-100%); transform: translateX(-100%); }
 }
 @keyframes scroll-marquee {
   0% { -webkit-transform: translateX(0); transform: translateX(0); }
-  100% { -webkit-transform: translateX(-50%); transform: translateX(-50%); }
+  100% { -webkit-transform: translateX(-100%); transform: translateX(-100%); }
 }
 
 /* ─── MAIN / NAV ─────────────────────────────────────────── */
