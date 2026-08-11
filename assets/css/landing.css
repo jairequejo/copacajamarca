@@ -156,10 +156,10 @@ a { text-decoration: none; }
 }
 .marquee-track {
   display: flex;
-  gap: 32px;
+  gap: 16px;
   align-items: center;
   width: max-content;
-  animation: scroll-marquee 15s linear infinite;
+  animation: scroll-marquee 8s linear infinite;
   padding: 0 16px;
 }
 .marquee-track img {
