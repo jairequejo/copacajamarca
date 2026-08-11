@@ -159,7 +159,6 @@ a { text-decoration: none; }
   animation: scroll-marquee 8s linear infinite;
   -webkit-animation: scroll-marquee 8s linear infinite;
   will-change: transform;
-  padding: 0 16px;
 }
 .marquee-track img {
   display: inline-block;
