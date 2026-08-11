@@ -157,8 +157,8 @@ a { text-decoration: none; }
   flex: 0 0 auto;
   display: flex;
   white-space: nowrap;
-  animation: scroll-marquee 10s linear infinite;
-  -webkit-animation: scroll-marquee 10s linear infinite;
+  animation: scroll-marquee 18s linear infinite;
+  -webkit-animation: scroll-marquee 18s linear infinite;
   will-change: transform;
 }
 .marquee-content img {
