@@ -139,7 +139,18 @@ async function fetchAndRender(isSilent = false) {
 
         if (error) throw error;
 
-        const parsed = (data || []).map(m => {
+        const now = new Date();
+        const cutoff = new Date(now.getTime() - (4 * 24 * 60 * 60 * 1000)); // Hace 4 días
+
+        const parsed = (data || [])
+            .filter(m => {
+                if (m.estado === 'EN_VIVO') return true;
+                if (!m.fecha_hora) return false;
+                
+                const matchDate = new Date(m.fecha_hora);
+                return matchDate >= cutoff;
+            })
+            .map(m => {
             let standardEstado = 'Pendiente';
             if (m.estado === 'EN_VIVO') standardEstado = 'En Vivo';
             else if (m.estado === 'FINALIZADO' || m.estado === 'OFICIAL' || m.estado === 'EN_REVISION') standardEstado = 'Finalizado';
