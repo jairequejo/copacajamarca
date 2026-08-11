@@ -52,7 +52,6 @@ a { text-decoration: none; }
   height: 100%;
   object-fit: cover;
   opacity: 0;
-  filter: saturate(.65) brightness(.75);
   animation: hero-slide 15s ease-in-out infinite;
 }
 
@@ -169,7 +168,6 @@ a { text-decoration: none; }
   width: 44px;
   height: 44px;
   object-fit: contain;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
   margin-right: 16px;
   vertical-align: middle;
 }
