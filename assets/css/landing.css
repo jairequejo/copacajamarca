@@ -14,10 +14,9 @@ body {
 img { display: block; max-width: 100%; }
 a { text-decoration: none; }
 
-/* ─── HERO — compacto en mobile para que EN VIVO quede visible ─ */
 .hero {
   background: var(--navy);
-  padding: calc(env(safe-area-inset-top) + 20px) 20px 28px;
+  padding: calc(env(safe-area-inset-top) + 20px) 20px 16px;
   text-align: center;
   border-bottom: 4px solid var(--gold);
   position: relative;
@@ -144,33 +143,35 @@ a { text-decoration: none; }
   position: relative; z-index: 2;
 }
 
-/* ─── STATS BAR ──────────────────────────────────────────── */
-.stats-bar {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  background: var(--gold);
+/* ─── LOGOS MARQUEE ──────────────────────────────────────────── */
+.marquee-container {
+  background: transparent;
+  overflow: hidden;
+  padding-top: 22px;
+  display: flex;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+  margin: 0 -20px;
 }
-.stat-cell {
-  text-align: center;
-  padding: 13px 8px;
+.marquee-track {
+  display: flex;
+  gap: 32px;
+  align-items: center;
+  width: max-content;
+  animation: scroll-marquee 15s linear infinite;
+  padding: 0 16px;
 }
-.stat-cell + .stat-cell {
-  border-left: 1px solid rgba(122,94,0,.18);
+.marquee-track img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
 }
-.stat-num {
-  font-family: var(--font-display);
-  font-size: 2rem;
-  color: var(--navy);
-  line-height: 1;
-}
-.stat-lbl {
-  font-family: var(--font-condensed);
-  font-size: .78rem;
-  font-weight: 800;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  color: var(--gold-text);
-  margin-top: 2px;
+
+@keyframes scroll-marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 
 /* ─── MAIN / NAV ─────────────────────────────────────────── */
@@ -518,7 +519,7 @@ a { text-decoration: none; }
 
 /* ─── RESPONSIVE ─────────────────────────────────────────── */
 @media (min-width: 420px) {
-  .hero { padding-top: calc(env(safe-area-inset-top) + 32px); padding-bottom: 36px; }
+  .hero { padding-top: calc(env(safe-area-inset-top) + 32px); padding-bottom: 20px; }
   .hero-title { font-size: 4.8rem; }
   .hero-logo  { width: 80px; height: 80px; }
 }

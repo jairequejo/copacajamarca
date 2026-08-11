@@ -1,3 +1,5 @@
+import { supabase } from './supabase.js';
+
 /* Ripple on tap */
 function initRipple() {
   document.querySelectorAll('.nav-card').forEach(card => {
@@ -27,4 +29,34 @@ function initRipple() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', initRipple);
+async function loadMarquee() {
+  try {
+    const { data: equipos } = await supabase
+      .from('equipos')
+      .select('logo_url')
+      .not('logo_url', 'is', null)
+      .limit(30);
+
+    if (!equipos || equipos.length === 0) return;
+    
+    const track = document.getElementById('marqueeTrack');
+    if (!track) return;
+
+    let html = '';
+    equipos.forEach(eq => {
+      // Usar logo.png generico si hay algun error raro
+      const src = eq.logo_url || 'assets/img/logo.png';
+      html += `<img src="${src}" alt="Logo" onerror="this.style.display='none'">`;
+    });
+    
+    // Duplicar para el efecto infinito suave (el keyframe mueve de 0 a -50%)
+    track.innerHTML = html + html;
+  } catch(e) {
+    console.error('Error fetching logos:', e);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initRipple();
+  loadMarquee();
+});

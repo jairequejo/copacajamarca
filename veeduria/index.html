@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#001a4d">
+  <title>Portal Veeduría · Copa Cajamarca</title>
+  
+  <link rel="icon" type="image/png" sizes="32x32" href="../assets/img/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="../assets/img/favicon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="../assets/img/apple-touch-icon.png">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --navy: #001a4d;
+      --navy-light: #00287a;
+      --gold: #ffba00;
+      --gold-dark: #f1a200;
+      --gold-light: #ffce4d;
+      --red: #d60d0d;
+      --bg: #eef2f7;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+    body {
+      background-color: var(--navy);
+      background-image: repeating-linear-gradient(-45deg, transparent 0, transparent 28px, rgba(255,255,255,.014) 28px, rgba(255,255,255,.014) 29px);
+      min-height: 100dvh;
+      font-family: 'Barlow', sans-serif;
+      display: flex;
+      flex-direction: column;
+      color: #fff;
+    }
+
+    /* HEADER */
+    .site-header {
+      background: var(--navy);
+      width: 100%;
+      z-index: 10;
+      position: relative;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    .header-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .header-logo {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: #fff;
+      object-fit: cover;
+      box-shadow: 0 0 0 2px rgba(255,186,0,.5);
+    }
+    .header-title-sup {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: .75rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      color: rgba(255,255,255,.55);
+      text-transform: uppercase;
+    }
+    .header-title-main {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.9rem;
+      color: #fff;
+      line-height: 1;
+    }
+    .page-bar {
+      background: var(--gold);
+      border-bottom: 3px solid var(--gold-dark);
+    }
+    .page-bar-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 10px 16px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      font-size: 1rem;
+      color: var(--navy);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    #btn-logout {
+      display: none;
+      background: var(--red);
+      color: #fff;
+      border: 1px solid #b90b0b;
+      padding: 6px 16px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      font-size: 0.95rem;
+      border-radius: 6px;
+      cursor: pointer;
+      text-transform: uppercase;
+      box-shadow: 0 4px 12px rgba(214,13,13,0.3);
+    }
+
+    .content-wrapper {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 24px 16px 60px;
+      width: 100%;
+      flex: 1;
+    }
+
+    /* CARD / BORDERS */
+    .card {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,186,0,0.18);
+      border-radius: 14px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+    }
+
+    /* BUTTONS */
+    .btn-primary {
+      background: var(--gold);
+      color: #5a4400;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 900;
+      font-size: 1.2rem;
+      padding: 16px 24px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      width: 100%;
+      box-shadow: 0 4px 16px rgba(255,186,0,.2);
+      transition: transform .1s;
+    }
+    .btn-primary:active { transform: scale(0.98); }
+
+    /* LOGIN */
+    #login-view {
+      max-width: 440px;
+      margin: 20px auto 0;
+      padding: 48px 32px;
+      text-align: center;
+    }
+    .login-logo {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: #fff;
+      margin: 0 auto 24px;
+      display: block;
+      box-shadow: 0 0 0 4px rgba(255,186,0,.6);
+    }
+    .login-title { font-family: 'Bebas Neue', sans-serif; font-size: 3.5rem; margin-bottom: 8px; }
+    .login-sub { font-family: 'Barlow Condensed', sans-serif; color: rgba(255,255,255,.6); margin-bottom: 30px; }
+    
+    .dni-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; margin-bottom: 30px; }
+    .dni-box {
+      width: 100%; aspect-ratio: 1/1.3; background: rgba(0,0,0,0.5); border: 2px solid rgba(255,255,255,.15);
+      color: #fff; border-radius: 8px; font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; text-align: center;
+    }
+    .dni-box:focus, .dni-box.filled { border-color: var(--gold); color: var(--gold); background: rgba(255,186,0,.15); }
+
+    /* DASHBOARD HEADER PROFILE */
+    #dashboard { display: none; width: 100%; }
+    .profile-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(0,0,0,0.3);
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.1);
+      margin-bottom: 24px;
+    }
+    .profile-logo {
+      width: 64px; height: 64px; object-fit: contain;
+    }
+    .profile-info h2 { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; margin: 0; line-height: 1; color: var(--gold); }
+    .profile-info p { font-family: 'Barlow Condensed', sans-serif; font-size: 1.1rem; color: #fff; margin-top: 4px; text-transform: uppercase; font-weight: 700; }
+
+    /* BUSCADOR DNI / APELLIDO */
+    .search-section {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,186,0,0.18);
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+    }
+    .search-section h3 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.8rem;
+      color: var(--gold);
+      margin-bottom: 16px;
+      letter-spacing: .04em;
+    }
+    .search-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 540px) {
+      .search-row { flex-direction: column; }
+    }
+    #search-input {
+      flex: 1;
+      padding: 12px 16px;
+      background: #f8fafc;
+      border: 2px solid #cbd5e1;
+      color: var(--navy);
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-family: 'Barlow', sans-serif;
+      font-weight: 500;
+      outline: none;
+    }
+    #search-input:focus {
+      border-color: var(--navy);
+    }
+    #btn-search {
+      background: var(--gold);
+      color: var(--navy);
+      border: none;
+      padding: 0 24px;
+      border-radius: 8px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800;
+      font-size: 1.1rem;
+      text-transform: uppercase;
+      cursor: pointer;
+      min-height: 48px;
+    }
+
+    #search-results {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* BREADCRUMB / VOLVER */
+    .nav-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .btn-back {
+      background: transparent; color: var(--gold); border: 1px solid var(--gold);
+      padding: 8px 16px; border-radius: 6px; cursor: pointer; font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+      display: none; text-transform: uppercase;
+    }
+    .section-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; color: #fff; letter-spacing: 0.05em; }
+
+    /* GRID EQUIPOS & CATEGORIAS */
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 16px;
+    }
+    .grid-card {
+      background: rgba(0,0,0,0.4); border-radius: 12px; padding: 16px 12px; text-align: center;
+      cursor: pointer; transition: transform 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-bottom: 4px solid var(--gold);
+    }
+    .grid-card:active { transform: scale(0.95); }
+    .grid-card img { width: 80px; height: 80px; object-fit: contain; margin-bottom: 12px; }
+    .grid-card h4 { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; color: #fff; font-size: 1.1rem; text-transform: uppercase; line-height: 1.1;}
+
+    /* JUGADORES LIST */
+    .jugadores-list { display: flex; flex-direction: column; gap: 16px; }
+    .jugador-card {
+      background: #fff; border-radius: 12px; padding: 16px; display: flex; gap: 16px; align-items: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .jugador-foto {
+      width: 70px; height: 70px; border-radius: 8px; object-fit: cover; background: #e2e8f0;
+      border: 1px solid #cbd5e1;
+    }
+    .jugador-info { flex: 1; color: var(--navy); }
+    .jugador-info h4 { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; line-height: 1; margin-bottom: 4px; }
+    .jugador-info p { font-size: 0.95rem; color: #475569; margin-bottom: 2px; font-weight: 500; }
+    .jugador-info p strong { color: var(--navy); }
+    
+    .btn-action {
+      background: var(--navy); color: #fff; text-decoration: none; padding: 8px 12px; border-radius: 6px;
+      font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 0.95rem; text-align: center;
+      display: inline-block; margin-top: 6px;
+    }
+    
+    .btn-ficha-general {
+      background: var(--gold); color: var(--navy); text-decoration: none; padding: 12px; border-radius: 8px;
+      font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 1.1rem; text-align: center;
+      display: block; margin-bottom: 20px; text-transform: uppercase; border: none; cursor: pointer;
+    }
+
+    #toast {
+      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
+      background: var(--red); color: #fff; padding: 16px 32px; border-radius: 12px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 1.15rem; opacity: 0; transition: all .3s; z-index: 9999;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-left">
+        <img src="../assets/img/logo.png" alt="Copa Cajamarca" class="header-logo">
+        <div>
+          <div class="header-title-sup">Copa Cajamarca 2026</div>
+          <div class="header-title-main">PORTAL VEEDURÍA</div>
+        </div>
+      </div>
+    </div>
+    <div class="page-bar">
+      <div class="page-bar-inner">
+        <span>ACCESO CUERPO TÉCNICO</span>
+        <button id="btn-logout">SALIR</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="content-wrapper">
+    <!-- LOGIN -->
+    <div id="login-view" class="card">
+      <img src="../assets/img/logo.png" alt="Logo" class="login-logo">
+      <h1 class="login-title">INICIAR SESIÓN</h1>
+      <p class="login-sub">Ingrese su DNI de Delegado o Entrenador</p>
+
+      <form id="form-login">
+        <div class="dni-grid">
+          <input type="tel" class="dni-box" maxlength="1" pattern="[0-9]" inputmode="numeric" autofocus>
+          <input type="tel" class="dni-box" maxlength="1" pattern="[0-9]" inputmode="numeric">
+          <input type="tel" class="dni-box" maxlength="1" pattern="[0-9]" inputmode="numeric">
+          <input type="tel" class="dni-box" maxlength="1" pattern="[0-9]" inputmode="numeric">
+          <input type="tel" class="dni-box" maxlength="1" pattern="[0-9]" inputmode="numeric">
+          <input type="tel" class="dni-box" maxlength="1" pattern="[0-9]" inputmode="numeric">
+          <input type="tel" class="dni-box" maxlength="1" pattern="[0-9]" inputmode="numeric">
+          <input type="tel" class="dni-box" maxlength="1" pattern="[0-9]" inputmode="numeric">
+        </div>
+        <input type="hidden" id="dni-input">
+        <button type="submit" id="btn-login" class="btn-primary">AUTENTICAR</button>
+      </form>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboard">
+      <div class="profile-header">
+        <img src="" id="del-logo" class="profile-logo" alt="Logo" style="display:none;">
+        <div class="profile-info">
+          <h2 id="del-nombre">HOLA, DELEGADO</h2>
+          <p id="del-equipo">Cargando...</p>
+        </div>
+      </div>
+
+      <!-- BUSCADOR -->
+      <div class="search-section" id="search-section">
+        <h3>AUDITAR JUGADOR RIVAL RÁPIDO</h3>
+        <div class="search-row">
+          <input type="text" id="search-input" placeholder="Ingrese DNI o Apellido">
+          <button id="btn-search">BUSCAR</button>
+        </div>
+        <div id="search-results"></div>
+      </div>
+
+      <div class="nav-bar">
+        <button id="btn-back" class="btn-back">« VOLVER</button>
+        <div class="section-title" id="section-title">EXPLORAR EQUIPOS PARTICIPANTES</div>
+      </div>
+
+      <div id="view-equipos" class="grid-container"></div>
+      <div id="view-categorias" class="grid-container" style="display:none;"></div>
+      <div id="view-jugadores" class="jugadores-list" style="display:none;"></div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+  <script type="module" src="veeduria.js?v=1"></script>
+</body>
+</html>
