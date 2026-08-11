@@ -536,3 +536,69 @@ a { text-decoration: none; }
 @media (min-width: 700px) {
   .main-content { padding: 22px 20px 28px; }
 }
+
+/* ─── DESKTOP SPLIT LAYOUT (min-width: 1024px) ───────────── */
+@media (min-width: 1024px) {
+  body {
+    display: grid;
+    grid-template-columns: 45% 55%;
+    grid-template-rows: 1fr auto;
+    grid-template-areas: 
+      "hero main"
+      "hero footer";
+    padding-bottom: 0;
+  }
+
+  .bottom-nav {
+    display: none !important;
+  }
+
+  .hero {
+    grid-area: hero;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    border-bottom: none;
+    border-right: 4px solid var(--gold);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 40px;
+  }
+
+  .marquee-container {
+    margin: 40px -40px 0 -40px;
+    width: calc(100% + 80px);
+  }
+
+  .main-content {
+    grid-area: main;
+    align-self: center;
+    padding: 80px 60px;
+    max-width: 800px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .nav-grid {
+    gap: 24px;
+  }
+
+  .nav-card {
+    padding: 24px;
+  }
+
+  .half-name { font-size: 1.4rem; }
+  .half-desc { font-size: 1rem; }
+  .live-name { font-size: 1.6rem; }
+  .live-desc { font-size: 1rem; }
+
+  .site-footer {
+    grid-area: footer;
+    background: transparent;
+    border-top: 1px solid rgba(0,26,77,.1);
+  }
+  .site-footer .footer-brand { color: var(--navy); }
+  .site-footer .footer-sub, .site-footer .footer-note { color: var(--text-soft); }
+  .site-footer .footer-logo { display: none; }
+}
