@@ -135,7 +135,7 @@ async function fetchAndRender(isSilent = false) {
         const { data, error } = await supabase
             .from('partidos')
             .select('id, fecha_hora, lugar, cancha, categoria, jornada, goles_local, goles_visitante, estado, equipo_local:equipos!partidos_equipo_local_id_fkey(nombre), equipo_visitante:equipos!partidos_equipo_visitante_id_fkey(nombre)')
-            .order('fecha_hora', { ascending: false });
+            .order('fecha_hora', { ascending: true });
 
         if (error) throw error;
 
