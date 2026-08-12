@@ -157,9 +157,11 @@ async function fetchAndRender(isSilent = false) {
             
             let fechaStr = '', horaStr = '';
             if (m.fecha_hora) {
-                // Keep it simple for dates
                 const d = new Date(m.fecha_hora);
-                fechaStr = d.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                // Format date as 'Sábado 15 de agosto'
+                const rawFecha = d.toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long' });
+                // Capitalize first letter
+                fechaStr = rawFecha.charAt(0).toUpperCase() + rawFecha.slice(1);
                 horaStr = d.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: true });
             }
 
