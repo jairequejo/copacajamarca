@@ -76,7 +76,8 @@ document.addEventListener('DOMContentLoaded', () => {
   async function cargarPartidos() {
     partidosList.innerHTML = '<p style="text-align:center; color:#94a3b8;">Cargando partidos programados...</p>';
     
-    // Obtenemos los partidos que están PROGRAMADOS o EN_VIVO
+    const cutoffISO = new Date(Date.now() - (4 * 24 * 60 * 60 * 1000)).toISOString();
+
     const { data, error } = await supabase
       .from('partidos')
       .select(`
@@ -90,8 +91,8 @@ document.addEventListener('DOMContentLoaded', () => {
         equipo_local:equipos!partidos_equipo_local_id_fkey(nombre),
         equipo_visitante:equipos!partidos_equipo_visitante_id_fkey(nombre)
       `)
-      .in('estado', ['PROGRAMADO', 'EN_VIVO'])
       .not('fecha_hora', 'is', null)
+      .gte('fecha_hora', cutoffISO)
       .order('fecha_hora', { ascending: true });
 
     if (error) {
@@ -126,7 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
       card.dataset.golesVisita = p.goles_visitante;
       card.innerHTML = `
         <div class="partido-header">
-          <span>${safe(horaTexto)} - ${safe(p.cancha || 'Cancha')}</span>
+          <span>${safe(horaTexto)} - ${safe(p.cancha || 'Cancha')} <strong style="color:var(--gold)">[${p.estado}]</strong></span>
           <span>Cat: ${safe(p.categoria || 'N/A')}</span>
         </div>
         
@@ -223,7 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function finalizarPartido(id) {
-    if (!confirm('¿Seguro que deseas enviar este partido a revisión? Desaparecerá de esta lista.')) return;
+    if (!confirm('¿Seguro que deseas enviar este partido a revisión?')) return;
 
     const { error } = await supabase
       .from('partidos')
