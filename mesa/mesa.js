@@ -203,10 +203,11 @@ document.addEventListener('DOMContentLoaded', () => {
         horaTexto = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
       }
 
-      const isFinalizado = p.estado === 'EN_REVISION';
-      const isOficial = p.estado === 'OFICIAL';
+      const estadoUpper = (p.estado || '').toUpperCase();
+      const isFinalizado = estadoUpper === 'EN_REVISION';
+      const isOficial = estadoUpper === 'OFICIAL';
       const isLocked = isFinalizado || isOficial;
-      const isProgramado = p.estado === 'PROGRAMADO';
+      const isProgramado = estadoUpper === 'PROGRAMADO';
 
       // Render '-' if programado, else use DB value or default to 0
       const gl = isProgramado ? '-' : (p.goles_local !== null ? p.goles_local : 0);
@@ -243,8 +244,8 @@ document.addEventListener('DOMContentLoaded', () => {
           ${isFinalizado ? `<button class="btn-envivo" data-action="editar" style="background:var(--navy); border:1px solid var(--gold); color:var(--gold); padding:16px; margin-top:16px; border-radius:10px; width:100%;">✏️ EDITAR RESULTADO / RECLAMO</button>` : ''}
         `;
       } else {
-        const btnEnVivoHTML = `<button class="btn-envivo" data-action="envivo" data-estado="${p.estado}">
-            ${p.estado === 'EN_VIVO' ? '🔙 VOLVER A PENDIENTE' : '▶️ INICIAR PARTIDO (EN VIVO)'}
+        const btnEnVivoHTML = `<button class="btn-envivo" data-action="envivo" data-estado="${estadoUpper}">
+            ${estadoUpper === 'EN_VIVO' ? '🔙 VOLVER A PENDIENTE' : '▶️ INICIAR PARTIDO (EN VIVO)'}
           </button>`;
 
         const scoreControlsDisabled = isProgramado ? 'disabled' : '';
@@ -301,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Delegación de eventos — sin window.*
       const btnEnVivo = card.querySelector('[data-action="envivo"]');
       if (btnEnVivo) {
-        if (p.estado === 'EN_VIVO') btnEnVivo.style.background = '#f97316';
+        if (estadoUpper === 'EN_VIVO') btnEnVivo.style.background = '#f97316';
         btnEnVivo.addEventListener('click', () => marcarEnVivo(p.id, btnEnVivo, p.goles_local, p.goles_visitante));
       }
       
@@ -334,7 +335,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
         
         let colorEstado = '#fff';
-        if (p.estado === 'EN_VIVO') colorEstado = '#16a34a';
+        if (estadoUpper === 'EN_VIVO') colorEstado = '#16a34a';
         if (isLocked) colorEstado = 'var(--gold)';
         
         tr.innerHTML = `
