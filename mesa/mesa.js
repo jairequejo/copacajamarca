@@ -76,7 +76,9 @@ document.addEventListener('DOMContentLoaded', () => {
   let allPartidosData = [];
 
   async function cargarPartidos() {
-    partidosList.innerHTML = '<p style="text-align:center; color:#94a3b8;">Cargando partidos programados...</p>';
+    if (allPartidosData.length === 0) {
+      partidosList.innerHTML = '<p style="text-align:center; color:#94a3b8;">Cargando partidos programados...</p>';
+    }
     
     const cutoffISO = new Date(Date.now() - (4 * 24 * 60 * 60 * 1000)).toISOString();
 
@@ -138,6 +140,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if(p.categoria) cats.add(p.categoria);
     });
 
+    const prevDia = selDia.value;
+    const prevLugar = selLugar.value;
+    const prevCat = selCat.value;
+
     selDia.innerHTML = '<option value="todos">📅 Todos los días</option>';
     selLugar.innerHTML = '<option value="todos">📍 Todos los lugares</option>';
     selCat.innerHTML = '<option value="todos">🏆 Todas las categorías</option>';
@@ -145,6 +151,10 @@ document.addEventListener('DOMContentLoaded', () => {
     [...dias].forEach(d => selDia.insertAdjacentHTML('beforeend', `<option value="${d}">${d.charAt(0).toUpperCase() + d.slice(1)}</option>`));
     [...lugares].forEach(l => selLugar.insertAdjacentHTML('beforeend', `<option value="${l}">${l}</option>`));
     [...cats].forEach(c => selCat.insertAdjacentHTML('beforeend', `<option value="${c}">${c}</option>`));
+
+    if (prevDia && [...dias].includes(prevDia)) selDia.value = prevDia;
+    if (prevLugar && [...lugares].includes(prevLugar)) selLugar.value = prevLugar;
+    if (prevCat && [...cats].includes(prevCat)) selCat.value = prevCat;
 
     selDia.onchange = aplicarFiltros;
     selLugar.onchange = aplicarFiltros;
