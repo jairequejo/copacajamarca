@@ -327,10 +327,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const btnAumentarVisita = card.querySelector('.btn-score.plus[data-team="visitante"]');
       const btnQuitarVisita = card.querySelector('.btn-score.minus[data-team="visitante"]');
 
-      if (btnAumentarLocal) btnAumentarLocal.addEventListener('click', () => actualizarGol(p.id, 'local', 1, p.goles_local, p.goles_visitante));
-      if (btnQuitarLocal) btnQuitarLocal.addEventListener('click', () => actualizarGol(p.id, 'local', -1, p.goles_local, p.goles_visitante));
-      if (btnAumentarVisita) btnAumentarVisita.addEventListener('click', () => actualizarGol(p.id, 'visita', 1, p.goles_local, p.goles_visitante));
-      if (btnQuitarVisita) btnQuitarVisita.addEventListener('click', () => actualizarGol(p.id, 'visita', -1, p.goles_local, p.goles_visitante));
+      if (btnAumentarLocal) btnAumentarLocal.addEventListener('click', () => actualizarGol(p.id, 'local', 1));
+      if (btnQuitarLocal) btnQuitarLocal.addEventListener('click', () => actualizarGol(p.id, 'local', -1));
+      if (btnAumentarVisita) btnAumentarVisita.addEventListener('click', () => actualizarGol(p.id, 'visita', 1));
+      if (btnQuitarVisita) btnQuitarVisita.addEventListener('click', () => actualizarGol(p.id, 'visita', -1));
       
       if (resumenTbody) {
         const tr = document.createElement('tr');
@@ -441,18 +441,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  async function actualizarGol(id, tipo, cantidad, currentGl, currentGv) {
+  async function actualizarGol(id, tipo, cantidad) {
+    const card = document.querySelector(`.partido-card[data-id="${id}"]`);
+    if (!card) return;
+    
     const displayElement = document.getElementById(tipo === 'local' ? `local-${id}` : `visita-${id}`);
     
-    // Si era nulo y están sumando, empezamos de 0.
-    let currentDBValue = tipo === 'local' ? currentGl : currentGv;
-    if (currentDBValue === null) currentDBValue = 0;
+    // Leer el valor actual DIRECTAMENTE DEL DOM para evitar cierres léxicos obsoletos
+    let valStr = displayElement.innerText.trim();
+    let currentVal = (valStr === '-' || valStr === '') ? 0 : parseInt(valStr);
+    if (isNaN(currentVal)) currentVal = 0;
 
-    let nuevoValor = currentDBValue + cantidad;
+    let nuevoValor = currentVal + cantidad;
     if (nuevoValor < 0) nuevoValor = 0;
     
+    // Prevenir el rapid-fire tapping (debounce / bloqueo temporal)
+    const btns = card.querySelectorAll(`.btn-score[data-team="${tipo}"]`);
+    btns.forEach(b => b.style.pointerEvents = 'none');
+
     // Actualización optimista (UI primero)
+    const valorPrevio = currentVal;
     displayElement.innerText = nuevoValor;
+    card.dataset[tipo === 'local' ? 'golesLocal' : 'golesVisita'] = nuevoValor;
 
     const payload = {};
     if (tipo === 'local') payload.goles_local = nuevoValor;
@@ -466,9 +476,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (error) {
       console.error(error);
-      showToast('Fallo al guardar gol. Verifica permisos RLS.', true);
-      displayElement.innerText = valorPrevio; // revertir al valor previo correcto
+      showToast('Fallo al guardar gol. Conexión inestable o falta de permisos.', true);
+      // Rollback Antifrágil
+      displayElement.innerText = valorPrevio;
+      card.dataset[tipo === 'local' ? 'golesLocal' : 'golesVisita'] = valorPrevio;
     }
+
+    // Rehabilitar botones tras el roundtrip
+    btns.forEach(b => b.style.pointerEvents = 'auto');
   }
 
   async function finalizarPartido(id) {
