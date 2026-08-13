@@ -275,12 +275,16 @@
     }
     .btn-envivo:hover { border-color: #fff; background: rgba(0,26,77,0.8); }
     .btn-envivo:active { transform: scale(0.98); }
-    .btn-envivo[disabled], .btn-envivo[style*="16a34a"] {
-      background: #16a34a !important;
-      border-color: #15803d !important;
+    .btn-envivo[disabled] {
+      opacity: 0.6 !important;
+      cursor: not-allowed;
+    }
+    .btn-envivo[style*="f97316"] {
+      background: #f97316 !important;
+      border-color: #ea580c !important;
       color: #fff !important;
       opacity: 1 !important;
-      box-shadow: 0 4px 16px rgba(22,163,74,0.3);
+      box-shadow: 0 4px 16px rgba(249,115,22,0.3);
     }
     
     .btn-finalizar {
@@ -317,9 +321,28 @@
       .equipo-name { width: 100%; text-align: center; font-size: 1.8rem; }
       .score-controls { width: 100%; justify-content: center; }
       .partido-header { flex-direction: column; align-items: center; gap: 8px; text-align: center; }
-      #filters-container { flex-direction: column; }
+      #filters-container { flex-direction: column; gap: 10px !important; }
       #filters-container select { width: 100%; flex: none; }
     }
+
+    .mobile-filter {
+      flex: 1 1 auto; min-width: 130px;
+      padding: 14px 20px; border-radius: 999px;
+      background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.15);
+      color: #fff; font-family: 'Barlow Condensed', sans-serif; font-size: 1.1rem; font-weight: 700;
+      text-align: center; text-align-last: center; appearance: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      outline: none; cursor: pointer;
+    }
+    .mobile-filter:hover { background: rgba(0,0,0,0.7); }
+    .mobile-filter.filter-gold {
+      background: var(--gold); border-color: var(--gold); color: var(--navy);
+      font-weight: 900;
+    }
+    .mobile-filter.filter-gold:hover { background: var(--gold-dark); }
+    
+    .btn-toggle-reclamo:hover { background: rgba(220,38,38,0.2) !important; }
+
   </style>
 </head>
 <body>
@@ -377,21 +400,21 @@
     </header>
 
     <div class="content-wrapper">
-      <div id="filters-container" style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:24px; display:none;">
-        <select id="filter-dia" style="flex:1 1 calc(50% - 6px); min-width:140px; padding:14px; border-radius:10px; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.15); color:#fff; font-family:'Barlow',sans-serif; font-size:1.05rem;">
+      <div id="filters-container" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:24px; display:none; justify-content:center;">
+        <select id="filter-dia" class="mobile-filter">
           <option value="todos">📅 Todos los días</option>
         </select>
-        <select id="filter-lugar" style="flex:1 1 calc(50% - 6px); min-width:140px; padding:14px; border-radius:10px; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.15); color:#fff; font-family:'Barlow',sans-serif; font-size:1.05rem;">
+        <select id="filter-lugar" class="mobile-filter">
           <option value="todos">📍 Todos los lugares</option>
         </select>
-        <select id="filter-cat" style="flex:1 1 calc(50% - 6px); min-width:140px; padding:14px; border-radius:10px; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.15); color:#fff; font-family:'Barlow',sans-serif; font-size:1.05rem;">
-          <option value="todos">🏆 Todas las categorías</option>
+        <select id="filter-cat" class="mobile-filter">
+          <option value="todos">🏆 Todas las cat.</option>
         </select>
-        <select id="filter-estado" style="flex:1 1 calc(50% - 6px); min-width:140px; padding:14px; border-radius:10px; background:var(--gold); border:1px solid var(--gold); color:var(--navy); font-family:'Barlow Condensed',sans-serif; font-weight:800; text-transform:uppercase; font-size:1.15rem; cursor:pointer;">
+        <select id="filter-estado" class="mobile-filter filter-gold">
           <option value="todos">🎯 TODOS LOS ESTADOS</option>
           <option value="EN_VIVO">🔴 EN VIVO</option>
           <option value="PROGRAMADO">⏳ PENDIENTES</option>
-          <option value="FINALIZADOS">✔️ FINALIZADOS / OFICIALES</option>
+          <option value="FINALIZADOS">✔️ FINALIZADOS</option>
         </select>
       </div>
 
