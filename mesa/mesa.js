@@ -73,6 +73,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // --- CARGAR PARTIDOS ---
+  let allPartidosData = [];
+
   async function cargarPartidos() {
     partidosList.innerHTML = '<p style="text-align:center; color:#94a3b8;">Cargando partidos programados...</p>';
     
@@ -87,6 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
         estado,
         fecha_hora,
         cancha,
+        lugar,
         categoria,
         equipo_local:equipos!partidos_equipo_local_id_fkey(nombre),
         equipo_visitante:equipos!partidos_equipo_visitante_id_fkey(nombre)
@@ -106,7 +109,72 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    renderizarPartidos(data);
+    allPartidosData = data;
+    construirFiltros(data);
+    aplicarFiltros();
+  }
+
+  function construirFiltros(data) {
+    const filterContainer = document.getElementById('filters-container');
+    const selDia = document.getElementById('filter-dia');
+    const selLugar = document.getElementById('filter-lugar');
+    const selCat = document.getElementById('filter-cat');
+    if(!filterContainer) return;
+
+    filterContainer.style.display = 'flex';
+
+    const dias = new Set();
+    const lugares = new Set();
+    const cats = new Set();
+
+    data.forEach(p => {
+      if(p.fecha_hora) {
+        const d = new Date(p.fecha_hora);
+        const dayStr = d.toLocaleDateString('es-PE', { weekday:'long', day:'numeric', month:'long' });
+        dias.add(dayStr);
+      }
+      if(p.lugar) lugares.add(p.lugar);
+      if(p.categoria) cats.add(p.categoria);
+    });
+
+    selDia.innerHTML = '<option value="todos">📅 Todos los días</option>';
+    selLugar.innerHTML = '<option value="todos">📍 Todos los lugares</option>';
+    selCat.innerHTML = '<option value="todos">🏆 Todas las categorías</option>';
+
+    [...dias].forEach(d => selDia.insertAdjacentHTML('beforeend', `<option value="${d}">${d.charAt(0).toUpperCase() + d.slice(1)}</option>`));
+    [...lugares].forEach(l => selLugar.insertAdjacentHTML('beforeend', `<option value="${l}">${l}</option>`));
+    [...cats].forEach(c => selCat.insertAdjacentHTML('beforeend', `<option value="${c}">${c}</option>`));
+
+    selDia.onchange = aplicarFiltros;
+    selLugar.onchange = aplicarFiltros;
+    selCat.onchange = aplicarFiltros;
+  }
+
+  function aplicarFiltros() {
+    const diaVal = document.getElementById('filter-dia')?.value || 'todos';
+    const lugarVal = document.getElementById('filter-lugar')?.value || 'todos';
+    const catVal = document.getElementById('filter-cat')?.value || 'todos';
+
+    const filtrados = allPartidosData.filter(p => {
+      let matchDia = true;
+      if(diaVal !== 'todos' && p.fecha_hora) {
+        const d = new Date(p.fecha_hora);
+        const pDia = d.toLocaleDateString('es-PE', { weekday:'long', day:'numeric', month:'long' });
+        if(pDia !== diaVal) matchDia = false;
+      } else if (diaVal !== 'todos' && !p.fecha_hora) {
+        matchDia = false;
+      }
+
+      let matchLugar = true;
+      if(lugarVal !== 'todos' && p.lugar !== lugarVal) matchLugar = false;
+
+      let matchCat = true;
+      if(catVal !== 'todos' && String(p.categoria) !== catVal) matchCat = false;
+
+      return matchDia && matchLugar && matchCat;
+    });
+
+    renderizarPartidos(filtrados);
   }
 
   function renderizarPartidos(partidos) {
@@ -120,11 +188,14 @@ document.addEventListener('DOMContentLoaded', () => {
         horaTexto = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
       }
 
+      const gl = p.goles_local !== null ? p.goles_local : 0;
+      const gv = p.goles_visitante !== null ? p.goles_visitante : 0;
+
       const card = document.createElement('div');
       card.className = 'partido-card';
       card.dataset.id = p.id;
-      card.dataset.golesLocal = p.goles_local;
-      card.dataset.golesVisita = p.goles_visitante;
+      card.dataset.golesLocal = gl;
+      card.dataset.golesVisita = gv;
       card.innerHTML = `
         <div class="partido-header">
           <span>${safe(horaTexto)} - ${safe(p.cancha || 'Cancha')} <strong style="color:var(--gold)">[${p.estado}]</strong></span>
@@ -141,7 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="equipo-name">${safe(p.equipo_local?.nombre || 'Local')}</div>
           <div class="score-controls">
             <button class="btn-score minus" data-team="local" data-delta="-1">-</button>
-            <div class="score-display" id="local-${p.id}">${p.goles_local}</div>
+            <div class="score-display" id="local-${p.id}">${gl}</div>
             <button class="btn-score plus" data-team="local" data-delta="1">+</button>
           </div>
         </div>
@@ -150,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="equipo-name">${safe(p.equipo_visitante?.nombre || 'Visita')}</div>
           <div class="score-controls">
             <button class="btn-score minus" data-team="visitante" data-delta="-1">-</button>
-            <div class="score-display" id="visita-${p.id}">${p.goles_visitante}</div>
+            <div class="score-display" id="visita-${p.id}">${gv}</div>
             <button class="btn-score plus" data-team="visitante" data-delta="1">+</button>
           </div>
         </div>
