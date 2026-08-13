@@ -313,7 +313,7 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.innerText = '✏️ EDITAR RESULTADO / RECLAMO';
     } else {
       showToast('Partido abierto para edición.');
-      setTimeout(fetchAndRender, 300);
+      setTimeout(cargarPartidos, 300);
     }
   }
 
@@ -358,7 +358,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.dataset.estado = 'PROGRAMADO';
         showToast('En Vivo desactivado');
       }
-      setTimeout(fetchAndRender, 300);
+      setTimeout(cargarPartidos, 300);
     }
   }
 
