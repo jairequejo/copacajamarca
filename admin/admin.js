@@ -209,10 +209,16 @@ document.addEventListener('DOMContentLoaded', () => {
       card.style.borderLeftColor = 'var(--navy)';
         card.innerHTML = `
         <div class="partido-header" style="color:var(--navy);">CAT: ${safe(p.categoria)} | ${safe(p.equipo_local.nombre)} vs ${safe(p.equipo_visitante.nombre)}</div>
-        <div style="display:flex; gap:10px; margin-top:10px;">
-          <input type="date" id="prog-fecha-${index}" class="input-brutal" style="padding:8px;" value="${fechaVal}">
-          <input type="time" id="prog-hora-${index}" class="input-brutal" style="padding:8px;" value="${horaVal}">
-          <div class="form-group" style="flex:1;">
+        <div class="prog-row" style="margin-top:10px;">
+          <div class="form-group" style="flex:1; margin-bottom:0;">
+            <label>Fecha</label>
+            <input type="date" id="prog-fecha-${index}" class="input-brutal" style="padding:8px;" value="${fechaVal}">
+          </div>
+          <div class="form-group" style="flex:1; margin-bottom:0;">
+            <label>Hora</label>
+            <input type="time" id="prog-hora-${index}" class="input-brutal" style="padding:8px;" value="${horaVal}">
+          </div>
+          <div class="form-group" style="flex:1; margin-bottom:0;">
             <label>Lugar</label>
             <select id="prog-lugar-${index}" class="input-brutal">
               <option value="">Seleccionar...</option>
@@ -221,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <option value="Estadio Héroes de San Ramón" ${p.lugar === 'Estadio Héroes de San Ramón' ? 'selected' : ''}>Estadio Héroes de San Ramón</option>
             </select>
           </div>
-          <div class="form-group" style="flex:1;">
+          <div class="form-group" style="flex:1; margin-bottom:0;">
             <label>Cancha</label>
             <select id="prog-cancha-${index}" class="input-brutal">
               <option value="">--</option>
