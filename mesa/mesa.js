@@ -244,7 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
       } else {
         const btnEnVivoHTML = `<button class="btn-envivo" data-action="envivo" data-estado="${p.estado}">
-            ${p.estado === 'EN_VIVO' ? '🔴 QUITAR EN VIVO' : '▶️ INICIAR PARTIDO (EN VIVO)'}
+            ${p.estado === 'EN_VIVO' ? '🔙 VOLVER A PENDIENTE' : '▶️ INICIAR PARTIDO (EN VIVO)'}
           </button>`;
 
         const scoreControlsDisabled = isProgramado ? 'disabled' : '';
@@ -259,8 +259,16 @@ document.addEventListener('DOMContentLoaded', () => {
             ${btnEnVivoHTML}
           </div>
 
-          <div style="margin-bottom: 14px;">
-            <input type="text" id="reclamo-${p.id}" placeholder="Escribe un reclamo u observación..." style="width:100%; padding:12px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); color:#fff; border-radius:8px;" value="${safe(p.reclamo || '')}">
+          <div style="margin-bottom: 14px; background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.1); padding:15px; border-radius:10px;">
+            <label style="color:var(--gold); font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:1.1rem; text-transform:uppercase; margin-bottom:10px; display:block;">⚠️ Observaciones o Reclamos:</label>
+            <select id="tipo-reclamo-${p.id}" style="width:100%; padding:12px; margin-bottom:10px; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.2); color:#fff; border-radius:8px; font-family:'Barlow',sans-serif; font-size:1.05rem;">
+              <option value="">-- Sin reclamos --</option>
+              <option value="DNI Vencido">Por DNI Vencido</option>
+              <option value="Niño sin DNI jugando">Niño sin DNI jugando</option>
+              <option value="Niño de otra categoría">Niño de otra categoría</option>
+              <option value="Otros">Otros (Especificar)</option>
+            </select>
+            <input type="text" id="reclamo-${p.id}" placeholder="Detalles de la observación (Opcional)..." style="width:100%; padding:12px; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.15); color:#fff; border-radius:8px; font-family:'Barlow',sans-serif;" value="${safe(p.reclamo || '')}">
           </div>
 
           <div class="equipo-row">
@@ -403,11 +411,11 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error(error);
       showToast('Error. Verifica permisos.', true);
       btn.disabled = false;
-      btn.innerText = isEnVivo ? '🔴 QUITAR EN VIVO' : '▶️ INICIAR PARTIDO (EN VIVO)';
+      btn.innerText = isEnVivo ? '🔙 VOLVER A PENDIENTE' : '▶️ INICIAR PARTIDO (EN VIVO)';
     } else {
       btn.disabled = false;
       if (newState === 'EN_VIVO') {
-        btn.innerText = '🔴 QUITAR EN VIVO';
+        btn.innerText = '🔙 VOLVER A PENDIENTE';
         btn.style.background = '#16a34a';
         btn.dataset.estado = 'EN_VIVO';
         showToast('Partido marcado como EN VIVO');
@@ -453,11 +461,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function finalizarPartido(id) {
     if (!confirm('¿Seguro que deseas enviar este partido a revisión?')) return;
-    const reclamo = document.getElementById(`reclamo-${id}`).value.trim();
+    
+    const selectEl = document.getElementById(`tipo-reclamo-${id}`);
+    const tipo = selectEl ? selectEl.value : '';
+    const textoEl = document.getElementById(`reclamo-${id}`);
+    const texto = textoEl ? textoEl.value.trim() : '';
+
+    let reclamoFinal = '';
+    if (tipo && tipo !== 'Otros') {
+      reclamoFinal += `[${tipo}] `;
+    }
+    if (texto) {
+      reclamoFinal += texto;
+    }
+    reclamoFinal = reclamoFinal.trim();
 
     const { error } = await supabase
       .from('partidos')
-      .update({ estado: 'EN_REVISION', reclamo: reclamo })
+      .update({ estado: 'EN_REVISION', reclamo: reclamoFinal })
       .eq('id', id);
 
     if (error) {
