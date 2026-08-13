@@ -226,22 +226,26 @@ function updateFilters() {
     const categories = Array.from(new Set(allMatches.map(m => m.categoria))).sort((a, b) => parseInt(a) - parseInt(b));
     const catData = buildHtml(categories, currentFilters.cat, 'Cat. ');
     currentFilters.cat = catData.activeVal;
-    document.getElementById('filterCat').innerHTML = catData.html;
+    const filterCatEl = document.getElementById('filterCat');
+    if (filterCatEl) filterCatEl.innerHTML = catData.html;
 
     const lugares = Array.from(new Set(allMatches.map(m => m.lugar))).filter(Boolean).sort();
     const lugarData = buildHtml(lugares, currentFilters.lugar);
     currentFilters.lugar = lugarData.activeVal;
-    document.getElementById('filterLugar').innerHTML = lugarData.html;
+    const filterLugarEl = document.getElementById('filterLugar');
+    if (filterLugarEl) filterLugarEl.innerHTML = lugarData.html;
 
     const canchas = Array.from(new Set(allMatches.map(m => m.cancha))).filter(Boolean).sort();
     const canchaData = buildHtml(canchas, currentFilters.cancha);
     currentFilters.cancha = canchaData.activeVal;
-    document.getElementById('filterCancha').innerHTML = canchaData.html;
+    const filterCanchaEl = document.getElementById('filterCancha');
+    if (filterCanchaEl) filterCanchaEl.innerHTML = canchaData.html;
 
     const estados = Array.from(new Set(allMatches.map(m => m.estadoStandard))).sort();
     const estadoData = buildHtml(estados, currentFilters.estado);
     currentFilters.estado = estadoData.activeVal;
-    document.getElementById('filterEstado').innerHTML = estadoData.html;
+    const filterEstadoEl = document.getElementById('filterEstado');
+    if (filterEstadoEl) filterEstadoEl.innerHTML = estadoData.html;
 }
 
 function updateLivePill() {

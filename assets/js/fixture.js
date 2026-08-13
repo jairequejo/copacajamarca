@@ -304,9 +304,7 @@ async function loadAll() {
         isFree,
         score: (golesL !== null && golesV !== null) ? `${golesL} - ${golesV}` : '',
         hora,
-        cancha: m.cancha || '',
-        grupoLocal:   grpLocal,
-        grupoVisita:  grpVisita,
+        cancha: m.cancha || ''
       };
     });
 
