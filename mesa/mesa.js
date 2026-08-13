@@ -194,9 +194,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const isLocked = isFinalizado || isOficial;
       const isProgramado = p.estado === 'PROGRAMADO';
 
-      // Render '-' if null and programado, else default to 0
-      const gl = p.goles_local !== null ? p.goles_local : (isProgramado ? '-' : 0);
-      const gv = p.goles_visitante !== null ? p.goles_visitante : (isProgramado ? '-' : 0);
+      // Render '-' if programado, else use DB value or default to 0
+      const gl = isProgramado ? '-' : (p.goles_local !== null ? p.goles_local : 0);
+      const gv = isProgramado ? '-' : (p.goles_visitante !== null ? p.goles_visitante : 0);
 
       const card = document.createElement('div');
       card.className = 'partido-card';

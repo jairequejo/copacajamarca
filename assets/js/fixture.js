@@ -295,8 +295,9 @@ async function loadAll() {
         if (hasScore || explicitFin) estado = 'finalizado';
       }
 
-      const golesL = m.goles_local != null && !isNaN(parseInt(m.goles_local, 10)) ? parseInt(m.goles_local, 10) : null;
-      const golesV = m.goles_visitante != null && !isNaN(parseInt(m.goles_visitante, 10)) ? parseInt(m.goles_visitante, 10) : null;
+      const isProgramado = String(m.estado).trim().toUpperCase() === 'PROGRAMADO';
+      const golesL = !isProgramado && m.goles_local != null && !isNaN(parseInt(m.goles_local, 10)) ? parseInt(m.goles_local, 10) : null;
+      const golesV = !isProgramado && m.goles_visitante != null && !isNaN(parseInt(m.goles_visitante, 10)) ? parseInt(m.goles_visitante, 10) : null;
 
       let hora = '';
       if (m.fecha_hora) {
