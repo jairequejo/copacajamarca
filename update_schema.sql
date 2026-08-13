@@ -1,1 +1,0 @@
-ALTER TABLE partidos ADD COLUMN IF NOT EXISTS reclamo TEXT;
