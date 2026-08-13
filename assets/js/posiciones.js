@@ -3,94 +3,47 @@ import { supabase } from './supabase.js';
 let equipos = {}, standings = {}, standingsByGrupo = {}, grupoMap = {}, activeCat = '';
 const el = id => document.getElementById(id);
 
-function buildStandings(matches, inscripciones) {
+function buildStandings(rows) {
   standings = {};
   standingsByGrupo = {};
-  grupoMap = {};
-  equipos = {};
+  equipos = {}; 
 
-  // Extraer categorías, equipos y grupos desde los partidos
-  matches.forEach(x => {
-    const cat = x.categoria;
-    const lo = x.equipo_local?.nombre?.trim().toUpperCase();
-    const vi = x.equipo_visitante?.nombre?.trim().toUpperCase();
-    if (!cat || !lo || !vi) return;
-    if (!equipos[cat]) equipos[cat] = new Set();
-    equipos[cat].add(lo);
-    equipos[cat].add(vi);
-    // Capturar grupo de cada equipo desde las inscripciones
-    const getGrupo = (eqId, c) => {
-      const ins = inscripciones.find(i => String(i.equipo_id) === String(eqId) && String(i.categoria) === String(c));
-      return ins ? ins.grupo : null;
+  rows.forEach(r => {
+    const cat = r.categoria;
+    const grp = r.grupo;
+    const mapped = {
+      eq: r.equipo, pj: r.pj, pg: r.pg, pe: r.pe, pp: r.pp, gf: r.gf, gc: r.gc, dg: r.dg, pts: r.pts
     };
-    const gL = getGrupo(x.equipo_local_id, cat);
-    const gV = getGrupo(x.equipo_visitante_id, cat);
-    if (!grupoMap[cat]) grupoMap[cat] = {};
-    if (gL) grupoMap[cat][lo] = gL;
-    if (gV) grupoMap[cat][vi] = gV;
+
+    if (!equipos[cat]) equipos[cat] = new Set();
+    equipos[cat].add(r.equipo);
+
+    if (!standings[cat]) standings[cat] = [];
+    standings[cat].push(mapped);
+
+    if (grp) {
+      if (!standingsByGrupo[cat]) standingsByGrupo[cat] = {};
+      if (!standingsByGrupo[cat][grp]) standingsByGrupo[cat][grp] = [];
+      standingsByGrupo[cat][grp].push(mapped);
+    }
   });
 
-  const validEstados = ['FINALIZADO', 'OFICIAL', 'EN_REVISION'];
-  const validMatches = matches.filter(x => validEstados.includes(x.estado));
-
-  Object.keys(equipos).sort().forEach(cat => {
-    // Detectar si esta categoría tiene grupos
-    const teamsInCat = Array.from(equipos[cat]);
-    const gruposEnCat = [...new Set(teamsInCat.map(t => grupoMap[cat] ? grupoMap[cat][t] : null).filter(Boolean))].sort();
-    const hasGrupos = gruposEnCat.length > 1 && (teamsInCat.filter(t => grupoMap[cat] && grupoMap[cat][t]).length / teamsInCat.length >= 0.5);
-
-    if (hasGrupos) {
-      // Construir standings separados por grupo (solo partidos intra-grupo)
-      standingsByGrupo[cat] = {};
-      gruposEnCat.forEach(g => {
-        const teamsInGrupo = teamsInCat.filter(t => grupoMap[cat] && grupoMap[cat][t] === g);
-        const mg = {};
-        teamsInGrupo.forEach(t => mg[t] = { eq: t, pj: 0, pg: 0, pe: 0, pp: 0, gf: 0, gc: 0, dg: 0, pts: 0 });
-        validMatches.filter(x => String(x.categoria) === String(cat)).forEach(x => {
-          const lo = x.equipo_local?.nombre?.trim().toUpperCase();
-          const vi = x.equipo_visitante?.nombre?.trim().toUpperCase();
-          const gl = parseInt(x.goles_local, 10);
-          const gv = parseInt(x.goles_visitante, 10);
-          if (isNaN(gl) || isNaN(gv)) return;
-          if (!mg[lo] || !mg[vi]) return; // partido inter-grupo: no cuenta en standings
-          const L = mg[lo], V = mg[vi];
-          L.pj++; V.pj++;
-          L.gf += gl; L.gc += gv;
-          V.gf += gv; V.gc += gl;
-          if (gl > gv)       { L.pg++; L.pts += 3; V.pp++; }
-          else if (gl < gv)  { V.pg++; V.pts += 3; L.pp++; }
-          else               { L.pe++; L.pts++; V.pe++; V.pts++; }
-          L.dg = L.gf - L.gc; V.dg = V.gf - V.gc;
-        });
-        standingsByGrupo[cat][g] = Object.values(mg).sort((a, b) => b.pts - a.pts || b.dg - a.dg || b.gf - a.gf || a.eq.localeCompare(b.eq));
+  Object.keys(standings).forEach(cat => {
+    if (standingsByGrupo[cat] && Object.keys(standingsByGrupo[cat]).length < 2) {
+      delete standingsByGrupo[cat];
+    }
+    
+    standings[cat].sort((a, b) => b.pts - a.pts || b.dg - a.dg || b.gf - a.gf || a.eq.localeCompare(b.eq));
+    if (standingsByGrupo[cat]) {
+      Object.keys(standingsByGrupo[cat]).forEach(g => {
+        standingsByGrupo[cat][g].sort((a, b) => b.pts - a.pts || b.dg - a.dg || b.gf - a.gf || a.eq.localeCompare(b.eq));
       });
     }
-
-    // Standings globales (todos los equipos de la categoría, para canvas/descarga)
-    const m = {};
-    teamsInCat.forEach(t => m[t] = { eq: t, pj: 0, pg: 0, pe: 0, pp: 0, gf: 0, gc: 0, dg: 0, pts: 0 });
-    validMatches.filter(x => String(x.categoria) === String(cat)).forEach(x => {
-      const lo = x.equipo_local?.nombre?.trim().toUpperCase();
-      const vi = x.equipo_visitante?.nombre?.trim().toUpperCase();
-      const gl = parseInt(x.goles_local, 10);
-      const gv = parseInt(x.goles_visitante, 10);
-      if (isNaN(gl) || isNaN(gv)) return;
-      if (!m[lo] || !m[vi]) return;
-      const L = m[lo], V = m[vi];
-      L.pj++; V.pj++;
-      L.gf += gl; L.gc += gv;
-      V.gf += gv; V.gc += gl;
-      if (gl > gv)       { L.pg++; L.pts += 3; V.pp++; }
-      else if (gl < gv)  { V.pg++; V.pts += 3; L.pp++; }
-      else               { L.pe++; L.pts++; V.pe++; V.pts++; }
-      L.dg = L.gf - L.gc; V.dg = V.gf - V.gc;
-    });
-    standings[cat] = Object.values(m).sort((a, b) => b.pts - a.pts || b.dg - a.dg || b.gf - a.gf || a.eq.localeCompare(b.eq));
   });
 }
 function renderAll() {
   const tabs = [];
-  Object.keys(equipos).sort((a, b) => a - b).forEach(c => {
+  Object.keys(equipos).sort((a, b) => a.localeCompare(b)).forEach(c => {
     if (standingsByGrupo[c]) {
       Object.keys(standingsByGrupo[c]).sort().forEach(g => {
         tabs.push({ id: c + '_' + g, label: 'Cat. ' + c + ' GRP ' + g, cat: c, grupo: g });
@@ -364,18 +317,11 @@ async function loadAll() {
   try {
     el('loaderText').textContent = 'Cargando datos...';
     
-    const [resPartidos, resInsc] = await Promise.all([
-      supabase.from('partidos').select('categoria, goles_local, goles_visitante, estado, equipo_local_id, equipo_visitante_id, equipo_local:equipos!partidos_equipo_local_id_fkey(nombre), equipo_visitante:equipos!partidos_equipo_visitante_id_fkey(nombre)'),
-      supabase.from('inscripciones').select('equipo_id, categoria, grupo')
-    ]);
-    if (resPartidos.error) throw resPartidos.error;
-    if (resInsc.error) throw resInsc.error;
-
-    const matches = resPartidos.data || [];
-    const inscripciones = resInsc.data || [];
-
-    if (!matches.length) throw new Error('SIN_DATOS');
-    buildStandings(matches, inscripciones); 
+    const { data: rows, error } = await supabase.from('view_posiciones').select('*');
+    if (error) throw error;
+    if (!rows || !rows.length) throw new Error('SIN_DATOS');
+    
+    buildStandings(rows); 
     renderAll();
     
     const now = new Date(), upd = el('lastUpdated');
