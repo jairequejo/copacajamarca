@@ -13,22 +13,9 @@ let currentJornada = 'todas';
 function getGrouped() {
   const g = {};
   G.fixture.forEach(m => {
-    // Si tiene grupos (y no es inter-grupo)
-    if (m.grupoLocal && m.grupoLocal === m.grupoVisita) {
-      const tabId = m.cat + '_' + m.grupoLocal;
-      if (!g[tabId]) g[tabId] = {};
-      if (!g[tabId][m.jornada]) g[tabId][m.jornada] = [];
-      g[tabId][m.jornada].push(m);
-    } 
-    // Inter-grupo: El usuario pidió OMITIRLOS por completo de las pestañas
-    else if (m.grupoLocal || m.grupoVisita) {
-      // No hacemos nada, el partido simplemente no se mostrará en las pestañas de grupos
-    } else {
-      // Categoría normal
-      if (!g[m.cat]) g[m.cat] = {};
-      if (!g[m.cat][m.jornada]) g[m.cat][m.jornada] = [];
-      g[m.cat][m.jornada].push(m);
-    }
+    if (!g[m.cat]) g[m.cat] = {};
+    if (!g[m.cat][m.jornada]) g[m.cat][m.jornada] = [];
+    g[m.cat][m.jornada].push(m);
   });
   return g;
 }
@@ -170,12 +157,7 @@ function renderFixture() {
 function buildCatTabs(cats) {
   const wrap = document.getElementById('catTabs');
   wrap.innerHTML = cats.map((c, i) => {
-    let label = 'Cat. ' + c;
-    if (c.includes('_')) {
-      const [cat, grp] = c.split('_');
-      label = `Cat. ${cat} GRP ${grp}`;
-    }
-    return `<button class="cat-tab ${c === currentCat ? 'active' : ''}" data-cat="${c}">${label}</button>`;
+    return `<button class="cat-tab ${c === currentCat ? 'active' : ''}" data-cat="${c}">Cat. ${c}</button>`;
   }).join('');
 
   wrap.addEventListener('click', e => {
@@ -261,9 +243,6 @@ async function loadAll() {
       
       // Determinar a qué tabId pertenece
       let tabId = String(m.categoria || '').trim();
-      if (grpLoc && grpLoc === grpVis) {
-        tabId = tabId + '_' + grpLoc;
-      }
       
       if (!G.equipos[tabId]) G.equipos[tabId] = new Set();
       if (loc) G.equipos[tabId].add(loc);
@@ -308,11 +287,6 @@ async function loadAll() {
       }
 
       let tabId = catStr;
-      const grpLocal = getGrupo(m.equipo_local_id, m.categoria);
-      const grpVisita = getGrupo(m.equipo_visitante_id, m.categoria);
-      if (grpLocal && grpLocal === grpVisita) {
-        tabId = tabId + '_' + grpLocal;
-      }
 
       return {
         id: m.id,
