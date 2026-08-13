@@ -205,54 +205,67 @@ document.addEventListener('DOMContentLoaded', () => {
       card.dataset.golesVisita = gv;
       if (isOficial) card.style.opacity = '0.6';
       if (isFinalizado) card.style.border = '1px solid var(--gold)';
-      
-      let btnEnVivoHTML = '';
-      if (isOficial) {
-        btnEnVivoHTML = `<button class="btn-envivo" disabled>🔒 BLOQUEADO (OFICIAL)</button>`;
-      } else if (isFinalizado) {
-        btnEnVivoHTML = `<button class="btn-envivo" data-action="editar" style="background:#b48600; opacity:1;">✏️ EDITAR PARTIDO</button>`;
+      if (isLocked) {
+        card.innerHTML = `
+          <div class="partido-header" style="border-bottom:none; margin-bottom:0; padding-bottom:0;">
+            <span>${safe(horaTexto)} - ${safe(p.cancha || 'Cancha')} <strong style="color:var(--gold)">[${p.estado}]</strong></span>
+            <span>Cat: ${safe(p.categoria || 'N/A')}</span>
+          </div>
+          
+          <div style="text-align: center; margin-top: 10px;">
+            <div style="font-family: 'Barlow Condensed', sans-serif; font-size: 1.4rem; font-weight: 800; text-transform: uppercase;">
+              ${safe(p.equipo_local?.nombre)} <span style="color:var(--gold); margin:0 8px;">VS</span> ${safe(p.equipo_visitante?.nombre)}
+            </div>
+            <div style="font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; letter-spacing: 2px; margin-top: 5px;">
+              ${gl} - ${gv}
+            </div>
+            ${p.reclamo ? `<div style="font-size:0.9rem; color:#ffba00; margin-top:5px; font-family:'Barlow',sans-serif;">⚠️ Reclamo: ${safe(p.reclamo)}</div>` : ''}
+          </div>
+
+          ${isFinalizado ? `<div style="text-align:center; margin-top:15px;"><button class="btn-envivo" data-action="editar" style="background:transparent; border:1px solid #b48600; color:#b48600; padding:8px 16px; font-size:1rem; min-height:auto; width:auto; border-radius:20px;">✏️ Editar Resultado</button></div>` : ''}
+        `;
       } else {
-        btnEnVivoHTML = `<button class="btn-envivo" data-action="envivo" data-estado="${p.estado}">
-          ${p.estado === 'EN_VIVO' ? '🔴 QUITAR EN VIVO' : '▶️ INICIAR PARTIDO (EN VIVO)'}
-        </button>`;
+        const btnEnVivoHTML = `<button class="btn-envivo" data-action="envivo" data-estado="${p.estado}">
+            ${p.estado === 'EN_VIVO' ? '🔴 QUITAR EN VIVO' : '▶️ INICIAR PARTIDO (EN VIVO)'}
+          </button>`;
+
+        const scoreControlsDisabled = isProgramado ? 'disabled' : '';
+
+        card.innerHTML = `
+          <div class="partido-header">
+            <span>${safe(horaTexto)} - ${safe(p.cancha || 'Cancha')} <strong style="color:var(--gold)">[${p.estado}]</strong></span>
+            <span>Cat: ${safe(p.categoria || 'N/A')}</span>
+          </div>
+          
+          <div style="margin-bottom: 14px;">
+            ${btnEnVivoHTML}
+          </div>
+
+          <div style="margin-bottom: 14px;">
+            <input type="text" id="reclamo-${p.id}" placeholder="Escribe un reclamo u observación..." style="width:100%; padding:12px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); color:#fff; border-radius:8px;" value="${safe(p.reclamo || '')}">
+          </div>
+
+          <div class="equipo-row">
+            <div class="equipo-name">${safe(p.equipo_local?.nombre || 'Local')}</div>
+            <div class="score-controls">
+              ${!isProgramado ? `<button class="btn-score minus" data-team="local" data-delta="-1" ${scoreControlsDisabled}>-</button>` : ''}
+              <div class="score-display" id="local-${p.id}">${gl}</div>
+              ${!isProgramado ? `<button class="btn-score plus" data-team="local" data-delta="1" ${scoreControlsDisabled}>+</button>` : ''}
+            </div>
+          </div>
+
+          <div class="equipo-row">
+            <div class="equipo-name">${safe(p.equipo_visitante?.nombre || 'Visita')}</div>
+            <div class="score-controls">
+              ${!isProgramado ? `<button class="btn-score minus" data-team="visitante" data-delta="-1" ${scoreControlsDisabled}>-</button>` : ''}
+              <div class="score-display" id="visita-${p.id}">${gv}</div>
+              ${!isProgramado ? `<button class="btn-score plus" data-team="visitante" data-delta="1" ${scoreControlsDisabled}>+</button>` : ''}
+            </div>
+          </div>
+
+          <button class="btn-finalizar" data-action="finalizar">Finalizar Partido</button>
+        `;
       }
-
-      const scoreControlsDisabled = isLocked || isProgramado ? 'disabled' : '';
-
-      card.innerHTML = `
-        <div class="partido-header">
-          <span>${safe(horaTexto)} - ${safe(p.cancha || 'Cancha')} <strong style="color:var(--gold)">[${p.estado}]</strong></span>
-          <span>Cat: ${safe(p.categoria || 'N/A')}</span>
-        </div>
-        
-        <div style="margin-bottom: 14px;">
-          ${btnEnVivoHTML}
-        </div>
-
-        <div style="margin-bottom: 14px;">
-          <input type="text" id="reclamo-${p.id}" placeholder="Escribe un reclamo u observación..." style="width:100%; padding:12px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); color:#fff; border-radius:8px;" value="${safe(p.reclamo || '')}" ${isLocked ? 'disabled' : ''}>
-        </div>
-
-        <div class="equipo-row">
-          <div class="equipo-name">${safe(p.equipo_local?.nombre || 'Local')}</div>
-          <div class="score-controls">
-            <button class="btn-score minus" data-team="local" data-delta="-1" ${scoreControlsDisabled}>-</button>
-            <div class="score-display" id="local-${p.id}">${gl}</div>
-            <button class="btn-score plus" data-team="local" data-delta="1" ${scoreControlsDisabled}>+</button>
-          </div>
-        </div>
-
-        <div class="equipo-row">
-          <div class="equipo-name">${safe(p.equipo_visitante?.nombre || 'Visita')}</div>
-          <div class="score-controls">
-            <button class="btn-score minus" data-team="visitante" data-delta="-1" ${scoreControlsDisabled}>-</button>
-            <div class="score-display" id="visita-${p.id}">${gv}</div>
-            <button class="btn-score plus" data-team="visitante" data-delta="1" ${scoreControlsDisabled}>+</button>
-          </div>
-        </div>
-
-        ${!isLocked ? `<button class="btn-finalizar" data-action="finalizar">Finalizar Partido</button>` : ''}
-      `;
       partidosList.appendChild(card);
 
       // Delegación de eventos — sin window.*
