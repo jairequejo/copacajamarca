@@ -550,6 +550,7 @@ a { text-decoration: none; }
     padding-bottom: 0;
   }
 
+  /* Delete Bottom Nav on Landing */
   .bottom-nav {
     display: none !important;
   }
