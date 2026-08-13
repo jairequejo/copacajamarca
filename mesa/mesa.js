@@ -207,22 +207,26 @@ document.addEventListener('DOMContentLoaded', () => {
       if (isFinalizado) card.style.border = '1px solid var(--gold)';
       if (isLocked) {
         card.innerHTML = `
-          <div class="partido-header" style="border-bottom:none; margin-bottom:0; padding-bottom:0;">
+          <div class="partido-header">
             <span>${safe(horaTexto)} - ${safe(p.cancha || 'Cancha')} <strong style="color:var(--gold)">[${p.estado}]</strong></span>
             <span>Cat: ${safe(p.categoria || 'N/A')}</span>
           </div>
           
-          <div style="text-align: center; margin-top: 10px;">
-            <div style="font-family: 'Barlow Condensed', sans-serif; font-size: 1.4rem; font-weight: 800; text-transform: uppercase;">
-              ${safe(p.equipo_local?.nombre)} <span style="color:var(--gold); margin:0 8px;">VS</span> ${safe(p.equipo_visitante?.nombre)}
+          <div class="equipo-row" style="flex-direction:column; align-items:center; text-align:center; padding:20px 15px; gap:12px; margin-bottom:0;">
+            <div style="font-family:'Barlow Condensed',sans-serif; font-size:1.6rem; font-weight:800; color:#fff; text-transform:uppercase;">${safe(p.equipo_local?.nombre)}</div>
+            
+            <div style="font-family:'Bebas Neue',sans-serif; font-size:3.5rem; color:var(--gold); background:rgba(0,0,0,0.5); padding:5px 25px; border-radius:12px; border:2px solid rgba(255,186,0,0.2); line-height:1; display:flex; align-items:center; justify-content:center; gap:15px; width:100%;">
+              <span>${gl}</span>
+              <span style="color:rgba(255,255,255,0.3); font-size:1.5rem; font-family:'Barlow Condensed',sans-serif;">VS</span>
+              <span>${gv}</span>
             </div>
-            <div style="font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; letter-spacing: 2px; margin-top: 5px;">
-              ${gl} - ${gv}
-            </div>
-            ${p.reclamo ? `<div style="font-size:0.9rem; color:#ffba00; margin-top:5px; font-family:'Barlow',sans-serif;">⚠️ Reclamo: ${safe(p.reclamo)}</div>` : ''}
+            
+            <div style="font-family:'Barlow Condensed',sans-serif; font-size:1.6rem; font-weight:800; color:#fff; text-transform:uppercase;">${safe(p.equipo_visitante?.nombre)}</div>
+            
+            ${p.reclamo ? `<div style="margin-top:10px; width:100%; padding:12px; background:rgba(214,13,13,0.15); border:1px solid rgba(214,13,13,0.3); border-radius:8px; color:#ffba00; font-size:1rem; font-family:'Barlow',sans-serif; line-height:1.4;"><strong>⚠️ RECLAMO:</strong><br>${safe(p.reclamo)}</div>` : ''}
           </div>
 
-          ${isFinalizado ? `<div style="text-align:center; margin-top:15px;"><button class="btn-envivo" data-action="editar" style="background:transparent; border:1px solid #b48600; color:#b48600; padding:8px 16px; font-size:1rem; min-height:auto; width:auto; border-radius:20px;">✏️ Editar Resultado</button></div>` : ''}
+          ${isFinalizado ? `<button class="btn-envivo" data-action="editar" style="background:var(--navy); border:1px solid var(--gold); color:var(--gold); padding:16px; margin-top:16px; border-radius:10px; width:100%;">✏️ EDITAR RESULTADO / RECLAMO</button>` : ''}
         `;
       } else {
         const btnEnVivoHTML = `<button class="btn-envivo" data-action="envivo" data-estado="${p.estado}">
@@ -306,9 +310,10 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error(error);
       showToast('Error. Verifica permisos.', true);
       btn.disabled = false;
-      btn.innerText = '✏️ EDITAR PARTIDO';
+      btn.innerText = '✏️ EDITAR RESULTADO / RECLAMO';
     } else {
       showToast('Partido abierto para edición.');
+      setTimeout(fetchAndRender, 300);
     }
   }
 
