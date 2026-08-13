@@ -364,12 +364,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Permitir que el DOM termine de dibujar antes de devolver el scroll y soltar el candado de altura
+    // Permitir que el DOM termine de dibujar antes de devolver el scroll (Safari iOS requiere mayor retraso)
     requestAnimationFrame(() => {
-      window.scrollTo(0, currentScrollY);
       setTimeout(() => {
+        window.scrollTo(0, currentScrollY);
         partidosList.style.minHeight = 'auto';
-      }, 50);
+      }, 150); // 150ms fuerza a WebKit (Safari) a procesar el reflow del DOM primero
     });
   }
 
