@@ -174,8 +174,8 @@ async function fetchAndRender(isSilent = false) {
                 visitante: m.equipo_visitante?.nombre || 'Por definir',
                 categoria: m.categoria?.toString() || '',
                 jornada: m.jornada || '',
-                golesLocal: m.goles_local?.toString() || '',
-                golesVisitante: m.goles_visitante?.toString() || '',
+                golesLocal: standardEstado === 'Pendiente' ? '' : (m.goles_local?.toString() ?? ''),
+                golesVisitante: standardEstado === 'Pendiente' ? '' : (m.goles_visitante?.toString() ?? ''),
                 estadoStandard: standardEstado
             };
         });
