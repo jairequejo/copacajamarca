@@ -367,6 +367,17 @@
     </header>
 
     <div class="content-wrapper">
+      <div id="filters-container" style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:24px; display:none;">
+        <select id="filter-dia" style="flex:1; min-width:140px; padding:12px; border-radius:8px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); color:#fff; font-family:'Barlow',sans-serif;">
+          <option value="todos">📅 Todos los días</option>
+        </select>
+        <select id="filter-lugar" style="flex:1; min-width:140px; padding:12px; border-radius:8px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); color:#fff; font-family:'Barlow',sans-serif;">
+          <option value="todos">📍 Todos los lugares</option>
+        </select>
+        <select id="filter-cat" style="flex:1; min-width:140px; padding:12px; border-radius:8px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); color:#fff; font-family:'Barlow',sans-serif;">
+          <option value="todos">🏆 Todas las categorías</option>
+        </select>
+      </div>
       <div id="partidos-list"></div>
     </div>
   </div>
