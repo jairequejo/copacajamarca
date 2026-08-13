@@ -378,16 +378,46 @@
 
     <div class="content-wrapper">
       <div id="filters-container" style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:24px; display:none;">
-        <select id="filter-dia" style="flex:1; min-width:140px; padding:12px; border-radius:8px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); color:#fff; font-family:'Barlow',sans-serif;">
+        <select id="filter-dia" style="flex:1 1 calc(50% - 6px); min-width:140px; padding:14px; border-radius:10px; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.15); color:#fff; font-family:'Barlow',sans-serif; font-size:1.05rem;">
           <option value="todos">📅 Todos los días</option>
         </select>
-        <select id="filter-lugar" style="flex:1; min-width:140px; padding:12px; border-radius:8px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); color:#fff; font-family:'Barlow',sans-serif;">
+        <select id="filter-lugar" style="flex:1 1 calc(50% - 6px); min-width:140px; padding:14px; border-radius:10px; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.15); color:#fff; font-family:'Barlow',sans-serif; font-size:1.05rem;">
           <option value="todos">📍 Todos los lugares</option>
         </select>
-        <select id="filter-cat" style="flex:1; min-width:140px; padding:12px; border-radius:8px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); color:#fff; font-family:'Barlow',sans-serif;">
+        <select id="filter-cat" style="flex:1 1 calc(50% - 6px); min-width:140px; padding:14px; border-radius:10px; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.15); color:#fff; font-family:'Barlow',sans-serif; font-size:1.05rem;">
           <option value="todos">🏆 Todas las categorías</option>
         </select>
+        <select id="filter-estado" style="flex:1 1 calc(50% - 6px); min-width:140px; padding:14px; border-radius:10px; background:var(--gold); border:1px solid var(--gold); color:var(--navy); font-family:'Barlow Condensed',sans-serif; font-weight:800; text-transform:uppercase; font-size:1.15rem; cursor:pointer;">
+          <option value="todos">🎯 TODOS LOS ESTADOS</option>
+          <option value="EN_VIVO">🔴 EN VIVO</option>
+          <option value="PROGRAMADO">⏳ PENDIENTES</option>
+          <option value="FINALIZADOS">✔️ FINALIZADOS / OFICIALES</option>
+        </select>
       </div>
+
+      <div style="display:flex; justify-content:center; margin-bottom:24px;">
+        <button id="btn-toggle-view" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:12px 24px; border-radius:30px; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:1.1rem; cursor:pointer; letter-spacing:0.05em; transition:background 0.2s;">
+          👁️ VER RESUMEN (TABLA)
+        </button>
+      </div>
+
+      <div id="resumen-container" style="display:none; width:100%; overflow-x:auto; background:rgba(0,0,0,0.2); border-radius:12px; padding:15px; margin-bottom:24px; border:1px solid rgba(255,255,255,0.1);">
+        <table style="width:100%; min-width:600px; border-collapse:collapse; color:#fff; font-size:1rem; font-family:'Barlow',sans-serif;">
+          <thead>
+            <tr style="border-bottom:1px solid rgba(255,186,0,0.3); color:var(--gold); font-family:'Barlow Condensed',sans-serif; font-size:1.2rem; text-transform:uppercase; letter-spacing:0.05em;">
+              <th style="padding:12px; text-align:left;">Hora/Lugar</th>
+              <th style="padding:12px; text-align:left;">Cat.</th>
+              <th style="padding:12px; text-align:right; width:30%;">Local</th>
+              <th style="padding:12px; text-align:center;">Score</th>
+              <th style="padding:12px; text-align:left; width:30%;">Visita</th>
+              <th style="padding:12px; text-align:center;">Estado</th>
+            </tr>
+          </thead>
+          <tbody id="resumen-tbody">
+          </tbody>
+        </table>
+      </div>
+
       <div id="partidos-list"></div>
     </div>
   </div>
