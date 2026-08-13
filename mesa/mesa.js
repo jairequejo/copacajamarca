@@ -149,12 +149,15 @@ document.addEventListener('DOMContentLoaded', () => {
     selDia.onchange = aplicarFiltros;
     selLugar.onchange = aplicarFiltros;
     selCat.onchange = aplicarFiltros;
+    const selEstado = document.getElementById('filter-estado');
+    if (selEstado) selEstado.onchange = aplicarFiltros;
   }
 
   function aplicarFiltros() {
     const diaVal = document.getElementById('filter-dia')?.value || 'todos';
     const lugarVal = document.getElementById('filter-lugar')?.value || 'todos';
     const catVal = document.getElementById('filter-cat')?.value || 'todos';
+    const estadoVal = document.getElementById('filter-estado')?.value || 'todos';
 
     const filtrados = allPartidosData.filter(p => {
       let matchDia = true;
@@ -172,14 +175,25 @@ document.addEventListener('DOMContentLoaded', () => {
       let matchCat = true;
       if(catVal !== 'todos' && String(p.categoria) !== catVal) matchCat = false;
 
-      return matchDia && matchLugar && matchCat;
+      let matchEstado = true;
+      if (estadoVal !== 'todos') {
+        if (estadoVal === 'FINALIZADOS' && (p.estado !== 'EN_REVISION' && p.estado !== 'OFICIAL')) matchEstado = false;
+        if (estadoVal !== 'FINALIZADOS' && p.estado !== estadoVal) matchEstado = false;
+      }
+
+      return matchDia && matchLugar && matchCat && matchEstado;
     });
 
     renderizarPartidos(filtrados);
   }
 
   function renderizarPartidos(partidos) {
+    const currentScrollY = window.scrollY;
+    
     partidosList.innerHTML = '';
+    
+    const resumenTbody = document.getElementById('resumen-tbody');
+    if (resumenTbody) resumenTbody.innerHTML = '';
     
     partidos.forEach(p => {
       // Parse hora
@@ -276,22 +290,67 @@ document.addEventListener('DOMContentLoaded', () => {
       card.querySelectorAll('.btn-score').forEach(btn => {
         btn.addEventListener('click', () => {
           actualizarGol(p.id, btn.dataset.team, parseInt(btn.dataset.delta), p.goles_local, p.goles_visitante);
-        });
-      });
       const btnEnVivo = card.querySelector('[data-action="envivo"]');
       if (btnEnVivo) {
         if (p.estado === 'EN_VIVO') btnEnVivo.style.background = '#16a34a';
         btnEnVivo.addEventListener('click', () => marcarEnVivo(p.id, btnEnVivo, p.goles_local, p.goles_visitante));
       }
+      
       const btnEditar = card.querySelector('[data-action="editar"]');
-      if (btnEditar) {
-        btnEditar.addEventListener('click', () => editarPartido(p.id, btnEditar));
-      }
+      if (btnEditar) btnEditar.addEventListener('click', () => editarPartido(p.id, btnEditar));
+      
       const btnFinalizar = card.querySelector('[data-action="finalizar"]');
-      if (btnFinalizar) {
-        btnFinalizar.addEventListener('click', () => {
-          finalizarPartido(p.id);
-        });
+      if (btnFinalizar) btnFinalizar.addEventListener('click', () => finalizarPartido(p.id));
+
+      const btnAumentarLocal = card.querySelector('.btn-score.plus[data-team="local"]');
+      const btnQuitarLocal = card.querySelector('.btn-score.minus[data-team="local"]');
+      const btnAumentarVisita = card.querySelector('.btn-score.plus[data-team="visitante"]');
+      const btnQuitarVisita = card.querySelector('.btn-score.minus[data-team="visitante"]');
+
+      if (btnAumentarLocal) btnAumentarLocal.addEventListener('click', () => actualizarGol(p.id, 'local', 1, p.goles_local, p.goles_visitante));
+      if (btnQuitarLocal) btnQuitarLocal.addEventListener('click', () => actualizarGol(p.id, 'local', -1, p.goles_local, p.goles_visitante));
+      if (btnAumentarVisita) btnAumentarVisita.addEventListener('click', () => actualizarGol(p.id, 'visita', 1, p.goles_local, p.goles_visitante));
+      if (btnQuitarVisita) btnQuitarVisita.addEventListener('click', () => actualizarGol(p.id, 'visita', -1, p.goles_local, p.goles_visitante));
+      
+      if (resumenTbody) {
+        const tr = document.createElement('tr');
+        tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+        
+        let colorEstado = '#fff';
+        if (p.estado === 'EN_VIVO') colorEstado = '#16a34a';
+        if (isLocked) colorEstado = 'var(--gold)';
+        
+        tr.innerHTML = `
+          <td style="padding:12px; font-weight:600;">${safe(horaTexto)}<br><span style="font-size:0.85rem; color:rgba(255,255,255,0.5);">${safe(p.cancha || 'Cancha')}</span></td>
+          <td style="padding:12px;">${safe(p.categoria || 'N/A')}</td>
+          <td style="padding:12px; text-align:right; font-family:'Barlow Condensed',sans-serif; font-weight:700;">${safe(p.equipo_local?.nombre)}</td>
+          <td style="padding:12px; text-align:center; font-family:'Bebas Neue',sans-serif; font-size:1.5rem; color:var(--gold);">${gl} - ${gv}</td>
+          <td style="padding:12px; text-align:left; font-family:'Barlow Condensed',sans-serif; font-weight:700;">${safe(p.equipo_visitante?.nombre)}</td>
+          <td style="padding:12px; text-align:center; font-family:'Barlow Condensed',sans-serif; font-weight:800; color:${colorEstado};">[${p.estado}]</td>
+        `;
+        resumenTbody.appendChild(tr);
+      }
+    });
+
+    window.scrollTo(0, currentScrollY);
+  }
+
+  const btnToggleView = document.getElementById('btn-toggle-view');
+  if (btnToggleView) {
+    const resumenContainer = document.getElementById('resumen-container');
+    btnToggleView.addEventListener('click', () => {
+      const isResumenVisible = resumenContainer.style.display === 'block';
+      if (isResumenVisible) {
+        resumenContainer.style.display = 'none';
+        partidosList.style.display = 'block';
+        btnToggleView.innerHTML = '👁️ VER RESUMEN (TABLA)';
+        btnToggleView.style.background = 'rgba(255,255,255,0.1)';
+      } else {
+        resumenContainer.style.display = 'block';
+        partidosList.style.display = 'none';
+        btnToggleView.innerHTML = '🎯 VER TARJETAS DE MESA';
+        btnToggleView.style.background = 'var(--navy)';
+        btnToggleView.style.borderColor = 'var(--gold)';
       }
     });
   }
