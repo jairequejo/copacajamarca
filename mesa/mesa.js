@@ -299,9 +299,6 @@ document.addEventListener('DOMContentLoaded', () => {
       partidosList.appendChild(card);
 
       // Delegación de eventos — sin window.*
-      card.querySelectorAll('.btn-score').forEach(btn => {
-        btn.addEventListener('click', () => {
-          actualizarGol(p.id, btn.dataset.team, parseInt(btn.dataset.delta), p.goles_local, p.goles_visitante);
       const btnEnVivo = card.querySelector('[data-action="envivo"]');
       if (btnEnVivo) {
         if (p.estado === 'EN_VIVO') btnEnVivo.style.background = '#f97316';
