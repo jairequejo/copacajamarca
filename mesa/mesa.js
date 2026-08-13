@@ -190,6 +190,10 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderizarPartidos(partidos) {
     const currentScrollY = window.scrollY;
     
+    // Antifragile: fijar la altura actual para evitar el salto brusco (scroll jump)
+    const currentHeight = partidosList.offsetHeight;
+    partidosList.style.minHeight = currentHeight + 'px';
+    
     partidosList.innerHTML = '';
     
     const resumenTbody = document.getElementById('resumen-tbody');
@@ -350,7 +354,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    window.scrollTo(0, currentScrollY);
+    // Permitir que el DOM termine de dibujar antes de devolver el scroll y soltar el candado de altura
+    requestAnimationFrame(() => {
+      window.scrollTo(0, currentScrollY);
+      setTimeout(() => {
+        partidosList.style.minHeight = 'auto';
+      }, 50);
+    });
   }
 
   const btnToggleView = document.getElementById('btn-toggle-view');
