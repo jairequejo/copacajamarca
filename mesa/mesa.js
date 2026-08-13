@@ -330,6 +330,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (newState === 'EN_VIVO') {
       if (gl === null) payload.goles_local = 0;
       if (gv === null) payload.goles_visitante = 0;
+    } else if (newState === 'PROGRAMADO') {
+      payload.goles_local = null;
+      payload.goles_visitante = null;
     }
 
     const { error } = await supabase
