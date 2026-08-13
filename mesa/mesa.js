@@ -192,11 +192,15 @@ document.addEventListener('DOMContentLoaded', () => {
       const gl = p.goles_local !== null ? p.goles_local : 0;
       const gv = p.goles_visitante !== null ? p.goles_visitante : 0;
 
+      const isLocked = p.estado === 'OFICIAL';
+
       const card = document.createElement('div');
       card.className = 'partido-card';
       card.dataset.id = p.id;
       card.dataset.golesLocal = gl;
       card.dataset.golesVisita = gv;
+      if (isLocked) card.style.opacity = '0.6';
+      
       card.innerHTML = `
         <div class="partido-header">
           <span>${safe(horaTexto)} - ${safe(p.cancha || 'Cancha')} <strong style="color:var(--gold)">[${p.estado}]</strong></span>
@@ -204,34 +208,34 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
         
         <div style="margin-bottom: 14px;">
-          <button class="btn-envivo" data-action="envivo" data-estado="${p.estado}" style="${p.estado === 'EN_VIVO' ? 'background:#16a34a; opacity:1;' : ''}">
-            ${p.estado === 'EN_VIVO' ? '🔴 QUITAR EN VIVO' : '▶️ INICIAR PARTIDO (EN VIVO)'}
+          <button class="btn-envivo" data-action="envivo" data-estado="${p.estado}" style="${p.estado === 'EN_VIVO' ? 'background:#16a34a; opacity:1;' : ''}" ${isLocked ? 'disabled' : ''}>
+            ${p.estado === 'EN_VIVO' ? '🔴 QUITAR EN VIVO' : (isLocked ? '🔒 BLOQUEADO (OFICIAL)' : '▶️ INICIAR PARTIDO (EN VIVO)')}
           </button>
         </div>
 
         <div style="margin-bottom: 14px;">
-          <input type="text" id="reclamo-${p.id}" placeholder="Escribe un reclamo u observación..." style="width:100%; padding:12px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); color:#fff; border-radius:8px;" value="${safe(p.reclamo || '')}">
+          <input type="text" id="reclamo-${p.id}" placeholder="Escribe un reclamo u observación..." style="width:100%; padding:12px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); color:#fff; border-radius:8px;" value="${safe(p.reclamo || '')}" ${isLocked ? 'disabled' : ''}>
         </div>
 
         <div class="equipo-row">
           <div class="equipo-name">${safe(p.equipo_local?.nombre || 'Local')}</div>
           <div class="score-controls">
-            <button class="btn-score minus" data-team="local" data-delta="-1">-</button>
+            <button class="btn-score minus" data-team="local" data-delta="-1" ${isLocked ? 'disabled' : ''}>-</button>
             <div class="score-display" id="local-${p.id}">${gl}</div>
-            <button class="btn-score plus" data-team="local" data-delta="1">+</button>
+            <button class="btn-score plus" data-team="local" data-delta="1" ${isLocked ? 'disabled' : ''}>+</button>
           </div>
         </div>
 
         <div class="equipo-row">
           <div class="equipo-name">${safe(p.equipo_visitante?.nombre || 'Visita')}</div>
           <div class="score-controls">
-            <button class="btn-score minus" data-team="visitante" data-delta="-1">-</button>
+            <button class="btn-score minus" data-team="visitante" data-delta="-1" ${isLocked ? 'disabled' : ''}>-</button>
             <div class="score-display" id="visita-${p.id}">${gv}</div>
-            <button class="btn-score plus" data-team="visitante" data-delta="1">+</button>
+            <button class="btn-score plus" data-team="visitante" data-delta="1" ${isLocked ? 'disabled' : ''}>+</button>
           </div>
         </div>
 
-        <button class="btn-finalizar" data-action="finalizar">Finalizar Partido</button>
+        <button class="btn-finalizar" data-action="finalizar" ${isLocked ? 'disabled style="display:none;"' : ''}>Finalizar Partido</button>
       `;
       partidosList.appendChild(card);
 
