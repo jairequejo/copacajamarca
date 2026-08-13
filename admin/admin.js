@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const { data, error } = await supabase
       .from('partidos')
       .select(`
-        id, goles_local, goles_visitante, categoria, cancha, fecha_hora,
+        id, goles_local, goles_visitante, categoria, cancha, fecha_hora, reclamo,
         equipo_local:equipos!partidos_equipo_local_id_fkey(nombre),
         equipo_visitante:equipos!partidos_equipo_visitante_id_fkey(nombre)
       `)
@@ -120,13 +120,16 @@ document.addEventListener('DOMContentLoaded', () => {
           <span>CAT: ${safe(p.categoria)}</span>
           <span>${safe(p.cancha || 'Cancha Libre')}</span>
         </div>
-        <div class="score-row">
-          <div class="team-name" style="text-align:right;">${safe(p.equipo_local?.nombre)}</div>
-          <div style="margin: 0 15px; background:var(--bg); padding:5px 15px; border-radius:8px;">
-            ${p.goles_local} - ${p.goles_visitante}
+        <div class="score-row" style="display:flex; align-items:center; justify-content:center; margin:15px 0;">
+          <div class="team-name" style="text-align:right; flex:1;">${safe(p.equipo_local?.nombre)}</div>
+          <div style="display:flex; gap:10px; margin: 0 20px; align-items:center;">
+            <input type="number" id="admin-gl-${p.id}" value="${p.goles_local || 0}" style="width:50px; padding:8px; font-size:1.2rem; text-align:center; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.2); color:#fff; border-radius:6px; font-family:'Bebas Neue',sans-serif;">
+            <span style="font-size:1.2rem; font-weight:bold; color:var(--gold);">-</span>
+            <input type="number" id="admin-gv-${p.id}" value="${p.goles_visitante || 0}" style="width:50px; padding:8px; font-size:1.2rem; text-align:center; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.2); color:#fff; border-radius:6px; font-family:'Bebas Neue',sans-serif;">
           </div>
-          <div class="team-name" style="text-align:left;">${safe(p.equipo_visitante?.nombre)}</div>
+          <div class="team-name" style="text-align:left; flex:1;">${safe(p.equipo_visitante?.nombre)}</div>
         </div>
+        ${p.reclamo ? `<div style="background:rgba(214,13,13,0.15); border:1px solid rgba(214,13,13,0.4); padding:12px; border-radius:8px; margin-bottom:15px; color:#ffba00; font-size:0.95rem; font-family:'Barlow',sans-serif;"><strong>⚠️ OBSERVACIÓN / RECLAMO:</strong><br>${safe(p.reclamo)}</div>` : ''}
         <button class="btn-aprobar" data-action="aprobar">Hacer Oficial</button>
       `;
       listaRevision.appendChild(card);
@@ -141,10 +144,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // Fuera del window — dentro del closure
   async function aprobarPartido(id) {
     if (!confirm('¿Confirma que el resultado es correcto? Se publicará en la tabla general.')) return;
+    
+    const gl = parseInt(document.getElementById(`admin-gl-${id}`).value) || 0;
+    const gv = parseInt(document.getElementById(`admin-gv-${id}`).value) || 0;
 
     const { error } = await supabase
       .from('partidos')
-      .update({ estado: 'OFICIAL' })
+      .update({ estado: 'OFICIAL', goles_local: gl, goles_visitante: gv })
       .eq('id', id);
 
     if (error) {

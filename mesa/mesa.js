@@ -91,6 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
         cancha,
         lugar,
         categoria,
+        reclamo,
         equipo_local:equipos!partidos_equipo_local_id_fkey(nombre),
         equipo_visitante:equipos!partidos_equipo_visitante_id_fkey(nombre)
       `)
@@ -203,9 +204,13 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
         
         <div style="margin-bottom: 14px;">
-          <button class="btn-envivo" data-action="envivo" ${p.estado === 'EN_VIVO' ? 'disabled style="background:#16a34a; opacity:1;"' : ''}>
-            ${p.estado === 'EN_VIVO' ? '🟢 EN VIVO' : '▶️ INICIAR PARTIDO (EN VIVO)'}
+          <button class="btn-envivo" data-action="envivo" data-estado="${p.estado}" style="${p.estado === 'EN_VIVO' ? 'background:#16a34a; opacity:1;' : ''}">
+            ${p.estado === 'EN_VIVO' ? '🔴 QUITAR EN VIVO' : '▶️ INICIAR PARTIDO (EN VIVO)'}
           </button>
+        </div>
+
+        <div style="margin-bottom: 14px;">
+          <input type="text" id="reclamo-${p.id}" placeholder="Escribe un reclamo u observación..." style="width:100%; padding:12px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); color:#fff; border-radius:8px;" value="${safe(p.reclamo || '')}">
         </div>
 
         <div class="equipo-row">
@@ -248,23 +253,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // DENTRO del closure — no en window
   async function marcarEnVivo(id, btn) {
+    const isEnVivo = btn.dataset.estado === 'EN_VIVO';
     btn.disabled = true;
     btn.innerText = 'Actualizando...';
     
+    const newState = isEnVivo ? 'PROGRAMADO' : 'EN_VIVO';
+
     const { error } = await supabase
       .from('partidos')
-      .update({ estado: 'EN_VIVO' })
+      .update({ estado: newState })
       .eq('id', id);
 
     if (error) {
       console.error(error);
       showToast('Error. Verifica permisos.', true);
       btn.disabled = false;
-      btn.innerText = '▶️ INICIAR PARTIDO (EN VIVO)';
+      btn.innerText = isEnVivo ? '🔴 QUITAR EN VIVO' : '▶️ INICIAR PARTIDO (EN VIVO)';
     } else {
-      btn.innerText = '🟢 EN VIVO';
-      btn.style.background = '#16a34a';
-      showToast('Partido marcado como EN VIVO');
+      btn.disabled = false;
+      if (newState === 'EN_VIVO') {
+        btn.innerText = '🔴 QUITAR EN VIVO';
+        btn.style.background = '#16a34a';
+        btn.dataset.estado = 'EN_VIVO';
+        showToast('Partido marcado como EN VIVO');
+      } else {
+        btn.innerText = '▶️ INICIAR PARTIDO (EN VIVO)';
+        btn.style.background = 'var(--navy)';
+        btn.dataset.estado = 'PROGRAMADO';
+        showToast('En Vivo desactivado');
+      }
     }
   }
 
@@ -296,10 +313,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function finalizarPartido(id) {
     if (!confirm('¿Seguro que deseas enviar este partido a revisión?')) return;
+    const reclamo = document.getElementById(`reclamo-${id}`).value.trim();
 
     const { error } = await supabase
       .from('partidos')
-      .update({ estado: 'EN_REVISION' })
+      .update({ estado: 'EN_REVISION', reclamo: reclamo })
       .eq('id', id);
 
     if (error) {
