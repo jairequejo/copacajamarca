@@ -501,6 +501,16 @@
       pointer-events: none;
     }
     #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    @media (max-width: 500px) {
+      .prog-row { flex-direction: column; gap: 12px; }
+      .score-row { flex-direction: column; gap: 12px; }
+      .score-row .team-name { text-align: center !important; width: 100%; font-size: 1.5rem; }
+      .score-row > div:nth-child(2) { justify-content: center; width: 100%; margin: 10px 0 !important; }
+      .tabs-container { flex-wrap: wrap; }
+      .tab-btn { flex: 1 1 40%; font-size: 0.95rem; padding: 12px 10px; }
+      .partido-header { flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+    }
   </style>
 </head>
 <body>
@@ -724,13 +734,3 @@
 </body>
 </html>
 
-    @media (max-width: 500px) {
-      .prog-row { flex-direction: column; gap: 12px; }
-      .score-row { flex-direction: column; gap: 12px; }
-      .score-row .team-name { text-align: center !important; width: 100%; font-size: 1.5rem; }
-      .score-row > div:nth-child(2) { justify-content: center; width: 100%; margin: 10px 0 !important; }
-      .tabs-container { flex-wrap: wrap; }
-      .tab-btn { flex: 1 1 40%; font-size: 0.95rem; padding: 12px 10px; }
-      .partido-header { flex-direction: column; align-items: center; gap: 8px; text-align: center; }
-    }
-  </style>
