@@ -189,18 +189,36 @@ document.addEventListener('DOMContentLoaded', () => {
         horaTexto = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
       }
 
-      const gl = p.goles_local !== null ? p.goles_local : 0;
-      const gv = p.goles_visitante !== null ? p.goles_visitante : 0;
+      const isFinalizado = p.estado === 'EN_REVISION';
+      const isOficial = p.estado === 'OFICIAL';
+      const isLocked = isFinalizado || isOficial;
+      const isProgramado = p.estado === 'PROGRAMADO';
 
-      const isLocked = p.estado === 'OFICIAL';
+      // Render '-' if null and programado, else default to 0
+      const gl = p.goles_local !== null ? p.goles_local : (isProgramado ? '-' : 0);
+      const gv = p.goles_visitante !== null ? p.goles_visitante : (isProgramado ? '-' : 0);
 
       const card = document.createElement('div');
       card.className = 'partido-card';
       card.dataset.id = p.id;
       card.dataset.golesLocal = gl;
       card.dataset.golesVisita = gv;
-      if (isLocked) card.style.opacity = '0.6';
+      if (isOficial) card.style.opacity = '0.6';
+      if (isFinalizado) card.style.border = '1px solid var(--gold)';
       
+      let btnEnVivoHTML = '';
+      if (isOficial) {
+        btnEnVivoHTML = `<button class="btn-envivo" disabled>🔒 BLOQUEADO (OFICIAL)</button>`;
+      } else if (isFinalizado) {
+        btnEnVivoHTML = `<button class="btn-envivo" data-action="editar" style="background:#b48600; opacity:1;">✏️ EDITAR PARTIDO</button>`;
+      } else {
+        btnEnVivoHTML = `<button class="btn-envivo" data-action="envivo" data-estado="${p.estado}">
+          ${p.estado === 'EN_VIVO' ? '🔴 QUITAR EN VIVO' : '▶️ INICIAR PARTIDO (EN VIVO)'}
+        </button>`;
+      }
+
+      const scoreControlsDisabled = isLocked || isProgramado ? 'disabled' : '';
+
       card.innerHTML = `
         <div class="partido-header">
           <span>${safe(horaTexto)} - ${safe(p.cancha || 'Cancha')} <strong style="color:var(--gold)">[${p.estado}]</strong></span>
@@ -208,9 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
         
         <div style="margin-bottom: 14px;">
-          <button class="btn-envivo" data-action="envivo" data-estado="${p.estado}" style="${p.estado === 'EN_VIVO' ? 'background:#16a34a; opacity:1;' : ''}" ${isLocked ? 'disabled' : ''}>
-            ${p.estado === 'EN_VIVO' ? '🔴 QUITAR EN VIVO' : (isLocked ? '🔒 BLOQUEADO (OFICIAL)' : '▶️ INICIAR PARTIDO (EN VIVO)')}
-          </button>
+          ${btnEnVivoHTML}
         </div>
 
         <div style="margin-bottom: 14px;">
@@ -220,52 +236,87 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="equipo-row">
           <div class="equipo-name">${safe(p.equipo_local?.nombre || 'Local')}</div>
           <div class="score-controls">
-            <button class="btn-score minus" data-team="local" data-delta="-1" ${isLocked ? 'disabled' : ''}>-</button>
+            <button class="btn-score minus" data-team="local" data-delta="-1" ${scoreControlsDisabled}>-</button>
             <div class="score-display" id="local-${p.id}">${gl}</div>
-            <button class="btn-score plus" data-team="local" data-delta="1" ${isLocked ? 'disabled' : ''}>+</button>
+            <button class="btn-score plus" data-team="local" data-delta="1" ${scoreControlsDisabled}>+</button>
           </div>
         </div>
 
         <div class="equipo-row">
           <div class="equipo-name">${safe(p.equipo_visitante?.nombre || 'Visita')}</div>
           <div class="score-controls">
-            <button class="btn-score minus" data-team="visitante" data-delta="-1" ${isLocked ? 'disabled' : ''}>-</button>
+            <button class="btn-score minus" data-team="visitante" data-delta="-1" ${scoreControlsDisabled}>-</button>
             <div class="score-display" id="visita-${p.id}">${gv}</div>
-            <button class="btn-score plus" data-team="visitante" data-delta="1" ${isLocked ? 'disabled' : ''}>+</button>
+            <button class="btn-score plus" data-team="visitante" data-delta="1" ${scoreControlsDisabled}>+</button>
           </div>
         </div>
 
-        <button class="btn-finalizar" data-action="finalizar" ${isLocked ? 'disabled style="display:none;"' : ''}>Finalizar Partido</button>
+        ${!isLocked ? `<button class="btn-finalizar" data-action="finalizar">Finalizar Partido</button>` : ''}
       `;
       partidosList.appendChild(card);
 
       // Delegación de eventos — sin window.*
       card.querySelectorAll('.btn-score').forEach(btn => {
         btn.addEventListener('click', () => {
-          actualizarGol(p.id, btn.dataset.team, parseInt(btn.dataset.delta));
+          actualizarGol(p.id, btn.dataset.team, parseInt(btn.dataset.delta), p.goles_local, p.goles_visitante);
         });
       });
       const btnEnVivo = card.querySelector('[data-action="envivo"]');
       if (btnEnVivo) {
-        btnEnVivo.addEventListener('click', () => marcarEnVivo(p.id, btnEnVivo));
+        if (p.estado === 'EN_VIVO') btnEnVivo.style.background = '#16a34a';
+        btnEnVivo.addEventListener('click', () => marcarEnVivo(p.id, btnEnVivo, p.goles_local, p.goles_visitante));
       }
-      card.querySelector('[data-action="finalizar"]').addEventListener('click', () => {
-        finalizarPartido(p.id);
-      });
+      const btnEditar = card.querySelector('[data-action="editar"]');
+      if (btnEditar) {
+        btnEditar.addEventListener('click', () => editarPartido(p.id, btnEditar));
+      }
+      const btnFinalizar = card.querySelector('[data-action="finalizar"]');
+      if (btnFinalizar) {
+        btnFinalizar.addEventListener('click', () => {
+          finalizarPartido(p.id);
+        });
+      }
     });
   }
 
+  async function editarPartido(id, btn) {
+    if (!confirm('¿Seguro que deseas volver a abrir este partido para edición?')) return;
+    btn.disabled = true;
+    btn.innerText = 'Actualizando...';
+    
+    const { error } = await supabase
+      .from('partidos')
+      .update({ estado: 'EN_VIVO' })
+      .eq('id', id);
+
+    if (error) {
+      console.error(error);
+      showToast('Error. Verifica permisos.', true);
+      btn.disabled = false;
+      btn.innerText = '✏️ EDITAR PARTIDO';
+    } else {
+      showToast('Partido abierto para edición.');
+    }
+  }
+
   // DENTRO del closure — no en window
-  async function marcarEnVivo(id, btn) {
+  async function marcarEnVivo(id, btn, gl, gv) {
     const isEnVivo = btn.dataset.estado === 'EN_VIVO';
     btn.disabled = true;
     btn.innerText = 'Actualizando...';
     
     const newState = isEnVivo ? 'PROGRAMADO' : 'EN_VIVO';
+    
+    const payload = { estado: newState };
+    // Si estamos iniciando el partido y los goles son nulos, inicializarlos en 0
+    if (newState === 'EN_VIVO') {
+      if (gl === null) payload.goles_local = 0;
+      if (gv === null) payload.goles_visitante = 0;
+    }
 
     const { error } = await supabase
       .from('partidos')
-      .update({ estado: newState })
+      .update(payload)
       .eq('id', id);
 
     if (error) {
@@ -289,10 +340,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  async function actualizarGol(id, tipo, cantidad) {
+  async function actualizarGol(id, tipo, cantidad, currentGl, currentGv) {
     const displayElement = document.getElementById(tipo === 'local' ? `local-${id}` : `visita-${id}`);
-    const valorPrevio = parseInt(displayElement.innerText); // valor ACTUAL en el DOM al momento del clic
-    let nuevoValor = valorPrevio + cantidad;
+    
+    // Si era nulo y están sumando, empezamos de 0.
+    let currentDBValue = tipo === 'local' ? currentGl : currentGv;
+    if (currentDBValue === null) currentDBValue = 0;
+
+    let nuevoValor = currentDBValue + cantidad;
     if (nuevoValor < 0) nuevoValor = 0;
     
     // Actualización optimista (UI primero)
