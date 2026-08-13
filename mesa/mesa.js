@@ -355,6 +355,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.dataset.estado = 'PROGRAMADO';
         showToast('En Vivo desactivado');
       }
+      setTimeout(fetchAndRender, 300);
     }
   }
 
