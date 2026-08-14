@@ -248,22 +248,23 @@
     .search-row {
       display: flex;
       align-items: center;
-      background: rgba(0,0,0,0.4);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 12px;
+      background: rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
       padding: 4px 16px;
-      margin-bottom: 24px;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      margin-bottom: 30px;
+      backdrop-filter: blur(10px);
+      box-shadow: inset 0 2px 15px rgba(0,0,0,0.6);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .search-row:focus-within {
       border-color: var(--gold);
-      box-shadow: 0 4px 20px rgba(255,186,0,0.15);
-      background: rgba(0,0,0,0.6);
+      background: rgba(0,0,0,0.7);
+      box-shadow: inset 0 2px 15px rgba(0,0,0,0.8), 0 0 20px rgba(255,186,0,0.15);
     }
     .search-icon {
-      color: rgba(255,255,255,0.4);
-      margin-right: 12px;
+      color: rgba(255,255,255,0.3);
+      margin-right: 14px;
       display: flex;
       align-items: center;
       transition: color 0.3s ease;
@@ -273,17 +274,20 @@
     }
     #search-input {
       flex: 1;
-      padding: 12px 0;
+      padding: 14px 0;
       background: transparent;
       border: none;
-      color: #fff;
-      font-size: 1.2rem;
+      color: var(--gold);
+      font-size: 1.5rem;
       font-family: 'Bebas Neue', sans-serif;
       letter-spacing: 0.05em;
       outline: none;
     }
     #search-input::placeholder {
       color: rgba(255,255,255,0.4);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.1rem;
+      letter-spacing: 0.02em;
     }
 
     /* BREADCRUMB / VOLVER */
