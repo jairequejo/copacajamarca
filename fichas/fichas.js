@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const delLogo = document.getElementById('del-logo');
   
   const searchInput = document.getElementById('search-input');
-  const btnSearch = document.getElementById('btn-search');
+  
   const searchResults = document.getElementById('search-results');
   
   const btnBack = document.getElementById('btn-back');
@@ -57,7 +57,14 @@ document.addEventListener('DOMContentLoaded', () => {
       box.value = box.value.replace(/[^0-9]/g, '');
       if (box.value) {
         box.classList.add('filled');
-        if (index < dniBoxes.length - 1) dniBoxes[index + 1].focus();
+        if (index < dniBoxes.length - 1) {
+          setTimeout(() => {
+            dniBoxes[index + 1].focus();
+            // Move cursor to end just in case
+            const nextBox = dniBoxes[index + 1];
+            nextBox.selectionStart = nextBox.selectionEnd = nextBox.value.length;
+          }, 10);
+        }
       } else {
         box.classList.remove('filled');
       }
@@ -142,57 +149,79 @@ document.addEventListener('DOMContentLoaded', () => {
   btnLogout.addEventListener('click', () => location.reload());
 
   // BUSCADOR RAPIDO
-  btnSearch.addEventListener('click', async () => {
-    const term = searchInput.value.trim();
-    if (term.length < 3) {
-      showToast('Ingresa al menos 3 caracteres');
+  
+  let searchTimeout;
+  
+  // Close autocomplete on click outside
+  document.addEventListener('click', (e) => {
+    if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+      searchResults.style.display = 'none';
+    }
+  });
+
+  searchInput.addEventListener('focus', () => {
+    if (searchResults.innerHTML.trim() !== '') {
+      searchResults.style.display = 'flex';
+    }
+  });
+
+  searchInput.addEventListener('input', (e) => {
+    const term = e.target.value.trim();
+    if (!term || term.length < 3) {
+      searchResults.innerHTML = '';
+      searchResults.style.display = 'none';
       return;
     }
+    
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(async () => {
+      searchResults.style.display = 'flex';
+      searchResults.innerHTML = '<div style="padding:16px; text-align:center; color:var(--navy); font-weight:600;">Buscando...</div>';
 
-    searchResults.innerHTML = '<p style="text-align:center; color:#fff; margin-top:15px;">Buscando en la base de datos...</p>';
+      const { data, error } = await supabase
+        .from('personas')
+        .select('dni, nombre_completo, categorias, fecha_nacimiento, equipos(nombre)')
+        .eq('rol', 'JUGADOR')
+        .or(`dni.eq.${term},nombre_completo.ilike.%${term}%`)
+        .limit(10);
 
-    const { data, error } = await supabase
-      .from('personas')
-      .select('dni, nombre_completo, categorias, fecha_nacimiento, equipos(nombre)')
-      .eq('rol', 'JUGADOR')
-      .or(`dni.eq.${term},nombre_completo.ilike.%${term}%`)
-      .limit(5);
-
-    if (error) {
-      searchResults.innerHTML = '<p style="color:#ef4444; text-align:center;">Error en la búsqueda.</p>';
-      return;
-    }
-
-    if (data.length === 0) {
-      searchResults.innerHTML = '<p style="text-align:center; color:#fff; margin-top:15px;">No se encontró ningún jugador.</p>';
-      return;
-    }
-
-    searchResults.innerHTML = '';
-    data.forEach(jugador => {
-      const fotoUrl = `https://uzyqpruqiqubwnqttnwf.supabase.co/storage/v1/object/public/dnis/${jugador.dni}.jpg`;
-      
-      let edad = 'N/A';
-      if (jugador.fecha_nacimiento) {
-        const diff = Date.now() - new Date(jugador.fecha_nacimiento).getTime();
-        edad = Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
+      if (error) {
+        searchResults.innerHTML = '<div style="padding:16px; text-align:center; color:#ef4444;">Error en búsqueda</div>';
+        return;
       }
 
-      const card = document.createElement('div');
-      card.className = 'jugador-card';
-      card.innerHTML = `
-        <img src="${safe(fotoUrl)}" class="jugador-foto" alt="Foto" onerror="this.src='../assets/img/logo.png'; this.style.opacity='0.3';">
-        <div class="jugador-info">
-          <h4>${safe(jugador.nombre_completo)}</h4>
-          <p>DNI: <strong>${safe(jugador.dni)}</strong> | Edad: ${edad} años</p>
-          <p>Categoría: <strong>${safe(jugador.categorias || 'N/A')}</strong></p>
-          <span style="color:var(--navy); font-weight:800; display:block; margin-top:6px; font-size:1.1rem; text-transform:uppercase;">${safe(jugador.equipos?.nombre || 'Libre')}</span>
-        </div>
-        <a href="${safe(fotoUrl)}" target="_blank" class="btn-action" style="background:var(--red);">VER FICHA DNI</a>
-      `;
-      searchResults.appendChild(card);
-    });
+      if (data.length === 0) {
+        searchResults.innerHTML = '<div style="padding:16px; text-align:center; color:var(--navy);">No se encontraron jugadores</div>';
+        return;
+      }
+
+      searchResults.innerHTML = '';
+      data.forEach(jugador => {
+        const fotoUrl = `https://uzyqpruqiqubwnqttnwf.supabase.co/storage/v1/object/public/dnis/${jugador.dni}.jpg`;
+        
+        let edad = 'N/A';
+        if (jugador.fecha_nacimiento) {
+          const diff = Date.now() - new Date(jugador.fecha_nacimiento).getTime();
+          edad = Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
+        }
+
+        const div = document.createElement('div');
+        div.className = 'autocomplete-item';
+        div.innerHTML = `
+          <img src="${safe(fotoUrl)}" class="autocomplete-img" onerror="this.src='../assets/img/logo.png'; this.style.opacity='0.3';">
+          <div class="autocomplete-info">
+            <h4>${safe(jugador.nombre_completo)}</h4>
+            <p>${safe(jugador.dni)} | ${edad} años | Cat: ${safe(jugador.categorias || 'N/A')} | ${safe(jugador.equipos?.nombre || 'Libre')}</p>
+          </div>
+        `;
+        div.addEventListener('click', () => {
+          window.open(fotoUrl, '_blank');
+        });
+        searchResults.appendChild(div);
+      });
+    }, 400); // Debounce 400ms
   });
+
 
   // EXPLORADOR
   async function loadEquipos() {
