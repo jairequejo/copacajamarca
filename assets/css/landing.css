@@ -156,13 +156,18 @@ a { text-decoration: none; }
   width: calc(100% + 40px);
 }
 .marquee-content {
+  /* Animation delayed for Safari */
   flex: 0 0 auto;
   display: flex;
   white-space: nowrap;
-  animation: scroll-marquee 18s linear infinite;
-  -webkit-animation: scroll-marquee 18s linear infinite;
   will-change: transform;
 }
+
+.marquee-content.running {
+  animation: scroll-marquee 18s linear infinite;
+  -webkit-animation: scroll-marquee 18s linear infinite;
+}
+
 .marquee-content img {
   display: inline-block;
   width: 44px;
