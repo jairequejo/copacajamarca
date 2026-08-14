@@ -353,4 +353,18 @@ document.addEventListener('DOMContentLoaded', () => {
       viewEquipos.style.display = 'grid';
     }
   });
+
+  // Ocultar bottom-nav en mobile cuando se abre el teclado (focus en inputs)
+  const bottomNav = document.querySelector('.bottom-nav');
+  document.addEventListener('focusin', (e) => {
+    if (e.target.tagName === 'INPUT' && bottomNav) {
+      bottomNav.style.display = 'none';
+    }
+  });
+  document.addEventListener('focusout', (e) => {
+    if (e.target.tagName === 'INPUT' && bottomNav) {
+      bottomNav.style.display = 'flex';
+    }
+  });
+
 });
