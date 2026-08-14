@@ -90,13 +90,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  document.getElementById('form-login').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (document.activeElement) document.activeElement.blur(); // Cierra el teclado virtual
-    const dni = hiddenDni.value.trim();
-    if (dni.length < 8) return;
-
-    btnLogin.innerText = "VERIFICANDO...";
+  async function performLogin(dni, isAuto = false) {
+    if (!isAuto) {
+      btnLogin.innerText = "VALIDANDO...";
+      btnLogin.disabled = true;
+    }
     
     const { data, error } = await supabase
       .from('personas')
@@ -107,17 +105,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (error) {
       btnLogin.innerText = "AUTENTICAR";
+      btnLogin.disabled = false;
       showToast('Error de conexión');
       return;
     }
 
     if (!data) {
       btnLogin.innerText = "AUTENTICAR";
-      showToast('DNI no registrado como Delegado');
+      btnLogin.disabled = false;
+      localStorage.removeItem('fichas_dni'); // Clear invalid saved DNI
+      if (!isAuto) showToast('DNI no registrado como Delegado');
       return;
     }
 
     btnLogin.innerText = "¡VALIDADO!";
+    localStorage.setItem('fichas_dni', dni);
     loggedUser = data;
     
     setTimeout(() => {
@@ -135,10 +137,32 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       loadEquipos();
-    }, 500);
+    }, isAuto ? 0 : 500);
+  }
+
+  // AUTO LOGIN
+  const savedDni = localStorage.getItem('fichas_dni');
+  if (savedDni) {
+    performLogin(savedDni, true);
+  }
+
+  document.getElementById('form-login').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    document.activeElement.blur();
+    
+    const dni = hiddenDni.value;
+    if (dni.length !== 8) {
+      showToast('Ingrese un DNI válido de 8 dígitos');
+      return;
+    }
+
+    await performLogin(dni, false);
   });
 
-  btnLogout.addEventListener('click', () => location.reload());
+  btnLogout.addEventListener('click', () => {
+    localStorage.removeItem('fichas_dni');
+    location.reload();
+  });
 
   // BUSCADOR RAPIDO
   
