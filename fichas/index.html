@@ -152,11 +152,11 @@
 
     /* CARD / BORDERS */
     .card {
-      background: #fff;
-      border: 1px solid rgba(0,26,77,0.1);
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,186,0,0.18);
       border-radius: 14px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-      color: var(--navy);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.4);
     }
 
     /* BUTTONS */
@@ -184,16 +184,10 @@
       text-align: center;
     }
     .login-logo {
-      width: 110px;
-      height: 110px;
-      border-radius: 50%;
-      background: #fff;
-      margin: 0 auto 24px;
-      display: block;
-      box-shadow: 0 0 0 4px rgba(255,186,0,.6);
+      width: 110px; height: 110px; border-radius: 50%; background: rgba(0,0,0,0.3); margin: 0 auto 24px; display: block; border: 1px solid rgba(255,255,255,0.1);
     }
-    .login-title { font-family: 'Bebas Neue', sans-serif; font-size: 3.5rem; margin-bottom: 8px; color: var(--navy);}
-    .login-sub { font-family: 'Barlow Condensed', sans-serif; color: #475569; margin-bottom: 30px; font-size: 1.1rem; }
+    .login-title { font-family: \'Bebas Neue\', sans-serif; font-size: 3.5rem; margin-bottom: 8px; color: #fff;}
+    .login-sub { font-family: \'Barlow Condensed\', sans-serif; color: rgba(255,255,255,0.7); margin-bottom: 30px; font-size: 1.1rem; }
     
     .dni-grid { 
       display: grid; 
@@ -203,20 +197,11 @@
       width: 100%; 
     }
     .dni-box {
-      width: 100%; 
-      aspect-ratio: 1/1.3; 
-      background: #f8fafc; 
-      border: 2px solid #cbd5e1;
-      color: var(--navy); 
-      border-radius: 8px; 
-      font-family: 'Bebas Neue', sans-serif; 
-      font-size: clamp(1.5rem, 6vw, 2.5rem); 
-      text-align: center;
-      padding: 0;
-      margin: 0;
-      box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+      width: 100%; aspect-ratio: 1/1.3; background: rgba(0,0,0,0.5); border: 2px solid rgba(255,255,255,.15);
+      color: #fff; border-radius: 8px; font-family: \'Bebas Neue\', sans-serif; font-size: clamp(1.5rem, 6vw, 2.5rem); text-align: center;
+      padding: 0; margin: 0;
     }
-    .dni-box:focus, .dni-box.filled { border-color: var(--navy); color: var(--navy); background: #fff; box-shadow: 0 0 0 3px rgba(0,26,77,0.1); }
+    .dni-box:focus, .dni-box.filled { border-color: var(--gold); color: var(--gold); background: rgba(255,186,0,.15); }
 
     /* BOTTOM NAV */
     .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--navy); display: flex; border-top: 1px solid rgba(255,255,255,.08); padding-bottom: env(safe-area-inset-bottom); z-index: 100; box-shadow: 0 -4px 20px rgba(0,0,0,.25); }
@@ -238,12 +223,11 @@
       display: flex;
       align-items: center;
       gap: 16px;
-      background: var(--navy);
+      background: rgba(0,0,0,0.3);
       padding: 16px;
       border-radius: 12px;
-      border: 2px solid var(--gold);
+      border: 1px solid rgba(255,255,255,0.1);
       margin-bottom: 24px;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.15);
     }
     .profile-logo {
       width: 64px; height: 64px; object-fit: contain;
@@ -253,18 +237,17 @@
 
     /* BUSCADOR DNI / APELLIDO */
     .search-section {
-      background: #fff;
-      border: 1px solid rgba(0,26,77,0.1);
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,186,0,0.18);
       border-radius: 14px;
       padding: 24px;
       margin-bottom: 24px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-      color: var(--navy);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.4);
     }
     .search-section h3 {
-      font-family: 'Bebas Neue', sans-serif;
+      font-family: \'Bebas Neue\', sans-serif;
       font-size: 1.8rem;
-      color: var(--navy);
+      color: #fff;
       margin-bottom: 16px;
       letter-spacing: .04em;
     }
@@ -279,17 +262,17 @@
     #search-input {
       flex: 1;
       padding: 12px 16px;
-      background: #f8fafc;
-      border: 2px solid #cbd5e1;
-      color: var(--navy);
+      background: rgba(0,0,0,0.5);
+      border: 2px solid rgba(255,255,255,.15);
+      color: #fff;
       border-radius: 8px;
       font-size: 1.1rem;
-      font-family: 'Barlow', sans-serif;
-      font-weight: 500;
+      font-family: \'Barlow\', sans-serif;
+      font-weight: 600;
       outline: none;
     }
     #search-input:focus {
-      border-color: var(--navy);
+      border-color: var(--gold);
     }
 
     /* BREADCRUMB / VOLVER */
@@ -325,17 +308,17 @@
     /* JUGADORES LIST */
     .jugadores-list { display: flex; flex-direction: column; gap: 16px; }
     .jugador-card {
-      background: #fff; border-radius: 12px; padding: 16px; display: flex; gap: 16px; align-items: center;
+      background: rgba(255,255,255,0.06); border-radius: 12px; padding: 16px; display: flex; gap: 16px; align-items: center;
       box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
     .jugador-foto {
-      width: 70px; height: 70px; border-radius: 8px; object-fit: cover; background: #e2e8f0;
-      border: 1px solid #cbd5e1;
+      width: 70px; height: 70px; border-radius: 8px; object-fit: cover; background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.15);
     }
-    .jugador-info { flex: 1; color: var(--navy); }
+    .jugador-info { flex: 1; color: #fff; }
     .jugador-info h4 { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; line-height: 1; margin-bottom: 4px; }
-    .jugador-info p { font-size: 0.95rem; color: #475569; margin-bottom: 2px; font-weight: 500; }
-    .jugador-info p strong { color: var(--navy); }
+    .jugador-info p { font-size: 0.95rem; color: rgba(255,255,255,0.7); margin-bottom: 2px; font-weight: 500; }
+    .jugador-info p strong { color: #fff; }
     
     .btn-action {
       background: var(--navy); color: #fff; text-decoration: none; padding: 8px 12px; border-radius: 6px;
