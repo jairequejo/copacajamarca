@@ -243,24 +243,12 @@
 
     /* BUSCADOR DNI / APELLIDO */
     .search-section {
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,186,0,0.18);
-      border-radius: 14px;
-      padding: 24px;
       margin-bottom: 24px;
-      box-shadow: 0 12px 40px rgba(0,0,0,0.4);
-    }
-    .search-section h3 {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 1.8rem;
-      color: var(--gold);
-      margin-bottom: 16px;
-      letter-spacing: .04em;
     }
     .search-row {
       display: flex;
       gap: 12px;
-      margin-bottom: 16px;
+      margin-bottom: 8px;
     }
     @media (max-width: 540px) {
       .search-row { flex-direction: column; }
@@ -442,10 +430,8 @@
 
       <!-- BUSCADOR -->
       <div class="search-section" id="search-section">
-        <h3>AUDITAR JUGADOR RIVAL RÁPIDO</h3>
         <div class="search-row">
-          <input type="text" id="search-input" placeholder="Ingrese DNI o Apellido">
-          <!-- Button removed for live search -->
+          <input type="text" id="search-input" placeholder="BUSCAR JUGADOR...">
         </div>
         <div id="search-results"></div>
       </div>
