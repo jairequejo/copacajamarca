@@ -77,9 +77,9 @@
       text-transform: uppercase;
     }
     .header-title-main {
-      font-family: 'Bebas Neue', sans-serif;
+      font-family: \'Bebas Neue\', sans-serif;
       font-size: 1.9rem;
-      color: var(--navy);
+      color: #fff;
       line-height: 1;
     }
     .page-bar {
@@ -466,44 +466,12 @@
       <div id="view-equipos" class="grid-container"></div>
       <div id="view-categorias" class="grid-container" style="display:none;"></div>
       
-      <div id="jugadores-header" style="display:none; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <button id="btn-add-jugador" class="btn-primary" style="width: auto; padding: 10px 20px; font-size: 1.1rem;">+ INSCRIBIR JUGADOR</button>
-      </div>
+      
       <div id="view-jugadores" class="jugadores-list" style="display:none;"></div>
     </div>
   </div>
 
-  <div id="modal-jugador" class="modal-overlay">
-    <div class="modal-content">
-      <button class="btn-close" id="btn-close-modal">X</button>
-      <h2 class="modal-title">INSCRIBIR JUGADOR</h2>
-      <form id="form-jugador">
-        <div class="form-group">
-          <label>DNI del Jugador (8 dígitos)</label>
-          <input type="tel" id="fj-dni" class="form-control" maxlength="8" pattern="[0-9]{8}" required placeholder="Ej. 70123456">
-        </div>
-        <div class="form-group">
-          <label>Nombres y Apellidos Completos</label>
-          <input type="text" id="fj-nombres" class="form-control" required placeholder="Nombres Apellidos">
-        </div>
-        <div class="form-group">
-          <label>Fecha de Nacimiento</label>
-          <input type="date" id="fj-fecha" class="form-control" required>
-        </div>
-        <div class="form-group">
-          <label>Categoría</label>
-          <select id="fj-categoria" class="form-control" required>
-            <!-- Llenado dinámico -->
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Foto del DNI (Opcional, Frontal)</label>
-          <input type="file" id="fj-foto" class="form-control" accept="image/jpeg, image/png">
-        </div>
-        <button type="submit" id="btn-submit-jugador" class="btn-submit">GUARDAR JUGADOR</button>
-      </form>
-    </div>
-  </div>
+  
 
   <nav class="bottom-nav" aria-label="Navegación principal">
     <a href="/" class="bnav-item">
