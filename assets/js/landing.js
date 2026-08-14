@@ -49,8 +49,16 @@ async function loadMarquee() {
       html += `<img src="${src}" alt="Logo" onerror="this.style.display='none'">`;
     });
     
+
     track.innerHTML = html;
     track2.innerHTML = html;
+    
+    // Force reflow and add animation class for Safari WebKit fix
+    requestAnimationFrame(() => {
+      track.classList.add('running');
+      track2.classList.add('running');
+    });
+
   } catch(e) {
     console.error('Error fetching logos:', e);
   }
