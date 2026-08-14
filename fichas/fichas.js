@@ -22,15 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const viewEquipos = document.getElementById('view-equipos');
   const viewCategorias = document.getElementById('view-categorias');
   const viewJugadores = document.getElementById('view-jugadores');
-  const jugadoresHeader = document.getElementById('jugadores-header');
-  const btnAddJugador = document.getElementById('btn-add-jugador');
-  
-  const modalJugador = document.getElementById('modal-jugador');
-  const btnCloseModal = document.getElementById('btn-close-modal');
-  const formJugador = document.getElementById('form-jugador');
-  const btnSubmitJugador = document.getElementById('btn-submit-jugador');
-  const fjCategoria = document.getElementById('fj-categoria');
-
   let currentView = 'equipos';
   let allTeams = [];
   let currentTeam = null;
@@ -286,10 +277,9 @@ document.addEventListener('DOMContentLoaded', () => {
     viewCategorias.style.display = 'none';
     
     if (loggedUser && loggedUser.equipo_id === currentTeam.id) {
-      jugadoresHeader.style.display = 'flex';
-      fjCategoria.innerHTML = `<option value="${safe(cat)}">${safe(cat)}</option>`;
-    } else {
-      jugadoresHeader.style.display = 'none';
+      
+      } else {
+      
     }
     
     viewJugadores.style.display = 'flex';
@@ -352,7 +342,7 @@ document.addEventListener('DOMContentLoaded', () => {
       currentView = 'categorias';
       sectionTitle.innerText = `CATEGORÍAS DE ${currentTeam.nombre}`;
       viewJugadores.style.display = 'none';
-      jugadoresHeader.style.display = 'none';
+      
       viewCategorias.style.display = 'grid';
     } else if (currentView === 'categorias') {
       currentView = 'equipos';
@@ -363,62 +353,4 @@ document.addEventListener('DOMContentLoaded', () => {
       viewEquipos.style.display = 'grid';
     }
   });
-
-  // LOGICA DEL MODAL
-  btnAddJugador.addEventListener('click', () => {
-    formJugador.reset();
-    modalJugador.classList.add('active');
-  });
-
-  btnCloseModal.addEventListener('click', () => {
-    modalJugador.classList.remove('active');
-  });
-
-  formJugador.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    btnSubmitJugador.disabled = true;
-    btnSubmitJugador.innerText = 'GUARDANDO...';
-
-    const fDni = document.getElementById('fj-dni').value.trim();
-    const fNombres = document.getElementById('fj-nombres').value.trim().toUpperCase();
-    const fFecha = document.getElementById('fj-fecha').value;
-    const fCat = document.getElementById('fj-categoria').value;
-    const fileInput = document.getElementById('fj-foto');
-
-    try {
-      // 1. Guardar o actualizar jugador en la base de datos (UPSERT)
-      const { error: dbError } = await supabase.from('personas').upsert({
-        dni: fDni,
-        nombre_completo: fNombres,
-        fecha_nacimiento: fFecha,
-        categorias: fCat,
-        equipo_id: loggedUser.equipo_id,
-        rol: 'JUGADOR'
-      }, { onConflict: 'dni' });
-
-      if (dbError) throw dbError;
-
-      // 2. Subir imagen si existe
-      if (fileInput.files.length > 0) {
-        const file = fileInput.files[0];
-        const { error: uploadError } = await supabase.storage.from('dnis').upload(`${fDni}.jpg`, file, {
-          cacheControl: '3600',
-          upsert: true
-        });
-        if (uploadError) throw uploadError;
-      }
-
-      showToast('JUGADOR INSCRITO CORRECTAMENTE');
-      modalJugador.classList.remove('active');
-      selectCategoria(currentCat); // Recargar la lista
-
-    } catch (err) {
-      console.error(err);
-      showToast('ERROR AL GUARDAR. REVISE LOS DATOS.');
-    } finally {
-      btnSubmitJugador.disabled = false;
-      btnSubmitJugador.innerText = 'GUARDAR JUGADOR';
-    }
-  });
-
 });
