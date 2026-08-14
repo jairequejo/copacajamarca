@@ -207,7 +207,7 @@
     .bnav-live-wrap { position: relative; display: flex; align-items: center; justify-content: center; }
     .bnav-live-dot { position: absolute; top: -2px; right: -2px; width: 6px; height: 6px; background: #ef4444; border-radius: 50%; box-shadow: 0 0 0 2px var(--navy); animation: pulse 2s infinite; }
     @media (min-width: 1024px) {
-      .bottom-nav { display: flex !important; top: 20px; bottom: auto; left: auto; right: 20px; transform: none; width: auto; border-radius: 12px; padding: 0 20px; height: 56px; box-shadow: 0 6px 24px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.15); gap: 20px; }
+      .bottom-nav { display: flex; top: 20px; bottom: auto; left: auto; right: 20px; transform: none; width: auto; border-radius: 12px; padding: 0 20px; height: 56px; box-shadow: 0 6px 24px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.15); gap: 20px; }
       .bottom-nav .bnav-item { padding: 0; flex-direction: row; gap: 8px; flex: 0 0 auto; }
       .bottom-nav .bnav-item span { display: block; white-space: nowrap; font-size: 0.95rem; }
       
@@ -475,7 +475,7 @@
 
   
 
-  <nav class="bottom-nav" aria-label="Navegación principal">
+  <nav class="bottom-nav" aria-label="Navegación principal" style="display: none;">
     <a href="/" class="bnav-item">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><polyline points="9 21 9 12 15 12 15 21"/></svg>
       <span>Inicio</span>
