@@ -92,6 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('form-login').addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (document.activeElement) document.activeElement.blur(); // Cierra el teclado virtual
     const dni = hiddenDni.value.trim();
     if (dni.length < 8) return;
 
