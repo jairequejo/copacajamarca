@@ -127,6 +127,9 @@ document.addEventListener('DOMContentLoaded', () => {
       dashboardView.style.display = 'block';
       btnLogout.style.display = 'block';
       
+      const bNav = document.querySelector('.bottom-nav');
+      if (bNav) bNav.style.display = 'flex';
+      
       const rolLabel = data.rol === 'ENTRENADOR' ? 'Entrenador' : 'Delegado';
       delNombre.innerText = `HOLA, ${data.nombre_completo.split(' ')[0].toUpperCase()}`;
       delEquipo.innerText = `${rolLabel}: ${data.equipos?.nombre || 'SIN EQUIPO'}`;
