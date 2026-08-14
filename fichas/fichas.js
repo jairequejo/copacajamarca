@@ -125,9 +125,8 @@ document.addEventListener('DOMContentLoaded', () => {
       dashboardView.style.display = 'block';
       btnLogout.style.display = 'block';
       
-      const rolLabel = data.rol === 'ENTRENADOR' ? 'Entrenador' : 'Delegado';
-      delNombre.innerText = `HOLA, ${data.nombre_completo.split(' ')[0].toUpperCase()}`;
-      delEquipo.innerText = `${rolLabel}: ${data.equipos?.nombre || 'Sin Equipo'}`;
+      delNombre.innerText = data.nombre_completo.split(' ')[0].toUpperCase();
+      delEquipo.innerText = data.equipos?.nombre || 'SIN EQUIPO';
       
       if (data.equipos?.logo_url) {
         delLogo.src = data.equipos.logo_url;
