@@ -356,11 +356,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Ocultar bottom-nav en mobile cuando se abre el teclado (focus en inputs)
   const bottomNav = document.querySelector('.bottom-nav');
-  const loginView = document.getElementById('login-view');
   document.addEventListener('focusin', (e) => {
     if (e.target.tagName === 'INPUT') {
       if (bottomNav) bottomNav.style.display = 'none';
-      if (loginView && e.target.closest('#login-view')) loginView.classList.add('keyboard-active');
+      if (loginView && e.target.closest('#login-view')) {
+        loginView.classList.add('keyboard-active');
+        // Scroll slightly after layout changes to keep inputs visible
+        setTimeout(() => { window.scrollBy(0, 150); }, 150);
+      }
     }
   });
   document.addEventListener('focusout', (e) => {
