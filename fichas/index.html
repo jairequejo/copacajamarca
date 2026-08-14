@@ -52,16 +52,15 @@
       margin: 0 auto;
       display: flex;
       align-items: center;
-      justify-content: center;
+      justify-content: space-between;
       padding: 16px;
-      position: relative;
     }
     .header-left {
       display: flex;
       align-items: center;
-      justify-content: center;
-      text-align: left;
       gap: 14px;
+      flex: 1;
+      min-width: 0;
     }
     .header-logo {
       width: clamp(40px, 10vw, 75px);
@@ -82,11 +81,13 @@
     .header-title-main {
       font-family: 'Barlow Condensed', sans-serif;
       font-weight: 900;
-      font-size: clamp(1.4rem, 6.5vw, 2.8rem);
+      font-size: clamp(1.2rem, 5vw, 2.2rem);
       color: #fff;
       line-height: 0.95;
       letter-spacing: .01em;
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     #btn-logout {
@@ -102,11 +103,7 @@
       display: none;
       text-transform: uppercase;
       transition: all 0.2s;
-      position: absolute;
-      right: 16px;
-      top: 50%;
-      transform: translateY(-50%);
-      z-index: 20;
+      flex-shrink: 0;
     }
     #btn-logout:hover {
       background: rgba(255, 0, 0, 0.15);
