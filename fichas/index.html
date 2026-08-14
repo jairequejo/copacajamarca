@@ -228,18 +228,19 @@
     .profile-header {
       display: flex;
       align-items: center;
-      gap: 16px;
-      background: rgba(0,0,0,0.3);
-      padding: 16px;
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,0.1);
-      margin-bottom: 24px;
+      justify-content: space-between;
+      margin-bottom: 32px;
+      padding: 0 4px;
     }
     .profile-logo {
-      width: 64px; height: 64px; object-fit: contain;
+      width: 90px; height: 90px; object-fit: contain;
+      filter: drop-shadow(0 8px 16px rgba(0,0,0,0.4));
     }
-    .profile-info h2 { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; margin: 0; line-height: 1; color: var(--gold); }
-    .profile-info p { font-family: 'Barlow Condensed', sans-serif; font-size: 1.1rem; color: #fff; margin-top: 4px; text-transform: uppercase; font-weight: 700; }
+    .profile-info {
+      text-align: right;
+    }
+    .profile-info h2 { font-family: 'Bebas Neue', sans-serif; font-size: 2.8rem; margin: 0; line-height: 1; color: var(--gold); letter-spacing: 0.02em; }
+    .profile-info p { font-family: 'Barlow Condensed', sans-serif; font-size: 1.25rem; color: #fff; margin-top: 6px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.02em; }
 
     /* BUSCADOR DNI / APELLIDO */
     .search-section {
