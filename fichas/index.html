@@ -79,10 +79,11 @@
     .header-title-main {
       font-family: 'Barlow Condensed', sans-serif;
       font-weight: 800;
-      font-size: 2rem;
+      font-size: clamp(1.1rem, 4.5vw, 2rem);
       color: #fff;
       line-height: 1;
       letter-spacing: .02em;
+      white-space: nowrap;
     }
 
     #btn-logout {
@@ -457,7 +458,7 @@
           </div>
           <input type="text" id="search-input" placeholder="BUSCAR JUGADOR...">
         </div>
-        <div id="search-results"></div>
+        <div id="search-results" style="display: none;"></div>
       </div>
 
       <div class="nav-bar">
