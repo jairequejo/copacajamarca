@@ -240,7 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function selectEquipo(eq) {
     currentTeam = eq;
     currentView = 'categorias';
-    sectionTitle.innerText = `CATEGORÍAS DE ${eq.nombre}`;
+    sectionTitle.innerText = eq.nombre;
     btnBack.style.display = 'block';
     searchSection.style.display = 'none'; // Ocultar buscador al explorar a fondo
     
@@ -273,7 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function selectCategoria(cat) {
     currentView = 'jugadores';
     currentCat = cat;
-    sectionTitle.innerText = `JUGADORES ${cat} - ${currentTeam.nombre}`;
+    sectionTitle.innerText = `${cat} - ${currentTeam.nombre}`;
     
     viewCategorias.style.display = 'none';
     
@@ -341,7 +341,7 @@ document.addEventListener('DOMContentLoaded', () => {
   btnBack.addEventListener('click', () => {
     if (currentView === 'jugadores') {
       currentView = 'categorias';
-      sectionTitle.innerText = `CATEGORÍAS DE ${currentTeam.nombre}`;
+      sectionTitle.innerText = currentTeam.nombre;
       viewJugadores.style.display = 'none';
       
       viewCategorias.style.display = 'grid';
