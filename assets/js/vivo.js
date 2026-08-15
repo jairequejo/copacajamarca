@@ -456,7 +456,8 @@ async function downloadScreenshot(futbolFormat) {
             const matchCancha = currentFilters.cancha === 'todos' || m.cancha === currentFilters.cancha;
             const matchEstado = currentFilters.estado === 'todos' || m.estadoStandard === currentFilters.estado;
 
-            const isF9 = m.categoria === '2013' || m.categoria === '2014';
+            const cat = m.categoria ? m.categoria.toString().trim() : '';
+            const isF9 = cat.startsWith('2013') || cat.startsWith('2014');
             const matchFormat = (futbolFormat === '9') ? isF9 : !isF9;
 
             return matchCat && matchLugar && matchCancha && matchEstado && matchFormat;
