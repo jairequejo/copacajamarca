@@ -721,7 +721,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectFormat = document.getElementById('select-print-format');
     const stylePrint = document.getElementById('print-page-size');
     if (selectFormat && stylePrint) {
-      stylePrint.innerHTML = `@page { size: ${selectFormat.value}; margin: 0; }`;
+      // Aplicar margen de 10mm para evitar que los carnets choquen con el borde superior de la hoja
+      stylePrint.innerHTML = `@page { size: ${selectFormat.value}; margin: 10mm; }`;
     }
     window.print();
   });
