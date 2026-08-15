@@ -94,7 +94,8 @@
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     
     .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(0,26,77,0.95); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid rgba(255,255,255,0.08); display: none; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
-    .nav-btn { flex: 1; padding: 14px 4px; background: transparent; border: none; color: rgba(255,255,255,0.4); font-family: 'Barlow Condensed', sans-serif; font-size: 0.95rem; font-weight: 800; text-transform: uppercase; cursor: pointer; transition: all 0.2s; position: relative; }
+    .nav-btn { flex: 1; padding: 12px 4px; background: transparent; border: none; color: rgba(255,255,255,0.4); font-family: 'Barlow Condensed', sans-serif; font-size: 0.85rem; font-weight: 800; text-transform: uppercase; cursor: pointer; transition: all 0.2s; position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .nav-btn svg { width: 22px; height: 22px; }
     .nav-btn.active { color: var(--gold); }
     .nav-btn.active::after { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 40px; height: 3px; background: var(--gold); border-radius: 0 0 3px 3px; }
     
