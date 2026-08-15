@@ -115,7 +115,13 @@ function entrarApp() {
   pinView.style.display = 'none';
   appHeader.style.display = 'flex';
   appMain.style.display = 'flex';
+  document.getElementById('bottom-nav').style.display = 'flex';
   showToast('Acceso autorizado — Bienvenido');
+  
+  // Cargar directorio de staff
+  if (typeof loadStaff === 'function') {
+    loadStaff();
+  }
 }
 
 // Animación shake para PIN incorrecto
@@ -328,3 +334,104 @@ function agregarHistorial(persona, dni, ok) {
   `;
   historialList.prepend(item);
 }
+
+// ════════════════════════════════════════════════
+// 3. TABS Y NAVEGACIÓN
+// ════════════════════════════════════════════════
+const navBtns = document.querySelectorAll('.nav-btn');
+const appTabs = document.querySelectorAll('.app-tab');
+
+navBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    navBtns.forEach(b => b.classList.remove('active'));
+    appTabs.forEach(t => t.classList.remove('active'));
+    
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+    
+    // Auto-pausar escáner si sale de la pestaña
+    if (btn.dataset.tab !== 'tab-escaner' && isScanning) {
+      detenerScanner();
+    }
+  });
+});
+
+// ════════════════════════════════════════════════
+// 4. DIRECTORIO Y GALERÍA DE STAFF
+// ════════════════════════════════════════════════
+const staffGrid = document.getElementById('staff-grid');
+const galeriaGrid = document.getElementById('galeria-grid');
+const staffStatus = document.getElementById('staff-status');
+const searchStaff = document.getElementById('search-staff');
+let allStaff = [];
+
+async function loadStaff() {
+  const { data, error } = await supabase
+    .from('personas')
+    .select('*, equipos(nombre)')
+    .in('rol', ['ENTRENADOR', 'DELEGADO'])
+    .order('nombre_completo');
+    
+  if (error) {
+    staffStatus.textContent = 'Error cargando staff.';
+    return;
+  }
+  
+  if (!data || data.length === 0) {
+    staffStatus.textContent = 'No hay staff registrado.';
+    return;
+  }
+  
+  staffStatus.style.display = 'none';
+  allStaff = data;
+  renderStaff(allStaff);
+  renderGaleria(allStaff);
+}
+
+function renderStaff(list) {
+  staffGrid.innerHTML = '';
+  list.forEach(p => {
+    const isRed = p.rol === 'ENTRENADOR';
+    const fotoUrl = `${BUCKET_URL}/${p.dni}.jpg`;
+    const card = document.createElement('div');
+    card.className = 'dir-card';
+    card.style.borderTop = `3px solid ${isRed ? '#d60d0d' : '#3b82f6'}`;
+    
+    card.innerHTML = `
+      <img class="dir-foto" src="${safe(fotoUrl)}" onerror="this.src='../assets/img/logo.png'">
+      <div class="dir-name">${safe(p.nombre_completo)}</div>
+      <div class="dir-rol" style="color:${isRed ? '#d60d0d' : '#3b82f6'};">${safe(p.rol)}</div>
+      <div class="dir-team">${safe(p.equipos?.nombre || 'Independiente')}</div>
+      <div style="font-size:0.7rem; color:rgba(255,255,255,0.4); margin-top:8px;">DNI: ${safe(p.dni)}</div>
+    `;
+    staffGrid.appendChild(card);
+  });
+}
+
+function renderGaleria(list) {
+  galeriaGrid.innerHTML = '';
+  list.forEach(p => {
+    const isRed = p.rol === 'ENTRENADOR';
+    const fotoUrl = `${BUCKET_URL}/${p.dni}.jpg`;
+    const wrap = document.createElement('div');
+    wrap.style.textAlign = 'center';
+    wrap.innerHTML = `
+      <img src="${safe(fotoUrl)}" style="width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:12px; border:2px solid ${isRed ? '#d60d0d' : '#3b82f6'};" onerror="this.src='../assets/img/logo.png'">
+      <div style="font-family:'Barlow Condensed'; font-size:0.8rem; margin-top:6px; color:#fff; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+        ${safe(p.nombre_completo.split(' ')[0])}
+      </div>
+    `;
+    galeriaGrid.appendChild(wrap);
+  });
+}
+
+searchStaff.addEventListener('input', (e) => {
+  const term = e.target.value.toLowerCase();
+  const filtered = allStaff.filter(p => 
+    p.nombre_completo.toLowerCase().includes(term) || 
+    p.dni.includes(term)
+  );
+  renderStaff(filtered);
+});
+
+
