@@ -529,18 +529,17 @@
       #carnets-render-area {
         position: relative;
         width: 100%;
-        display: flex !important;
-        flex-wrap: wrap;
-        gap: 3mm;
-        justify-content: center;
-        align-content: flex-start;
+        display: block !important;
+        text-align: center;
         padding: 5mm;
         box-sizing: border-box;
       }
       .carnet-box {
+        display: inline-flex !important;
         page-break-inside: avoid;
         break-inside: avoid;
-        margin-bottom: 2mm;
+        margin: 2mm;
+        vertical-align: top;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
       }
