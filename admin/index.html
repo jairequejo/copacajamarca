@@ -577,6 +577,7 @@
         <button class="tab-btn" data-target="tab-programar">Programar</button>
         <button class="tab-btn" data-target="tab-importar">Importar</button>
         <button class="tab-btn" data-target="tab-salvavidas">Salvavidas</button>
+        <button class="tab-btn" data-target="tab-directorio">Directorio</button>
         <button class="tab-btn" data-target="tab-boleteria">Boletería</button>
       </div>
 
@@ -662,6 +663,58 @@
           </div>
 
           <button id="btn-crear" class="btn-inyectar" style="background: linear-gradient(to bottom, #ef4444, #dc2626) !important; color: white !important; margin-top: 32px;">INYECTAR A LA BD</button>
+        </div>
+      </div>
+
+      <!-- Pestaña Directorio -->
+      <div id="tab-directorio" class="tab-content">
+        <div class="card" style="border-left: 4px solid #3b82f6;">
+          <h2 class="card-header-title" style="color: #60a5fa; border-bottom-color: rgba(59,130,246,0.2);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            DIRECTORIO Y REGISTRO
+          </h2>
+          
+          <div style="background: rgba(0,0,0,0.3); padding: 16px; border-radius: 12px; margin-bottom: 24px; border: 1px solid rgba(255,255,255,0.05);">
+            <h3 style="font-family:'Barlow Condensed'; color:var(--gold); margin-bottom:12px; letter-spacing:0.05em; font-size:1.1rem;">NUEVO REGISTRO</h3>
+            <form id="form-registro" style="display:grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+              <div class="form-group" style="margin-bottom:0;"><label>DNI</label><input type="text" id="reg-dni" class="input-dark" maxlength="8" required pattern="[0-9]{8}"></div>
+              <div class="form-group" style="margin-bottom:0;"><label>Nombre Completo</label><input type="text" id="reg-nombre" class="input-dark" required></div>
+              <div class="form-group" style="margin-bottom:0;"><label>Rol</label>
+                <select id="reg-rol" class="input-dark" required>
+                  <option value="JUGADOR">Jugador</option>
+                  <option value="DELEGADO">Delegado</option>
+                  <option value="ENTRENADOR">Entrenador</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom:0;"><label>Equipo</label><select id="reg-equipo" class="input-dark" required></select></div>
+              <div class="form-group" style="margin-bottom:0;"><label>F. Nacimiento (Jugadores)</label><input type="date" id="reg-nac" class="input-dark"></div>
+              <div class="form-group" style="margin-bottom:0;"><label>Categoría(s) (Ej: 2014, 2015)</label><input type="text" id="reg-cat" class="input-dark"></div>
+              <div style="grid-column: 1 / -1;"><button type="submit" class="btn-guardar" style="margin-top:8px;">REGISTRAR PERSONA</button></div>
+            </form>
+          </div>
+
+          <div style="background: rgba(0,0,0,0.3); padding: 16px; border-radius: 12px; margin-bottom: 24px; border: 1px solid rgba(255,255,255,0.05);">
+            <h3 style="font-family:'Barlow Condensed'; color:rgba(255,255,255,0.8); margin-bottom:12px; letter-spacing:0.05em; font-size:1.1rem;">FILTRAR DIRECTORIO</h3>
+            <div class="prog-row" style="margin-bottom:0;">
+              <input type="text" id="dir-search" class="input-dark" placeholder="Buscar por DNI o Nombre" style="flex:2;">
+              <select id="dir-rol" class="input-dark" style="flex:1;">
+                <option value="">Todos</option>
+                <option value="JUGADOR">Jugadores</option>
+                <option value="DELEGADO">Delegados</option>
+                <option value="ENTRENADOR">Entrenadores</option>
+              </select>
+              <select id="dir-equipo" class="input-dark" style="flex:1;">
+                <option value="">Todos</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="dir-resultados" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:12px; max-height:500px; overflow-y:auto; padding-right:8px;">
+            <p style="color:rgba(255,255,255,0.5); text-align:center; grid-column: 1 / -1;">Cargando directorio...</p>
+          </div>
+        </div>
+      </div>
+
       <!-- Pestaña Boletería -->
       <div id="tab-boleteria" class="tab-content">
         <div class="card" style="border-left: 4px solid #7c3aed;">
@@ -730,7 +783,7 @@
 
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script type="module" src="admin.js?v=12"></script>
+  <script type="module" src="admin.js?v=13"></script>
 </body>
 </html>
 
