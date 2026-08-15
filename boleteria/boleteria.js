@@ -22,8 +22,33 @@ const toast      = document.getElementById('toast');
 
 let codeReader  = null;
 let isScanning  = false;
+let isProcessingScan = false; // Bloqueador de escaneos múltiples
 let historial   = JSON.parse(localStorage.getItem('historial_ui') || '[]');
 let lastScanned = null;
+
+// Sonidos Antifrágiles nativos (AudioContext)
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playBeep(success) {
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  
+  if (success) {
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+  } else {
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+  }
+}
 
 // Sanitizador XSS mínimo
 const safe = s => String(s ?? '').replace(/[<>"'&]/g, c =>
@@ -207,14 +232,16 @@ async function iniciarScanner() {
 
     codeReader.decodeFromStream(stream, 'video-preview', async (result, err) => {
       if (result) {
+        if (isProcessingScan) return; // Bloquear si ya estamos procesando uno o si no le dio a siguiente
+
         const qrText = result.getText().trim();
 
-        // Anti-duplicados: ignorar el mismo QR por 3 segundos
+        // Anti-duplicados (redundancia)
         if (qrText === lastScanned) return;
         lastScanned = qrText;
         setTimeout(() => { lastScanned = null; }, 3000);
 
-        // Extraer DNI del QR (Antifrágil: Usamos regex directo en vez de new URL para tolerar errores de escaneo en la URL)
+        // Extraer DNI del QR (Antifrágil)
         let dni = qrText;
         try {
           if (qrText.includes('dni=')) {
@@ -228,13 +255,15 @@ async function iniciarScanner() {
           }
         } catch (_) { /* si falla, se asume texto plano */ }
 
-        // Validar formato (permitimos de 4 a 15 caracteres alfanuméricos por si hay pasaportes o errores de tipeo)
+        // Validar formato
         dni = dni.trim();
         if (!/^[a-zA-Z0-9_-]{4,15}$/.test(dni)) {
+          playBeep(false);
           setStatus(`QR Inválido: ${dni.slice(0, 15)}`, false, true);
           return;
         }
 
+        isProcessingScan = true; // Bloquear motor
         setStatus(`DNI ${dni} — Consultando…`, true);
         await validarPersona(dni);
       }
@@ -273,38 +302,52 @@ async function validarPersona(dni) {
     .single();
 
   if (error || !data) {
+    playBeep(false);
+    isProcessingScan = false; // Desbloquear si falla
     mostrarError(dni, 'DNI no registrado en el sistema');
     agregarHistorial(null, dni, false);
     return;
   }
   
-  // Anti-Passback (Control de Reingreso) Local
+  // Anti-Passback Local
   const dbLocal = JSON.parse(localStorage.getItem('escaneos_cc') || '{}');
-  const record = dbLocal[dni] || { conteo: 0, ultimo: null };
+  const record = dbLocal[dni] || { conteo: 0, ultimo: null, horas_lista: [] };
+  if (!record.horas_lista) record.horas_lista = []; // migración segura
   
   let warningInfo = null;
+  let isAlert = false;
+
   if (record.ultimo) {
     const diffMin = Math.floor((Date.now() - record.ultimo) / 60000);
+    const listaTiempos = record.horas_lista.join(', ');
+    
     if (diffMin < 60) {
-      warningInfo = `¡ALERTA! Carnet ya escaneado hace ${diffMin} min (Uso #${record.conteo + 1})`;
+      isAlert = true;
+      warningInfo = `¡ALERTA! Carnet escaneado hace ${diffMin} min. (Ya ingresó a las: ${listaTiempos})`;
     } else {
-      const horas = Math.floor(diffMin / 60);
-      warningInfo = `INFO: Ingresó hace ${horas} horas (Uso #${record.conteo + 1})`;
+      warningInfo = `INFO: Ingresos previos a las: ${listaTiempos}`;
     }
   }
 
+  // Sonido
+  playBeep(!isAlert);
+
   // Actualizar DB local
+  const horaActualStr = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
   record.conteo += 1;
   record.ultimo = Date.now();
+  record.horas_lista.push(horaActualStr);
+  if (record.horas_lista.length > 5) record.horas_lista.shift(); // Guardar ultimos 5 para no reventar
+  
   dbLocal[dni] = record;
   localStorage.setItem('escaneos_cc', JSON.stringify(dbLocal));
 
-  mostrarResultado(data, warningInfo, record.conteo);
+  mostrarResultado(data, warningInfo, record.conteo, isAlert);
   agregarHistorial(data, dni, true);
 }
 
 // ── MOSTRAR RESULTADO ─────────────────────────────
-function mostrarResultado(persona, warningInfo, conteo) {
+function mostrarResultado(persona, warningInfo, conteo, isAlert) {
   const fotoUrl = `${BUCKET_URL}/${persona.dni}.jpg`;
   const rolLabel = {
     'DELEGADO':   'Delegado Oficial',
@@ -316,9 +359,8 @@ function mostrarResultado(persona, warningInfo, conteo) {
   
   let warningHtml = '';
   if (warningInfo) {
-    const isAlert = warningInfo.includes('¡ALERTA!');
     warningHtml = `
-      <div style="background:${isAlert ? '#d60d0d' : '#f1a200'}; color:${isAlert ? '#fff' : '#000'}; font-family:'Barlow Condensed', sans-serif; padding:12px; font-size:1.1rem; font-weight:800; text-align:center; text-transform:uppercase; animation: shake 0.5s;">
+      <div style="background:${isAlert ? '#d60d0d' : '#f1a200'}; color:${isAlert ? '#fff' : '#000'}; font-family:'Barlow Condensed', sans-serif; padding:12px; font-size:1rem; font-weight:800; text-align:center; animation: shake 0.5s;">
         ${warningInfo}
       </div>
     `;
@@ -333,7 +375,7 @@ function mostrarResultado(persona, warningInfo, conteo) {
              onerror="this.style.opacity='.25';">
         <div>
           <div class="result-info-name">${safe(persona.nombre_completo)}</div>
-          <div class="result-info-detail">DNI: ${safe(persona.dni)} • Ingresos: ${conteo}</div>
+          <div class="result-info-detail">DNI: ${safe(persona.dni)} • Total Ingresos: ${conteo}</div>
         </div>
       </div>
       <div class="result-badges">
@@ -341,12 +383,13 @@ function mostrarResultado(persona, warningInfo, conteo) {
         <span class="badge badge-gold">${safe(persona.equipos?.nombre || 'Sin equipo')}</span>
         ${persona.categorias ? `<span class="badge badge-navy">Cat. ${safe(persona.categorias)}</span>` : ''}
       </div>
-      <button class="btn-nuevo-scan" id="btn-nuevo">Escanear siguiente</button>
+      <button class="btn-nuevo-scan" id="btn-nuevo" style="background:#eab308; color:#000; font-weight:900;">✓ ESCANEAR SIGUIENTE</button>
     </div>
   `;
   document.getElementById('btn-nuevo').addEventListener('click', () => {
     resultado.style.display = 'none';
     resultado.innerHTML = '';
+    isProcessingScan = false; // Desbloquear motor para escanear de nuevo
   });
 
   setStatus(`✓ ${persona.nombre_completo.split(' ')[0]} — Autorizado`, true);
