@@ -512,25 +512,45 @@
       .partido-header { flex-direction: column; align-items: center; gap: 8px; text-align: center; }
     }
     @media print {
-      body * { visibility: hidden !important; }
-      #carnets-render-area, #carnets-render-area * { visibility: visible !important; }
+      body { background: #fff; margin: 0; padding: 0; overflow: visible !important; }
+      .sidebar, .site-header, .tabs-container { display: none !important; }
+      .tab-content:not(#tab-carnets) { display: none !important; }
+      
+      /* Aislar estrictamente el área de renderizado */
+      #tab-carnets .card > *:not(#carnets-preview-container) { display: none !important; }
+      #carnets-preview-container > *:not(#carnets-render-area) { display: none !important; }
+      
+      /* Limpiar contenedores fantasma */
+      .card { border: none !important; margin: 0 !important; padding: 0 !important; background: transparent !important; box-shadow: none !important; }
+      .main-content { margin: 0 !important; padding: 0 !important; width: 100% !important; overflow: visible !important; }
+      #tab-carnets { display: block !important; }
+      #carnets-preview-container { display: block !important; }
+
       #carnets-render-area {
-        position: absolute; left: 0; top: 0;
-        width: 100%; margin: 0; padding: 0;
-        display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-start;
-        background: transparent !important;
+        position: relative;
+        width: 100%;
+        display: flex !important;
+        flex-wrap: wrap;
+        gap: 3mm;
+        justify-content: center;
+        align-content: flex-start;
+        padding: 5mm;
+        box-sizing: border-box;
       }
       .carnet-box {
         page-break-inside: avoid;
+        break-inside: avoid;
+        margin-bottom: 2mm;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
-        box-shadow: none !important;
-        border: 0.5px solid #ccc !important;
       }
-      @page { size: A1 portrait; margin: 10mm; }
     }
-    
-        .carnet-box {
+  </style>
+  <style id="print-page-size">
+    @page { size: A1 portrait; margin: 10mm; }
+  </style>
+  <style>
+    .carnet-box {
       width: 54mm;
       height: 85.6mm;
       border-radius: 3.18mm;
@@ -611,13 +631,38 @@
       border: 2px solid rgba(255,255,255,0.2);
       box-shadow: 0 4px 10px rgba(0,0,0,0.5);
     }
+    
+    .carnet-logos-footer {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 8px;
+      width: 100%;
+    }
     .team-logo {
-      width: 1.2cm;
-      height: 1.2cm;
+      width: 1.6cm;
+      height: 1.6cm;
       object-fit: contain;
       filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
-      margin-top: 6px;
       z-index: 3;
+    }
+    .carnet-qr {
+      width: 1.6cm;
+      height: 1.6cm;
+      background: #ffffff;
+      padding: 2px;
+      border-radius: 4px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .carnet-qr img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
     }
 
     .carnet-rol {
@@ -680,6 +725,7 @@
   <div id="login-view">
     <div class="vault-card">
       <div class="vault-ring">
+
         <img src="../assets/img/logo.png" alt="Copa Cajamarca"
              onerror="this.style.display='none';document.getElementById('logo-fb-admin').style.display='flex';">
         <div id="logo-fb-admin" style="display:none; width: 100%; height: 100%; border-radius: 50%; background: var(--navy); border: 4px solid var(--gold); align-items: center; justify-content: center; font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; color: var(--gold);">CC</div>
@@ -902,9 +948,17 @@
           </div>
 
           <div id="carnets-preview-container" style="display:none;">
-            <button id="btn-imprimir-carnets" class="btn-guardar" style="width:100%; margin-bottom:24px; background:#eab308; color:#000; font-size:1.2rem; box-shadow:0 0 20px rgba(234,179,8,0.4);">
-               🖨️ IMPRIMIR / DESCARGAR EN PDF (FORMATO A1)
-            </button>
+            <div style="display:flex; gap:10px; margin-bottom:24px;">
+              <select id="select-print-format" class="input-control" style="flex:1; background:#111; color:#fff; border:1px solid #333; padding:10px; font-size:1rem; border-radius:6px; cursor:pointer;">
+                <option value="A4 portrait">Formato A4 (Impresora Estándar)</option>
+                <option value="A3 portrait">Formato A3 (Tabloide)</option>
+                <option value="A2 portrait">Formato A2 (Póster Pequeño)</option>
+                <option value="A1 portrait" selected>Formato A1 (Plóter/Imprenta)</option>
+              </select>
+              <button id="btn-imprimir-carnets" class="btn-guardar" style="flex:2; background:#eab308; color:#000; font-size:1.2rem; box-shadow:0 0 20px rgba(234,179,8,0.4);">
+                 🖨️ IMPRIMIR / DESCARGAR EN PDF
+              </button>
+            </div>
             <p style="color:rgba(255,255,255,0.6); text-align:center; margin-top:-16px; margin-bottom:16px; font-size:0.9rem;">
               * Al hacer clic, se abrirá el cuadro de diálogo de tu navegador. Si no deseas imprimir físicamente, en <strong>"Destino"</strong> selecciona <strong>"Guardar como PDF"</strong>.
             </p>
@@ -984,6 +1038,7 @@
 
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="../assets/js/qrcode.min.js"></script>
   <script type="module" src="admin.js?v=13"></script>
 </body>
 </html>
