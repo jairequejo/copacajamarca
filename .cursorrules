@@ -1,0 +1,1 @@
+ABSOLUTELY NO frameworks. Use ONLY native HTML5, modern pure CSS3 (Grid, Flexbox, :root variables), and ES6+ Vanilla JavaScript. NO Tailwind, NO Bootstrap, NO React. Use native DOM APIs (Proxy, Intl, Constraint Validation). Reduce cyclomatic complexity. Maintain strict Separation of Concerns.

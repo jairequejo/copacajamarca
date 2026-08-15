@@ -296,6 +296,11 @@ document.addEventListener('DOMContentLoaded', () => {
     
     selectLocal.innerHTML = options;
     selectVisita.innerHTML = options;
+    
+    const regEquipo = document.getElementById('reg-equipo');
+    const dirEquipo = document.getElementById('dir-equipo');
+    if (regEquipo) regEquipo.innerHTML = options;
+    if (dirEquipo) dirEquipo.innerHTML = '<option value="">Todos los Equipos</option>' + options.replace('<option value="">-- Seleccionar --</option>', '');
   }
 
   document.getElementById('btn-crear').addEventListener('click', async () => {
@@ -538,6 +543,100 @@ document.addEventListener('DOMContentLoaded', () => {
       btnGuardarExcel.innerText = 'Confirmar e Importar BD';
       btnGuardarExcel.disabled = false;
     }
+  });
+
+  // ═══════════════════════════════════════════════
+  // --- TAB: DIRECTORIO Y REGISTRO ---
+  // ═══════════════════════════════════════════════
+  const btnGuardarRegistro = document.querySelector('#form-registro .btn-guardar');
+  const dirResultados = document.getElementById('dir-resultados');
+  const dirSearch = document.getElementById('dir-search');
+  const dirRol = document.getElementById('dir-rol');
+  const dirEquipo = document.getElementById('dir-equipo');
+  const formRegistro = document.getElementById('form-registro');
+
+  document.querySelector('[data-target="tab-directorio"]')?.addEventListener('click', () => {
+    cargarDirectorio();
+  });
+
+  async function cargarDirectorio() {
+    if (!dirResultados) return;
+    dirResultados.innerHTML = '<p style="color:rgba(255,255,255,0.5); text-align:center; grid-column: 1 / -1;">Cargando directorio...</p>';
+    
+    let query = supabase.from('personas').select('*, equipos(nombre)').order('nombre_completo');
+    
+    const term = dirSearch.value.trim();
+    if (term) query = query.or(`dni.eq.${term},nombre_completo.ilike.%${term}%`);
+    if (dirRol.value) query = query.eq('rol', dirRol.value);
+    if (dirEquipo.value) query = query.eq('equipo_id', dirEquipo.value);
+
+    const { data, error } = await query;
+
+    if (error) {
+      dirResultados.innerHTML = `<p style="color:red; text-align:center; grid-column: 1 / -1;">Error: ${safe(error.message)}</p>`;
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      dirResultados.innerHTML = '<p style="color:rgba(255,255,255,0.5); text-align:center; grid-column: 1 / -1;">No hay registros que coincidan.</p>';
+      return;
+    }
+
+    dirResultados.innerHTML = '';
+    data.forEach(p => {
+      const card = document.createElement('div');
+      card.style.cssText = 'background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px; display: flex; gap: 12px; align-items: center;';
+      
+      const fotoUrl = `https://uzyqpruqiqubwnqttnwf.supabase.co/storage/v1/object/public/dnis/${p.dni}.jpg`;
+      
+      let rolColor = p.rol === 'JUGADOR' ? '#22c55e' : p.rol === 'DELEGADO' ? '#eab308' : '#3b82f6';
+
+      card.innerHTML = `
+        <img src="${safe(fotoUrl)}" style="width: 50px; height: 50px; border-radius: 8px; object-fit: cover; border: 1px solid rgba(255,255,255,0.2);" onerror="this.src='../assets/img/logo.png'; this.style.opacity='0.3';">
+        <div style="flex: 1; min-width: 0;">
+          <h4 style="margin: 0; font-size: 1.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--white);">${safe(p.nombre_completo)}</h4>
+          <p style="margin: 4px 0 0; font-size: 0.85rem; color: rgba(255,255,255,0.6);">
+            <strong style="color:${rolColor};">${safe(p.rol)}</strong> | DNI: ${safe(p.dni)}
+          </p>
+          <p style="margin: 2px 0 0; font-size: 0.85rem; color: rgba(255,255,255,0.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            Eq: ${safe(p.equipos?.nombre || 'Ninguno')} ${p.categorias ? `| Cat: ${safe(p.categorias)}` : ''}
+          </p>
+        </div>
+      `;
+      dirResultados.appendChild(card);
+    });
+  }
+
+  [dirSearch, dirRol, dirEquipo].forEach(el => el?.addEventListener('input', () => {
+    clearTimeout(window.dirTimeout);
+    window.dirTimeout = setTimeout(cargarDirectorio, 300);
+  }));
+
+  formRegistro?.addEventListener('submit', async (e) => {
+    btnGuardarRegistro.innerText = 'Guardando...';
+    btnGuardarRegistro.disabled = true;
+
+    const payload = {
+      dni: document.getElementById('reg-dni').value.trim(),
+      nombre_completo: document.getElementById('reg-nombre').value.trim().toUpperCase(),
+      rol: document.getElementById('reg-rol').value,
+      equipo_id: document.getElementById('reg-equipo').value,
+      categorias: document.getElementById('reg-cat').value.trim(),
+      fecha_nacimiento: document.getElementById('reg-nac').value || null
+    };
+
+    const { error } = await supabase.from('personas').insert([payload]);
+
+    if (error) {
+      showToast('Error: ' + error.message, true);
+    } else {
+      showToast('¡Registro Creado con Éxito!');
+      formRegistro.reset();
+      cargarDirectorio();
+    }
+
+    btnGuardarRegistro.innerText = 'REGISTRAR PERSONA';
+    btnGuardarRegistro.disabled = false;
   });
 
   // ═══════════════════════════════════════════════
