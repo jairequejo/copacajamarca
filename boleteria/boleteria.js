@@ -260,7 +260,7 @@ function detenerScanner() {
   setStatus('Cámara detenida.');
 }
 
-// ── VALIDAR EN SUPABASE ───────────────────────────
+// ── VALIDAR EN SUPABASE Y LÓGICA ANTI-FRAUDE ────────
 async function validarPersona(dni) {
   const { data, error } = await supabase
     .from('personas')
@@ -274,12 +274,34 @@ async function validarPersona(dni) {
     agregarHistorial(null, dni, false);
     return;
   }
-  mostrarResultado(data);
+  
+  // Anti-Passback (Control de Reingreso) Local
+  const dbLocal = JSON.parse(localStorage.getItem('escaneos_cc') || '{}');
+  const record = dbLocal[dni] || { conteo: 0, ultimo: null };
+  
+  let warningInfo = null;
+  if (record.ultimo) {
+    const diffMin = Math.floor((Date.now() - record.ultimo) / 60000);
+    if (diffMin < 60) {
+      warningInfo = `¡ALERTA! Carnet ya escaneado hace ${diffMin} min (Uso #${record.conteo + 1})`;
+    } else {
+      const horas = Math.floor(diffMin / 60);
+      warningInfo = `INFO: Ingresó hace ${horas} horas (Uso #${record.conteo + 1})`;
+    }
+  }
+
+  // Actualizar DB local
+  record.conteo += 1;
+  record.ultimo = Date.now();
+  dbLocal[dni] = record;
+  localStorage.setItem('escaneos_cc', JSON.stringify(dbLocal));
+
+  mostrarResultado(data, warningInfo, record.conteo);
   agregarHistorial(data, dni, true);
 }
 
 // ── MOSTRAR RESULTADO ─────────────────────────────
-function mostrarResultado(persona) {
+function mostrarResultado(persona, warningInfo, conteo) {
   const fotoUrl = `${BUCKET_URL}/${persona.dni}.jpg`;
   const rolLabel = {
     'DELEGADO':   'Delegado Oficial',
@@ -288,15 +310,27 @@ function mostrarResultado(persona) {
   }[persona.rol] || persona.rol;
 
   resultado.style.display = 'block';
+  
+  let warningHtml = '';
+  if (warningInfo) {
+    const isAlert = warningInfo.includes('¡ALERTA!');
+    warningHtml = `
+      <div style="background:${isAlert ? '#d60d0d' : '#f1a200'}; color:${isAlert ? '#fff' : '#000'}; font-family:'Barlow Condensed', sans-serif; padding:12px; font-size:1.1rem; font-weight:800; text-align:center; text-transform:uppercase; animation: shake 0.5s;">
+        ${warningInfo}
+      </div>
+    `;
+  }
+
   resultado.innerHTML = `
     <div class="result-header ok">✓ ACCESO AUTORIZADO</div>
+    ${warningHtml}
     <div class="result-body">
       <div class="result-persona">
         <img src="${safe(fotoUrl)}" class="result-foto" alt="Foto"
              onerror="this.style.opacity='.25';">
         <div>
           <div class="result-info-name">${safe(persona.nombre_completo)}</div>
-          <div class="result-info-detail">DNI: ${safe(persona.dni)}</div>
+          <div class="result-info-detail">DNI: ${safe(persona.dni)} • Ingresos: ${conteo}</div>
         </div>
       </div>
       <div class="result-badges">
