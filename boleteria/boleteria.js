@@ -22,7 +22,7 @@ const toast      = document.getElementById('toast');
 
 let codeReader  = null;
 let isScanning  = false;
-let historial   = [];
+let historial   = JSON.parse(localStorage.getItem('historial_ui') || '[]');
 let lastScanned = null;
 
 // Sanitizador XSS mínimo
@@ -116,6 +116,7 @@ function entrarApp() {
   appHeader.style.display = 'flex';
   appMain.style.display = 'flex';
   document.getElementById('bottom-nav').style.display = 'flex';
+  renderHistorial(); // Renderizar historial guardado
   showToast('Acceso autorizado — Bienvenido');
   
   // Cargar directorio de staff
@@ -376,18 +377,28 @@ function agregarHistorial(persona, dni, ok) {
   const hora = new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
   historial.unshift({ persona, dni, ok, hora });
   if (historial.length > 50) historial.pop(); // evitar memory leak en sesiones largas
+  localStorage.setItem('historial_ui', JSON.stringify(historial));
+  renderHistorial();
+}
+
+function renderHistorial() {
   histCount.textContent = historial.length;
+  historialList.innerHTML = '';
+  if (historial.length === 0) {
+    historialList.innerHTML = '<div style="padding:20px;text-align:center;color:rgba(255,255,255,.3);">Ningún escaneo aún</div>';
+    return;
+  }
 
-  if (historial.length === 1) historialList.innerHTML = '';
-
-  const item = document.createElement('div');
-  item.className = 'historial-item';
-  item.innerHTML = `
-    <span class="hist-name">${safe(persona?.nombre_completo || 'Desconocido')}</span>
-    <span class="hist-rol">${safe(persona?.rol || 'N/A')} · ${safe(hora)}</span>
-    <span class="${ok ? 'hist-ok' : 'hist-err'}">${ok ? '✓' : '✗'}</span>
-  `;
-  historialList.prepend(item);
+  historial.forEach(h => {
+    const item = document.createElement('div');
+    item.className = 'historial-item';
+    item.innerHTML = `
+      <span class="hist-name">${safe(h.persona?.nombre_completo || 'Desconocido')}</span>
+      <span class="hist-rol">${safe(h.persona?.rol || 'N/A')} · ${safe(h.hora)}</span>
+      <span class="${h.ok ? 'hist-ok' : 'hist-err'}">${h.ok ? '✓' : '✗'}</span>
+    `;
+    historialList.appendChild(item);
+  });
 }
 
 // ════════════════════════════════════════════════
