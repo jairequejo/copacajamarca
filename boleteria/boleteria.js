@@ -438,7 +438,6 @@ async function loadStaff() {
   staffStatus.style.display = 'none';
   allStaff = data;
   renderStaff(allStaff);
-  renderGaleria(allStaff);
 }
 
 function renderStaff(list) {
@@ -458,23 +457,6 @@ function renderStaff(list) {
       <div style="font-size:0.7rem; color:rgba(255,255,255,0.4); margin-top:8px;">DNI: ${safe(p.dni)}</div>
     `;
     staffGrid.appendChild(card);
-  });
-}
-
-function renderGaleria(list) {
-  galeriaGrid.innerHTML = '';
-  list.forEach(p => {
-    const isRed = p.rol === 'ENTRENADOR';
-    const fotoUrl = `${BUCKET_URL}/${p.dni}.jpg`;
-    const wrap = document.createElement('div');
-    wrap.style.textAlign = 'center';
-    wrap.innerHTML = `
-      <img src="${safe(fotoUrl)}" style="width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:12px; border:2px solid ${isRed ? '#d60d0d' : '#3b82f6'};" onerror="this.src='../assets/img/logo.png'">
-      <div style="font-family:'Barlow Condensed'; font-size:0.8rem; margin-top:6px; color:#fff; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-        ${safe(p.nombre_completo.split(' ')[0])}
-      </div>
-    `;
-    galeriaGrid.appendChild(wrap);
   });
 }
 
