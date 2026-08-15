@@ -162,6 +162,8 @@ async function iniciarScanner() {
       return;
     }
     codeReader = new ZXing.BrowserQRCodeReader();
+    // Acelerador: Reducimos el tiempo entre intentos de escaneo de 500ms a 100ms
+    codeReader.timeBetweenDecodingAttempts = 100;
 
     setStatus('Iniciando cámara…');
 
