@@ -735,7 +735,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const { data, error } = await supabase
       .from('personas')
       .select('*, equipos(nombre, logo_url)')
-      .in('rol', ['ENTRENADOR', 'DELEGADO'])
+      .in('rol', ['ENTRENADOR', 'DELEGADO', 'JUGADOR'])
       .order('equipo_id')
       .order('nombre_completo');
 
@@ -746,7 +746,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (!data || data.length === 0) {
-      carnetsStatus.textContent = 'No hay Entrenadores ni Delegados registrados.';
+      carnetsStatus.textContent = 'No hay personas registradas (Entrenadores, Delegados o Jugadores).';
       return;
     }
 
