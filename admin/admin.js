@@ -717,6 +717,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const carnetsRenderArea = document.getElementById('carnets-render-area');
   const btnImprimirCarnets = document.getElementById('btn-imprimir-carnets');
 
+  btnImprimirCarnets?.addEventListener('click', () => {
+    const selectFormat = document.getElementById('select-print-format');
+    const stylePrint = document.getElementById('print-page-size');
+    if (selectFormat && stylePrint) {
+      stylePrint.innerHTML = `@page { size: ${selectFormat.value}; margin: 0; }`;
+    }
+    window.print();
+  });
+
   btnGenerarCarnets?.addEventListener('click', async () => {
     carnetsStatus.style.display = 'block';
     carnetsStatus.textContent = 'Descargando base de datos y renderizando...';
@@ -760,11 +769,25 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="carnet-rol">${safe(p.rol)}</div>
           <div class="carnet-nombre">${safe(p.nombre_completo)}</div>
           <div class="carnet-equipo">${safe(p.equipos?.nombre || 'Independiente')}</div>
-          ${p.equipos?.logo_url ? `<img class="team-logo" src="${safe(p.equipos.logo_url)}" onerror="this.style.display='none'">` : ''}
+          <div class="carnet-logos-footer">
+            ${p.equipos?.logo_url ? `<img class="team-logo" src="${safe(p.equipos.logo_url)}" onerror="this.style.display='none'">` : ''}
+            <div class="carnet-qr"></div>
+          </div>
         </div>
         <div class="carnet-footer">DNI: ${safe(p.dni)} - PERSONAL E INTRANSFERIBLE</div>
       `;
       docFrag.appendChild(carnet);
+      
+      // La URL base asume el formato requerido para Boletería/Fichas
+      const qrData = `https://copacajamarca.app/fichas/index.html?dni=${p.dni}`;
+      new QRCode(carnet.querySelector('.carnet-qr'), {
+        text: qrData,
+        width: 64,
+        height: 64,
+        colorDark : "#000000",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.M
+      });
     });
 
     carnetsRenderArea.appendChild(docFrag);
@@ -773,9 +796,7 @@ document.addEventListener('DOMContentLoaded', () => {
     showToast(`Se prepararon ${data.length} carnets para impresión`);
   });
 
-  btnImprimirCarnets?.addEventListener('click', () => {
-    window.print();
-  });
+
 
   // ═══════════════════════════════════════════════
   // --- TAB: BOLETERÍA — Configurar PIN ---
