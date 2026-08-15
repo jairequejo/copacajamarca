@@ -214,9 +214,10 @@ async function iniciarScanner() {
           }
         } catch (_) { /* si falla, se asume texto plano */ }
 
-        // Validar formato 8 dígitos
-        if (!/^\d{8}$/.test(dni)) {
-          setStatus(`QR no reconocido: ${qrText.slice(0, 20)}`, false, true);
+        // Validar formato (permitimos de 4 a 15 caracteres alfanuméricos por si hay pasaportes o errores de tipeo)
+        dni = dni.trim();
+        if (!/^[a-zA-Z0-9_-]{4,15}$/.test(dni)) {
+          setStatus(`QR Inválido: ${dni.slice(0, 15)}`, false, true);
           return;
         }
 
