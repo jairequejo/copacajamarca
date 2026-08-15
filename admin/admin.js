@@ -554,6 +554,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const dirRol = document.getElementById('dir-rol');
   const dirEquipo = document.getElementById('dir-equipo');
   const formRegistro = document.getElementById('form-registro');
+  
+  let modoEdicion = false;
 
   document.querySelector('[data-target="tab-directorio"]')?.addEventListener('click', () => {
     cargarDirectorio();
@@ -561,6 +563,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function cargarDirectorio() {
     if (!dirResultados) return;
+    const contadorEl = document.getElementById('dir-contador');
+    if (contadorEl) contadorEl.textContent = 'Calculando...';
     dirResultados.innerHTML = '<p style="color:rgba(255,255,255,0.5); text-align:center; grid-column: 1 / -1;">Cargando directorio...</p>';
     
     let query = supabase.from('personas').select('*, equipos(nombre)').order('nombre_completo');
@@ -573,22 +577,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const { data, error } = await query;
 
     if (error) {
+      if (contadorEl) contadorEl.textContent = 'Error';
       dirResultados.innerHTML = `<p style="color:red; text-align:center; grid-column: 1 / -1;">Error: ${safe(error.message)}</p>`;
       return;
     }
 
     if (!data || data.length === 0) {
+      if (contadorEl) contadorEl.textContent = '0 resultados encontrados';
       dirResultados.innerHTML = '<p style="color:rgba(255,255,255,0.5); text-align:center; grid-column: 1 / -1;">No hay registros que coincidan.</p>';
       return;
     }
 
+    if (contadorEl) contadorEl.textContent = `${data.length} resultado(s) encontrado(s)`;
+
     dirResultados.innerHTML = '';
     data.forEach(p => {
       const card = document.createElement('div');
-      card.style.cssText = 'background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px; display: flex; gap: 12px; align-items: center;';
+      card.style.cssText = 'background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 12px; display: flex; gap: 12px; align-items: center; position: relative;';
       
       const fotoUrl = `https://uzyqpruqiqubwnqttnwf.supabase.co/storage/v1/object/public/dnis/${p.dni}.jpg`;
-      
       let rolColor = p.rol === 'JUGADOR' ? '#22c55e' : p.rol === 'DELEGADO' ? '#eab308' : '#3b82f6';
 
       card.innerHTML = `
@@ -602,10 +609,59 @@ document.addEventListener('DOMContentLoaded', () => {
             Eq: ${safe(p.equipos?.nombre || 'Ninguno')} ${p.categorias ? `| Cat: ${safe(p.categorias)}` : ''}
           </p>
         </div>
+        <div style="display:flex; flex-direction:column; gap:4px;">
+          <button class="btn-editar" style="background:#3b82f6; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:0.8rem;">Editar</button>
+        </div>
       `;
+      
+      card.querySelector('.btn-editar').addEventListener('click', () => {
+        modoEdicion = true;
+        document.getElementById('reg-dni').value = p.dni;
+        document.getElementById('reg-dni').readOnly = true;
+        document.getElementById('reg-nombre').value = p.nombre_completo;
+        document.getElementById('reg-rol').value = p.rol;
+        document.getElementById('reg-equipo').value = p.equipo_id || '';
+        document.getElementById('reg-cat').value = p.categorias || '';
+        document.getElementById('reg-nac').value = p.fecha_nacimiento || '';
+        btnGuardarRegistro.innerText = 'ACTUALIZAR PERSONA';
+        btnGuardarRegistro.style.background = '#eab308';
+        
+        document.getElementById('btn-cancelar-edicion').style.display = 'block';
+        document.getElementById('btn-eliminar-registro').style.display = 'block';
+
+        window.scrollTo({ top: formRegistro.offsetTop - 50, behavior: 'smooth' });
+      });
+
       dirResultados.appendChild(card);
     });
   }
+
+  function resetFormulario() {
+    formRegistro.reset();
+    modoEdicion = false;
+    document.getElementById('reg-dni').readOnly = false;
+    btnGuardarRegistro.innerText = 'REGISTRAR PERSONA';
+    btnGuardarRegistro.style.background = '';
+    document.getElementById('btn-cancelar-edicion').style.display = 'none';
+    document.getElementById('btn-eliminar-registro').style.display = 'none';
+  }
+
+  document.getElementById('btn-cancelar-edicion')?.addEventListener('click', resetFormulario);
+
+  document.getElementById('btn-eliminar-registro')?.addEventListener('click', async () => {
+    const dni = document.getElementById('reg-dni').value;
+    const nombre = document.getElementById('reg-nombre').value;
+    if(confirm(`⚠️ ATENCIÓN: Estás a punto de eliminar permanentemente a ${nombre} (DNI: ${dni}).\n\n¿Estás absolutamente seguro de continuar?`)) {
+      const { error } = await supabase.from('personas').delete().eq('dni', dni);
+      if (error) {
+        showToast('Error al eliminar', true);
+      } else {
+        showToast('Registro eliminado para siempre');
+        resetFormulario();
+        cargarDirectorio();
+      }
+    }
+  });
 
   [dirSearch, dirRol, dirEquipo].forEach(el => el?.addEventListener('input', () => {
     clearTimeout(window.dirTimeout);
@@ -613,30 +669,112 @@ document.addEventListener('DOMContentLoaded', () => {
   }));
 
   formRegistro?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const nombre = document.getElementById('reg-nombre').value.trim().toUpperCase();
+
+    if (modoEdicion) {
+      if(!confirm(`Estás a punto de actualizar los datos de ${nombre}.\n\n¿Confirmar cambios?`)) return;
+    }
+
     btnGuardarRegistro.innerText = 'Guardando...';
     btnGuardarRegistro.disabled = true;
 
     const payload = {
       dni: document.getElementById('reg-dni').value.trim(),
-      nombre_completo: document.getElementById('reg-nombre').value.trim().toUpperCase(),
+      nombre_completo: nombre,
       rol: document.getElementById('reg-rol').value,
-      equipo_id: document.getElementById('reg-equipo').value,
-      categorias: document.getElementById('reg-cat').value.trim(),
+      equipo_id: document.getElementById('reg-equipo').value || null,
+      categorias: document.getElementById('reg-cat').value.trim() || null,
       fecha_nacimiento: document.getElementById('reg-nac').value || null
     };
 
-    const { error } = await supabase.from('personas').insert([payload]);
-
-    if (error) {
-      showToast('Error: ' + error.message, true);
+    let errorObj;
+    if (modoEdicion) {
+      const { error } = await supabase.from('personas').update(payload).eq('dni', payload.dni);
+      errorObj = error;
     } else {
-      showToast('¡Registro Creado con Éxito!');
-      formRegistro.reset();
+      const { error } = await supabase.from('personas').insert([payload]);
+      errorObj = error;
+    }
+
+    if (errorObj) {
+      showToast('Error: ' + errorObj.message, true);
+    } else {
+      showToast(modoEdicion ? '¡Registro Actualizado!' : '¡Registro Creado con Éxito!');
+      resetFormulario();
       cargarDirectorio();
     }
 
-    btnGuardarRegistro.innerText = 'REGISTRAR PERSONA';
     btnGuardarRegistro.disabled = false;
+  });
+
+  // ═══════════════════════════════════════════════
+  // --- TAB: CARNETS ---
+  // ═══════════════════════════════════════════════
+  const btnGenerarCarnets = document.getElementById('btn-generar-carnets');
+  const carnetsStatus = document.getElementById('carnets-status');
+  const carnetsPreviewContainer = document.getElementById('carnets-preview-container');
+  const carnetsRenderArea = document.getElementById('carnets-render-area');
+  const btnImprimirCarnets = document.getElementById('btn-imprimir-carnets');
+
+  btnGenerarCarnets?.addEventListener('click', async () => {
+    carnetsStatus.style.display = 'block';
+    carnetsStatus.textContent = 'Descargando base de datos y renderizando...';
+    carnetsPreviewContainer.style.display = 'none';
+    carnetsRenderArea.innerHTML = '';
+
+    const { data, error } = await supabase
+      .from('personas')
+      .select('*, equipos(nombre, logo_url)')
+      .in('rol', ['ENTRENADOR', 'DELEGADO'])
+      .order('equipo_id')
+      .order('nombre_completo');
+
+    if (error) {
+      carnetsStatus.textContent = `Error: ${error.message}`;
+      showToast('Error al cargar datos para carnets', true);
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      carnetsStatus.textContent = 'No hay Entrenadores ni Delegados registrados.';
+      return;
+    }
+
+    const docFrag = document.createDocumentFragment();
+    
+    data.forEach(p => {
+      const isRed = p.rol === 'ENTRENADOR';
+      const className = isRed ? 'carnet-rojo' : 'carnet-azul';
+      
+      const carnet = document.createElement('div');
+      carnet.className = `carnet-box ${className}`;
+
+      const fotoUrl = `https://uzyqpruqiqubwnqttnwf.supabase.co/storage/v1/object/public/dnis/${p.dni}.jpg`;
+      
+      carnet.innerHTML = `
+        <div class="carnet-top">
+          <img class="carnet-foto" src="${safe(fotoUrl)}" alt="Foto" onerror="this.outerHTML='<img class=\\\'carnet-logo\\\' src=\\\'../assets/img/logo.png\\\'>'">
+        </div>
+        <div class="carnet-bottom">
+          <div class="carnet-rol">${safe(p.rol)}</div>
+          <div class="carnet-nombre">${safe(p.nombre_completo)}</div>
+          <div class="carnet-equipo">${safe(p.equipos?.nombre || 'Independiente')}</div>
+          ${p.equipos?.logo_url ? `<img class="team-logo" src="${safe(p.equipos.logo_url)}" onerror="this.style.display='none'">` : ''}
+        </div>
+        <div class="carnet-footer">DNI: ${safe(p.dni)} - PERSONAL E INTRANSFERIBLE</div>
+      `;
+      docFrag.appendChild(carnet);
+    });
+
+    carnetsRenderArea.appendChild(docFrag);
+    carnetsStatus.style.display = 'none';
+    carnetsPreviewContainer.style.display = 'block';
+    showToast(`Se prepararon ${data.length} carnets para impresión`);
+  });
+
+  btnImprimirCarnets?.addEventListener('click', () => {
+    window.print();
   });
 
   // ═══════════════════════════════════════════════
