@@ -172,7 +172,9 @@ async function iniciarScanner() {
       return;
     }
 
-    const videoInputDevices = await ZXing.BrowserCodeReader.listVideoInputDevices();
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const videoInputDevices = devices.filter(d => d.kind === 'videoinput');
+
     if (!videoInputDevices.length) {
       showToast('No se encontró cámara en el dispositivo', false);
       setStatus('Sin cámara detectada', false, true);
