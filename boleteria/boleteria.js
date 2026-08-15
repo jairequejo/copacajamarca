@@ -191,7 +191,18 @@ async function iniciarScanner() {
     btnScanner.classList.add('activo');
     setStatus('Apunta el QR del carnet al recuadro', true);
 
-    codeReader.decodeFromVideoDevice(selectedDeviceId, 'video-preview', async (result, err) => {
+    // Estrategia de Aprovechamiento (Rendimiento):
+    // Forzamos una resolución baja/media (640x480) para que el procesamiento de ZXing en JS no sature la CPU del móvil.
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        deviceId: selectedDeviceId ? { exact: selectedDeviceId } : undefined,
+        facingMode: "environment",
+        width: { ideal: 640 },
+        height: { ideal: 480 }
+      }
+    });
+
+    codeReader.decodeFromStream(stream, 'video-preview', async (result, err) => {
       if (result) {
         const qrText = result.getText().trim();
 
@@ -200,13 +211,13 @@ async function iniciarScanner() {
         lastScanned = qrText;
         setTimeout(() => { lastScanned = null; }, 3000);
 
-        // Extraer DNI del QR (URL, JSON o texto plano)
+        // Extraer DNI del QR (Antifrágil: Usamos regex directo en vez de new URL para tolerar errores de escaneo en la URL)
         let dni = qrText;
         try {
           if (qrText.includes('dni=')) {
-            const urlObj = new URL(qrText);
-            if (urlObj.searchParams.has('dni')) {
-              dni = urlObj.searchParams.get('dni');
+            const match = qrText.match(/dni=([a-zA-Z0-9_-]+)/);
+            if (match && match[1]) {
+              dni = match[1];
             }
           } else {
             const parsed = JSON.parse(qrText);
@@ -237,6 +248,11 @@ async function iniciarScanner() {
 }
 
 function detenerScanner() {
+  const videoEl = document.getElementById('video-preview');
+  if (videoEl && videoEl.srcObject) {
+    videoEl.srcObject.getTracks().forEach(t => t.stop());
+    videoEl.srcObject = null;
+  }
   if (codeReader) { codeReader.reset(); codeReader = null; }
   isScanning = false;
   btnScanner.textContent = 'Iniciar Escáner';
