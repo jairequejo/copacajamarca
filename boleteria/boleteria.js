@@ -185,12 +185,19 @@ async function iniciarScanner() {
         lastScanned = qrText;
         setTimeout(() => { lastScanned = null; }, 3000);
 
-        // Extraer DNI del QR (texto plano o JSON)
+        // Extraer DNI del QR (URL, JSON o texto plano)
         let dni = qrText;
         try {
-          const parsed = JSON.parse(qrText);
-          if (parsed.dni) dni = String(parsed.dni);
-        } catch (_) { /* es texto plano */ }
+          if (qrText.includes('dni=')) {
+            const urlObj = new URL(qrText);
+            if (urlObj.searchParams.has('dni')) {
+              dni = urlObj.searchParams.get('dni');
+            }
+          } else {
+            const parsed = JSON.parse(qrText);
+            if (parsed.dni) dni = String(parsed.dni);
+          }
+        } catch (_) { /* si falla, se asume texto plano */ }
 
         // Validar formato 8 dígitos
         if (!/^\d{8}$/.test(dni)) {

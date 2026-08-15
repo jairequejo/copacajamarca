@@ -143,10 +143,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }, isAuto ? 0 : 500);
   }
 
-  // AUTO LOGIN
-  const savedDni = localStorage.getItem('fichas_dni');
-  if (savedDni) {
-    performLogin(savedDni, true);
+  // AUTO LOGIN VIA URL OR LOCALSTORAGE
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlDni = urlParams.get('dni');
+  
+  if (urlDni) {
+    // Rellenar visualmente las cajas del DNI
+    for (let i = 0; i < 8 && i < urlDni.length; i++) {
+      if (dniBoxes[i]) {
+        dniBoxes[i].value = urlDni[i];
+        dniBoxes[i].classList.add('filled');
+      }
+    }
+    updateHiddenDni();
+    
+    localStorage.setItem('fichas_dni', urlDni);
+    window.history.replaceState({}, document.title, window.location.pathname);
+    performLogin(urlDni, true);
+  } else {
+    const savedDni = localStorage.getItem('fichas_dni');
+    if (savedDni) {
+      performLogin(savedDni, true);
+    }
   }
 
   document.getElementById('form-login').addEventListener('submit', async (e) => {

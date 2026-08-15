@@ -778,22 +778,36 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
       docFrag.appendChild(carnet);
       
-      // La URL base asume el formato requerido para Boletería/Fichas
-      const qrData = `https://copacajamarca.app/fichas/index.html?dni=${p.dni}`;
-      new QRCode(carnet.querySelector('.carnet-qr'), {
-        text: qrData,
-        width: 64,
-        height: 64,
-        colorDark : "#000000",
-        colorLight : "#ffffff",
-        correctLevel : QRCode.CorrectLevel.M
-      });
+      // Store the DOM node and data for later generation
+      carnet.dataset.qr = p.dni;
     });
 
     carnetsRenderArea.appendChild(docFrag);
     carnetsStatus.style.display = 'none';
     carnetsPreviewContainer.style.display = 'block';
-    showToast(`Se prepararon ${data.length} carnets para impresión`);
+
+    // Generar los QRs después de que el DOM sea visible (para evitar fallos de offsetWidth = 0)
+    setTimeout(() => {
+      const qrElements = carnetsRenderArea.querySelectorAll('.carnet-box');
+      
+      qrElements.forEach(box => {
+        const dni = box.dataset.qr;
+        if (!dni) return;
+        const qrContainer = box.querySelector('.carnet-qr');
+        qrContainer.innerHTML = ''; // Limpiar por si acaso
+        // El usuario requiere que el QR apunte rígidamente a producción con el dominio .com
+        const qrData = `https://copacajamarca.com/fichas/index.html?dni=${dni}`;
+        new QRCode(qrContainer, {
+          text: qrData,
+          width: 128,
+          height: 128,
+          colorDark : "#000000",
+          colorLight : "#ffffff",
+          correctLevel : QRCode.CorrectLevel.L
+        });
+      });
+      showToast(`Se prepararon ${data.length} carnets para impresión`);
+    }, 50);
   });
 
 
