@@ -159,6 +159,13 @@ async function iniciarScanner() {
 
     setStatus('Iniciando cámara…');
 
+    // Verificar si el navegador bloquea la cámara por no ser HTTPS
+    if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+      showToast('Navegador bloqueó cámara (Requiere HTTPS)', false);
+      setStatus('Error de seguridad (Usa HTTPS)', false, true);
+      return;
+    }
+
     const videoInputDevices = await ZXing.BrowserCodeReader.listVideoInputDevices();
     if (!videoInputDevices.length) {
       showToast('No se encontró cámara en el dispositivo', false);
