@@ -35,6 +35,7 @@ async function loadMarquee() {
       .from('equipos')
       .select('logo_url')
       .not('logo_url', 'is', null)
+      .order('nombre', { ascending: true })
       .limit(30);
 
     if (!equipos || equipos.length === 0) return;

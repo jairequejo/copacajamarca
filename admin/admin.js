@@ -353,7 +353,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function parseSpanishDate(dateStr, timeStr) {
     try {
-      // dateStr = "Sábado, 18 de Julio del 2026" o "18/07/2026"
+      // dateStr = "Sábado, 18 de Julio del" o "18/07/"
       let d = new Date();
       let dFound = false;
 
