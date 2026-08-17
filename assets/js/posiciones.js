@@ -173,14 +173,14 @@ async function generateCanvasForCat(cat) {
   const ts = fit(ctx, 'TABLA DE POSICIONES', TW, 92, '900');
   ctx.font = `900 ${ts}px "Barlow Condensed",sans-serif`; ctx.fillText('TABLA DE POSICIONES', TX, TY); ctx.restore();
 
-  // FILA 2: CATEGORIA pill rojo + ETAPA REGIONAL 2026 dorado derecha
+  // FILA 2: CATEGORIA pill rojo + ETAPA REGIONAL dorado derecha
   const R2 = TY + ts + 8;
   const catTxt = `CATEGORÍA ${cat}`;
   ctx.font = `italic 800 42px "Barlow Condensed",sans-serif`;
   const cW = ctx.measureText(catTxt).width + 34;
   pill(ctx, TX, R2, cW, 54, 8); ctx.fillStyle = RED; ctx.fill(); ctx.strokeStyle = GOLD; ctx.lineWidth = 1.5; ctx.stroke();
   ctx.fillStyle = WHITE; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(catTxt, TX + 17, R2 + 27);
-  ctx.fillStyle = GOLD; ctx.textAlign = 'right'; ctx.font = `italic 800 44px "Barlow Condensed",sans-serif`; ctx.fillText('ETAPA REGIONAL 2026', W - 26, R2 + 27);
+  ctx.fillStyle = GOLD; ctx.textAlign = 'right'; ctx.font = `italic 800 44px "Barlow Condensed",sans-serif`; ctx.fillText('ETAPA REGIONAL', W - 26, R2 + 27);
 
   // SEPARADOR DEBAJO DEL TEXTO
   const SEP = R2 + 62; ctx.fillStyle = gG; ctx.fillRect(0, SEP, W, 3);
