@@ -294,20 +294,20 @@ function detenerScanner() {
 
 // ── VALIDAR EN SUPABASE Y LÓGICA ANTI-FRAUDE ────────
 async function validarPersona(dni) {
-  const { data, error } = await supabase
-    .from('personas')
-    .select('nombre_completo, dni, rol, categorias, equipos(nombre, logo_url)')
-    .eq('dni', dni)
-    .in('rol', ['DELEGADO', 'ENTRENADOR', 'JUGADOR'])
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from('personas')
+      .select('nombre_completo, dni, rol, categorias, equipos(nombre, logo_url)')
+      .eq('dni', dni)
+      .in('rol', ['DELEGADO', 'ENTRENADOR', 'JUGADOR'])
+      .single();
 
-  if (error || !data) {
-    playBeep(false);
-    isProcessingScan = false; // Desbloquear si falla
-    mostrarError(dni, 'DNI no registrado en el sistema');
-    agregarHistorial(null, dni, false);
-    return;
-  }
+    if (error || !data) {
+      playBeep(false);
+      mostrarError(dni, 'DNI no registrado en el sistema');
+      agregarHistorial(null, dni, false);
+      return;
+    }
   
   // Anti-Passback Local
   const dbLocal = JSON.parse(localStorage.getItem('escaneos_cc') || '{}');
@@ -344,6 +344,12 @@ async function validarPersona(dni) {
 
   mostrarResultado(data, warningInfo, record.conteo, isAlert);
   agregarHistorial(data, dni, true);
+  } catch (err) {
+    console.error('Error validando persona:', err);
+    playBeep(false);
+    mostrarError(dni, 'Error de conexión. Intente nuevamente.');
+    agregarHistorial(null, dni, false);
+  }
 }
 
 // ── MOSTRAR RESULTADO ─────────────────────────────
@@ -409,6 +415,7 @@ function mostrarError(dni, mensaje) {
   document.getElementById('btn-nuevo').addEventListener('click', () => {
     resultado.style.display = 'none';
     resultado.innerHTML = '';
+    isProcessingScan = false; // Desbloquear motor
   });
 
   setStatus(`✗ DNI ${dni} — No autorizado`, false, true);
