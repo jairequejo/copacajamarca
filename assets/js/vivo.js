@@ -483,7 +483,7 @@ async function downloadScreenshot(futbolFormat) {
 
         let fechaText = filtered[0].fecha || '';
         if (fechaText.length > 0) fechaText = fechaText.charAt(0).toUpperCase() + fechaText.slice(1);
-        const tempText = 'TEMPORADA 2026';
+        const tempText = 'TEMPORADA';
 
         if (!_logo.complete) {
             await new Promise((resolve) => {
