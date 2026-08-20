@@ -65,7 +65,25 @@ async function loadMarquee() {
   }
 }
 
+async function checkLiveMatches() {
+  try {
+    const { count, error } = await supabase
+      .from('partidos')
+      .select('id', { count: 'exact', head: true })
+      .ilike('estado', '%vivo%');
+
+    if (!error && count === 0) {
+      document.querySelectorAll('.pulse-dot, .bnav-live-dot, .live-badge').forEach(el => {
+        el.style.display = 'none';
+      });
+    }
+  } catch(e) {
+    console.error('Error checking live matches:', e);
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   initRipple();
   loadMarquee();
+  checkLiveMatches();
 });
