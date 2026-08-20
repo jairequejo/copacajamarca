@@ -140,7 +140,7 @@ async function fetchAndRender(isSilent = false) {
         if (error) throw error;
 
         const now = new Date();
-        const cutoff = new Date(now.getTime() - (4 * 24 * 60 * 60 * 1000)); // Hace 4 días
+        const cutoff = new Date(now.getTime() - (2 * 24 * 60 * 60 * 1000)); // Hace 2 días (48 horas)
 
         const parsed = (data || [])
             .filter(m => {
