@@ -740,13 +740,13 @@ document.addEventListener('DOMContentLoaded', () => {
           useCORS: true,
           logging: false,
           allowTaint: false,
-          backgroundColor: null, // Mantiene la transparencia en las esquinas curvas
+          backgroundColor: '#ffffff', // Forzar blanco en las esquinas para evitar bugs negros de jsPDF
           width: carnet.offsetWidth,
           height: carnet.offsetHeight
         });
         
-        // Exportar a PNG (JPEG destruye la transparencia de los bordes redondeados)
-        const imgData = canvas.toDataURL('image/png');
+        // Exportar a JPEG (más ligero, y el blanco ya tapó las esquinas)
+        const imgData = canvas.toDataURL('image/jpeg', 1.0);
         
         // Generar PDF con dimensiones CR80 exactas (54mm x 85.6mm)
         const pdf = new jsPDF({
@@ -755,8 +755,8 @@ document.addEventListener('DOMContentLoaded', () => {
           format: [54, 85.6]
         });
         
-        // Insertar imagen respetando transparencia
-        pdf.addImage(imgData, 'PNG', 0, 0, 54, 85.6);
+        // Insertar imagen
+        pdf.addImage(imgData, 'JPEG', 0, 0, 54, 85.6);
         const pdfBlob = pdf.output('blob');
         
         const nombreEl = carnet.querySelector('.carnet-nombre');
