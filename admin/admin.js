@@ -734,49 +734,27 @@ document.addEventListener('DOMContentLoaded', () => {
       for (let i = 0; i < carnets.length; i++) {
         const carnet = carnets[i];
         
-        // Workaround agresivo: Mover a fixed 0,0 para evitar bugs de scroll/offset
-        const clone = carnet.cloneNode(true);
-        const wrapper = document.createElement('div');
-        wrapper.style.position = 'fixed';
-        wrapper.style.top = '0px';
-        wrapper.style.left = '0px';
-        wrapper.style.width = '54mm';
-        wrapper.style.height = '85.6mm';
-        wrapper.style.zIndex = '-9999';
-        wrapper.style.margin = '0';
-        wrapper.style.padding = '0';
-        wrapper.style.background = 'transparent';
-        
-        wrapper.appendChild(clone);
-        document.body.appendChild(wrapper);
-
-        // Desactivar text-wrap balance temporalmente en el clon
-        const nombres = clone.querySelectorAll('.carnet-nombre');
-        nombres.forEach(n => { n.style.textWrap = 'normal'; });
-
-        // Captura
-        const imgData = await window.htmlToImage.toPng(wrapper, {
-          pixelRatio: 3, // Alta calidad
+        // Renderizar usando html2canvas desde cero
+        const canvas = await window.html2canvas(carnet, {
+          scale: 3, // Alta calidad
           useCORS: true,
-          cacheBust: true,
-          width: wrapper.offsetWidth,
-          height: wrapper.offsetHeight,
-          style: {
-            transform: 'none'
-          }
+          logging: false,
+          allowTaint: false,
+          backgroundColor: null,
+          width: carnet.offsetWidth,
+          height: carnet.offsetHeight
         });
-
-        // Limpieza
-        document.body.removeChild(wrapper);
         
-        // Generar PDF CR80
+        const imgData = canvas.toDataURL('image/jpeg', 1.0);
+        
+        // Generar PDF con dimensiones CR80 exactas (54mm x 85.6mm)
         const pdf = new jsPDF({
           orientation: 'portrait',
           unit: 'mm',
           format: [54, 85.6]
         });
         
-        pdf.addImage(imgData, 'PNG', 0, 0, 54, 85.6);
+        pdf.addImage(imgData, 'JPEG', 0, 0, 54, 85.6);
         const pdfBlob = pdf.output('blob');
         
         const nombreEl = carnet.querySelector('.carnet-nombre');
