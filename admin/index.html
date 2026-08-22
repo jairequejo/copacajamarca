@@ -511,43 +511,9 @@
       .tab-btn { flex: 1 1 40%; font-size: 0.95rem; padding: 12px 10px; }
       .partido-header { flex-direction: column; align-items: center; gap: 8px; text-align: center; }
     }
-    @media print {
-      body { background: #fff; margin: 0; padding: 0; overflow: visible !important; }
-      .sidebar, .site-header, .tabs-container { display: none !important; }
-      .tab-content:not(#tab-carnets) { display: none !important; }
-      
-      /* Aislar estrictamente el área de renderizado */
-      #tab-carnets .card > *:not(#carnets-preview-container) { display: none !important; }
-      #carnets-preview-container > *:not(#carnets-render-area) { display: none !important; }
-      
-      /* Limpiar contenedores fantasma */
-      .card { border: none !important; margin: 0 !important; padding: 0 !important; background: transparent !important; box-shadow: none !important; }
-      .main-content { margin: 0 !important; padding: 0 !important; width: 100% !important; overflow: visible !important; }
-      #tab-carnets { display: block !important; }
-      #carnets-preview-container { display: block !important; }
-
-      #carnets-render-area {
-        position: relative;
-        width: 100%;
-        display: block !important;
-        text-align: center;
-        padding: 5mm;
-        box-sizing: border-box;
-      }
-      .carnet-box {
-        display: inline-flex !important;
-        page-break-inside: avoid;
-        break-inside: avoid;
-        margin: 2mm;
-        vertical-align: top;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-      }
     }
   </style>
-  <style id="print-page-size">
-    @page { size: A1 portrait; margin: 10mm; }
-  </style>
+
   <style>
     .carnet-box {
       width: 54mm;
@@ -935,30 +901,24 @@
           </h2>
           <p class="help-text" style="margin-bottom:16px;">
             Genera identificaciones oficiales (8.56cm x 5.4cm) para Jugadores, Delegados y Entrenadores de los equipos activos. 
-            El documento final se formatea automáticamente en hoja A4 (hasta 10 carnets por hoja) sin márgenes para impresión y corte directo.
+            El documento final se descargará como un archivo .zip que contendrá un PDF individual para cada carnet con tamaño de tarjeta de crédito (CR80) listos para impresión.
           </p>
           
           <div style="background: rgba(0,0,0,0.3); padding: 16px; border-radius: 12px; margin-bottom: 24px; border: 1px solid rgba(255,255,255,0.05);">
              <button id="btn-generar-carnets" class="vault-btn" style="width:100%; margin-top:0; background:linear-gradient(to bottom, #10b981, #059669); color:#fff; border-color:#047857; text-shadow:none;">
-               PREPARAR LOTE DE IMPRESIÓN (TODOS LOS CARNETS)
+               PREPARAR LOTE DE CARNETS
              </button>
              <p id="carnets-status" style="color:rgba(255,255,255,0.5); text-align:center; margin-top:12px; font-size:0.9rem; display:none;">Cargando base de datos...</p>
           </div>
 
           <div id="carnets-preview-container" style="display:none;">
-            <div style="display:flex; gap:10px; margin-bottom:24px;">
-              <select id="select-print-format" class="input-control" style="flex:1; background:#111; color:#fff; border:1px solid #333; padding:10px; font-size:1rem; border-radius:6px; cursor:pointer;">
-                <option value="A4 portrait">Formato A4 (Impresora Estándar)</option>
-                <option value="A3 portrait">Formato A3 (Tabloide)</option>
-                <option value="A2 portrait">Formato A2 (Póster Pequeño)</option>
-                <option value="A1 portrait" selected>Formato A1 (Plóter/Imprenta)</option>
-              </select>
-              <button id="btn-imprimir-carnets" class="btn-guardar" style="flex:2; background:#eab308; color:#000; font-size:1.2rem; box-shadow:0 0 20px rgba(234,179,8,0.4);">
-                 🖨️ IMPRIMIR / DESCARGAR EN PDF
+            <div style="display:flex; justify-content:center; gap:10px; margin-bottom:24px;">
+              <button id="btn-descargar-zip-carnets" class="btn-guardar" style="width:100%; max-width:500px; background:#eab308; color:#000; font-size:1.2rem; box-shadow:0 0 20px rgba(234,179,8,0.4);">
+                 ⬇️ DESCARGAR TODOS LOS CARNETS (.ZIP)
               </button>
             </div>
             <p style="color:rgba(255,255,255,0.6); text-align:center; margin-top:-16px; margin-bottom:16px; font-size:0.9rem;">
-              * Al hacer clic, se abrirá el cuadro de diálogo de tu navegador. Si no deseas imprimir físicamente, en <strong>"Destino"</strong> selecciona <strong>"Guardar como PDF"</strong>.
+              * Se descargará un archivo .zip que contiene un PDF individual por cada carnet (tamaño CR80 - Tarjeta de Crédito).
             </p>
             <div style="text-align:center; color:var(--gold); font-family:'Barlow Condensed'; letter-spacing:0.1em; margin-bottom:12px;">VISTA PREVIA DEL DOCUMENTO:</div>
             <div id="carnets-render-area" style="background:#fff; color:#000; padding:20px; border-radius:8px; display:flex; flex-wrap:wrap; gap:10px; justify-content:center;">
@@ -1036,6 +996,9 @@
 
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="../assets/js/qrcode.min.js"></script>
   <script type="module" src="admin.js?v=13"></script>
 </body>

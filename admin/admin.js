@@ -715,16 +715,70 @@ document.addEventListener('DOMContentLoaded', () => {
   const carnetsStatus = document.getElementById('carnets-status');
   const carnetsPreviewContainer = document.getElementById('carnets-preview-container');
   const carnetsRenderArea = document.getElementById('carnets-render-area');
-  const btnImprimirCarnets = document.getElementById('btn-imprimir-carnets');
+  const btnDescargarZipCarnets = document.getElementById('btn-descargar-zip-carnets');
 
-  btnImprimirCarnets?.addEventListener('click', () => {
-    const selectFormat = document.getElementById('select-print-format');
-    const stylePrint = document.getElementById('print-page-size');
-    if (selectFormat && stylePrint) {
-      // Aplicar margen de 10mm para evitar que los carnets choquen con el borde superior de la hoja
-      stylePrint.innerHTML = `@page { size: ${selectFormat.value}; margin: 10mm; }`;
+  btnDescargarZipCarnets?.addEventListener('click', async () => {
+    btnDescargarZipCarnets.disabled = true;
+    btnDescargarZipCarnets.innerText = 'GENERANDO ZIP... ESTO PUEDE TOMAR UNOS MINUTOS';
+    
+    try {
+      const carnets = carnetsRenderArea.querySelectorAll('.carnet-box');
+      if (carnets.length === 0) {
+        showToast('No hay carnets para descargar', true);
+        return;
+      }
+
+      const zip = new JSZip();
+      const { jsPDF } = window.jspdf;
+      
+      for (let i = 0; i < carnets.length; i++) {
+        const carnet = carnets[i];
+        
+        const canvas = await html2canvas(carnet, {
+          scale: 3, 
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff'
+        });
+        
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        
+        // CR80 credit card size: 54mm x 85.6mm
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: [54, 85.6]
+        });
+        
+        pdf.addImage(imgData, 'JPEG', 0, 0, 54, 85.6);
+        const pdfBlob = pdf.output('blob');
+        
+        const nombreEl = carnet.querySelector('.carnet-nombre');
+        const rolEl = carnet.querySelector('.carnet-rol');
+        const equipoEl = carnet.querySelector('.carnet-equipo');
+        
+        let nombre = nombreEl ? nombreEl.textContent.trim().replace(/[^a-zA-Z0-9]/g, '_') : `carnet_${i+1}`;
+        let rol = rolEl ? rolEl.textContent.trim().replace(/[^a-zA-Z0-9]/g, '') : '';
+        let equipo = equipoEl ? equipoEl.textContent.trim().replace(/[^a-zA-Z0-9]/g, '_') : '';
+        
+        zip.file(`${equipo}/${rol}_${nombre}.pdf`, pdfBlob);
+      }
+      
+      const content = await zip.generateAsync({ type: 'blob' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(content);
+      a.download = `Carnets_CopaCajamarca.zip`;
+      a.click();
+      
+      showToast('Descarga iniciada con éxito');
+      
+    } catch (err) {
+      console.error(err);
+      showToast('Error al generar ZIP: ' + err.message, true);
+    } finally {
+      btnDescargarZipCarnets.disabled = false;
+      btnDescargarZipCarnets.innerHTML = '⬇️ DESCARGAR TODOS LOS CARNETS (.ZIP)';
     }
-    window.print();
   });
 
   btnGenerarCarnets?.addEventListener('click', async () => {
