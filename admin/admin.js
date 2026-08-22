@@ -734,16 +734,42 @@ document.addEventListener('DOMContentLoaded', () => {
       for (let i = 0; i < carnets.length; i++) {
         const carnet = carnets[i];
         
-        // Usar html-to-image para renderizar fielmente CSS (gradientes, pseudo-elementos, sombras)
-        const imgData = await window.htmlToImage.toPng(carnet, {
-          pixelRatio: 3, // Alta calidad para impresión
+        // Workaround agresivo: Mover a fixed 0,0 para evitar bugs de scroll/offset
+        const clone = carnet.cloneNode(true);
+        const wrapper = document.createElement('div');
+        wrapper.style.position = 'fixed';
+        wrapper.style.top = '0px';
+        wrapper.style.left = '0px';
+        wrapper.style.width = '54mm';
+        wrapper.style.height = '85.6mm';
+        wrapper.style.zIndex = '-9999';
+        wrapper.style.margin = '0';
+        wrapper.style.padding = '0';
+        wrapper.style.background = 'transparent';
+        
+        wrapper.appendChild(clone);
+        document.body.appendChild(wrapper);
+
+        // Desactivar text-wrap balance temporalmente en el clon
+        const nombres = clone.querySelectorAll('.carnet-nombre');
+        nombres.forEach(n => { n.style.textWrap = 'normal'; });
+
+        // Captura
+        const imgData = await window.htmlToImage.toPng(wrapper, {
+          pixelRatio: 3, // Alta calidad
+          useCORS: true,
+          cacheBust: true,
+          width: wrapper.offsetWidth,
+          height: wrapper.offsetHeight,
           style: {
-            transform: 'none', // Resetear cualquier transform accidental al renderizar
-            margin: 0
+            transform: 'none'
           }
         });
+
+        // Limpieza
+        document.body.removeChild(wrapper);
         
-        // CR80 credit card size: 54mm x 85.6mm
+        // Generar PDF CR80
         const pdf = new jsPDF({
           orientation: 'portrait',
           unit: 'mm',
@@ -826,11 +852,16 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="carnet-bottom">
           <div class="carnet-rol">${safe(p.rol)}</div>
           <div class="carnet-nombre">${safe(p.nombre_completo)}</div>
+          
+          <div style="flex: 1; min-height: 2px;"></div> <!-- Spacer superior -->
+          
           <div class="carnet-equipo">${safe(p.equipos?.nombre || 'Independiente')}</div>
           <div class="carnet-logos-footer">
             ${p.equipos?.logo_url ? `<img class="team-logo" src="${safe(p.equipos.logo_url)}" crossorigin="anonymous" onerror="this.style.display='none'">` : ''}
             <div class="carnet-qr"></div>
           </div>
+          
+          <div style="flex: 1; min-height: 2px;"></div> <!-- Spacer inferior -->
         </div>
         <div class="carnet-footer">DNI: ${safe(p.dni)} &middot; PERSONAL E INTRANSFERIBLE</div>
       `;
