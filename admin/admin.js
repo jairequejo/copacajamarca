@@ -1,5 +1,4 @@
 import { supabase } from '../assets/js/supabase.js';
-import './import_personas.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const loginView = document.getElementById('login-view');
