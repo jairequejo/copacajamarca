@@ -817,20 +817,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const fotoUrl = `https://uzyqpruqiqubwnqttnwf.supabase.co/storage/v1/object/public/dnis/${p.dni}.jpg`;
       
       carnet.innerHTML = `
-        <!-- Capas de fondo decorativas -->
-        <div class="carnet-bg-marca">
-          <img src="../assets/img/logo-nuevo.svg" crossorigin="anonymous" alt="">
-        </div>
-        <div class="carnet-highlight"></div>
-
-        <!-- Banda superior: nombre del torneo -->
         <div class="carnet-header-band">
-          <img class="carnet-header-band-logo" src="../assets/img/logo-nuevo.svg" crossorigin="anonymous" alt="">
-          <span class="carnet-header-band-text">COPA CAJAMARCA 2026</span>
+          <span class="carnet-header-band-text">CREDENCIAL OFICIAL · COPA CAJAMARCA</span>
         </div>
-
         <div class="carnet-top">
-          <img class="carnet-foto" src="${safe(fotoUrl)}" crossorigin="anonymous" alt="Foto" onerror="this.outerHTML='<img class=\\\'carnet-logo\\\' src=\\\'../assets/img/logo.png\\\' crossorigin=\\\'anonymous\\\'>'">
+          <img class="carnet-foto" src="${safe(fotoUrl)}" crossorigin="anonymous" alt="Foto" onerror="this.outerHTML='<img class=\\\'carnet-logo\\\' src=\\\'../assets/img/logo-sin-anio.png\\\' crossorigin=\\\'anonymous\\\'>'">
         </div>
         <div class="carnet-bottom">
           <div class="carnet-rol">${safe(p.rol)}</div>
@@ -841,7 +832,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="carnet-qr"></div>
           </div>
         </div>
-        <div class="carnet-footer">DNI: ${safe(p.dni)} · PERSONAL E INTRANSFERIBLE</div>
+        <div class="carnet-footer">DNI: ${safe(p.dni)} &middot; PERSONAL E INTRANSFERIBLE</div>
       `;
       docFrag.appendChild(carnet);
       
