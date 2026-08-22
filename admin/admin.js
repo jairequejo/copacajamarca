@@ -735,14 +735,14 @@ document.addEventListener('DOMContentLoaded', () => {
       for (let i = 0; i < carnets.length; i++) {
         const carnet = carnets[i];
         
-        const canvas = await html2canvas(carnet, {
-          scale: 3, 
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: '#ffffff'
+        // Usar html-to-image para renderizar fielmente CSS (gradientes, pseudo-elementos, sombras)
+        const imgData = await window.htmlToImage.toPng(carnet, {
+          pixelRatio: 3, // Alta calidad para impresión
+          style: {
+            transform: 'none', // Resetear cualquier transform accidental al renderizar
+            margin: 0
+          }
         });
-        
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
         
         // CR80 credit card size: 54mm x 85.6mm
         const pdf = new jsPDF({
@@ -751,7 +751,7 @@ document.addEventListener('DOMContentLoaded', () => {
           format: [54, 85.6]
         });
         
-        pdf.addImage(imgData, 'JPEG', 0, 0, 54, 85.6);
+        pdf.addImage(imgData, 'PNG', 0, 0, 54, 85.6);
         const pdfBlob = pdf.output('blob');
         
         const nombreEl = carnet.querySelector('.carnet-nombre');
@@ -819,14 +819,14 @@ document.addEventListener('DOMContentLoaded', () => {
       
       carnet.innerHTML = `
         <div class="carnet-top">
-          <img class="carnet-foto" src="${safe(fotoUrl)}" alt="Foto" onerror="this.outerHTML='<img class=\\\'carnet-logo\\\' src=\\\'../assets/img/logo.png\\\'>'">
+          <img class="carnet-foto" src="${safe(fotoUrl)}" crossorigin="anonymous" alt="Foto" onerror="this.outerHTML='<img class=\\\'carnet-logo\\\' src=\\\'../assets/img/logo.png\\\' crossorigin=\\\'anonymous\\\'>'">
         </div>
         <div class="carnet-bottom">
           <div class="carnet-rol">${safe(p.rol)}</div>
           <div class="carnet-nombre">${safe(p.nombre_completo)}</div>
           <div class="carnet-equipo">${safe(p.equipos?.nombre || 'Independiente')}</div>
           <div class="carnet-logos-footer">
-            ${p.equipos?.logo_url ? `<img class="team-logo" src="${safe(p.equipos.logo_url)}" onerror="this.style.display='none'">` : ''}
+            ${p.equipos?.logo_url ? `<img class="team-logo" src="${safe(p.equipos.logo_url)}" crossorigin="anonymous" onerror="this.style.display='none'">` : ''}
             <div class="carnet-qr"></div>
           </div>
         </div>
