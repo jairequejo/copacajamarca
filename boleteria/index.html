@@ -56,7 +56,26 @@
     .btn-iniciar{width:100%;background:linear-gradient(to bottom,#ffc933,#ffba00);color:#3d2e00;border:none;padding:18px;font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase;border-radius:12px;cursor:pointer;transition:all .2s;box-shadow:0 8px 24px rgba(255,186,0,.3);min-height:60px;}
     .btn-iniciar:hover{transform:translateY(-2px);}
     .btn-iniciar.activo{background:linear-gradient(to bottom,#ef4444,#dc2626) !important;color:white !important;}
-    #resultado{margin-bottom:20px;}
+    #resultado {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 90%;
+      max-width: 400px;
+      z-index: 10000;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.9);
+      border-radius: 12px;
+    }
+    #resultado::before {
+      content: '';
+      position: fixed;
+      top: -200vh; left: -200vw;
+      width: 500vw; height: 500vh;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(8px);
+      z-index: -1;
+    }
     .result-header{padding:16px 20px;border-radius:12px 12px 0 0;font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:.08em;}
     .result-header.ok{background:linear-gradient(135deg,#14532d,#16a34a);color:#fff;}
     .result-header.err{background:linear-gradient(135deg,#7f1d1d,#d60d0d);color:#fff;}
@@ -135,10 +154,10 @@
       <p class="vault-sub">Ingresa el PIN de acceso</p>
       <form id="form-pin" onsubmit="event.preventDefault();">
         <div class="pin-grid">
-          <input type="tel" class="pin-box" maxlength="1" pattern="[0-9]" inputmode="none" autocomplete="off">
-          <input type="tel" class="pin-box" maxlength="1" pattern="[0-9]" inputmode="none" autocomplete="off">
-          <input type="tel" class="pin-box" maxlength="1" pattern="[0-9]" inputmode="none" autocomplete="off">
-          <input type="tel" class="pin-box" maxlength="1" pattern="[0-9]" inputmode="none" autocomplete="off">
+          <input type="tel" class="pin-box" maxlength="1" pattern="[0-9]" inputmode="none" autocomplete="off" readonly>
+          <input type="tel" class="pin-box" maxlength="1" pattern="[0-9]" inputmode="none" autocomplete="off" readonly>
+          <input type="tel" class="pin-box" maxlength="1" pattern="[0-9]" inputmode="none" autocomplete="off" readonly>
+          <input type="tel" class="pin-box" maxlength="1" pattern="[0-9]" inputmode="none" autocomplete="off" readonly>
         </div>
         <button type="submit" class="btn-pin-submit" id="btn-pin-enter">INGRESAR</button>
       </form>
