@@ -237,9 +237,13 @@ document.addEventListener('DOMContentLoaded', () => {
       if (isFinalizado) card.style.border = '1px solid var(--gold)';
       if (isLocked) {
         card.innerHTML = `
-          <div class="partido-header">
-            <span>${safe(horaTexto)} - ${safe(p.cancha || 'Cancha')} <strong style="color:var(--gold)">[${p.estado}]</strong></span>
-            <span>Cat: ${safe(p.categoria || 'N/A')}</span>
+          <div class="partido-header" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:12px; margin-bottom:16px;">
+            <div style="display:flex; flex-wrap:wrap; gap:6px;">
+              <span style="background:rgba(255,255,255,0.12); padding:4px 8px; border-radius:6px; color:#fff; font-weight:800; font-size:0.95rem; display:flex; align-items:center; gap:4px;">🕒 ${safe(horaTexto)}</span>
+              <span style="background:rgba(255,255,255,0.12); padding:4px 8px; border-radius:6px; color:#fff; font-weight:800; font-size:0.95rem; display:flex; align-items:center; gap:4px;">📍 ${safe(p.cancha || 'Cancha')}</span>
+              <span style="background:rgba(255,255,255,0.12); padding:4px 8px; border-radius:6px; color:#fff; font-weight:800; font-size:0.95rem; display:flex; align-items:center; gap:4px;">🏆 ${safe(p.categoria || 'N/A')}</span>
+            </div>
+            <strong style="font-size:0.85rem; padding:4px 10px; border-radius:999px; background:rgba(255,186,0,0.15); border:1px solid rgba(255,186,0,0.3); color:var(--gold);">[${p.estado}]</strong>
           </div>
           
           <div class="equipo-row" style="flex-direction:column; align-items:center; text-align:center; padding:20px 15px; gap:12px; margin-bottom:0;">
@@ -266,9 +270,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const scoreControlsDisabled = isProgramado ? 'disabled' : '';
 
         card.innerHTML = `
-          <div class="partido-header">
-            <span>${safe(horaTexto)} - ${safe(p.cancha || 'Cancha')} <strong style="color:var(--gold)">[${p.estado}]</strong></span>
-            <span>Cat: ${safe(p.categoria || 'N/A')}</span>
+          <div class="partido-header" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:12px; margin-bottom:16px;">
+            <div style="display:flex; flex-wrap:wrap; gap:6px;">
+              <span style="background:rgba(255,255,255,0.12); padding:4px 8px; border-radius:6px; color:#fff; font-weight:800; font-size:0.95rem; display:flex; align-items:center; gap:4px;">🕒 ${safe(horaTexto)}</span>
+              <span style="background:rgba(255,255,255,0.12); padding:4px 8px; border-radius:6px; color:#fff; font-weight:800; font-size:0.95rem; display:flex; align-items:center; gap:4px;">📍 ${safe(p.cancha || 'Cancha')}</span>
+              <span style="background:rgba(255,255,255,0.12); padding:4px 8px; border-radius:6px; color:#fff; font-weight:800; font-size:0.95rem; display:flex; align-items:center; gap:4px;">🏆 ${safe(p.categoria || 'N/A')}</span>
+            </div>
+            <strong style="font-size:0.85rem; padding:4px 10px; border-radius:999px; background:rgba(255,186,0,0.15); border:1px solid rgba(255,186,0,0.3); color:var(--gold);">[${p.estado}]</strong>
           </div>
           
           <div style="margin-bottom: 14px;">
