@@ -131,10 +131,10 @@
     .mode-toggle { display:flex; background:rgba(0,0,0,0.4); border-radius:999px; padding:4px; gap:4px; margin-bottom:16px; }
     .mode-btn { flex:1; padding:10px 16px; border:none; border-radius:999px; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:1rem; letter-spacing:.08em; cursor:pointer; transition:all .2s; background:transparent; color:rgba(255,255,255,0.5); }
     .mode-btn.active { background:var(--gold); color:#3d2e00; }
-    .numpad { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:20px; }
-    .numpad-btn { padding:16px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#fff; border-radius:12px; font-family:'Bebas Neue',sans-serif; font-size:1.6rem; cursor:pointer; transition:all .15s; }
-    .numpad-btn:active { transform:scale(0.92); background:rgba(255,186,0,0.2); }
-    .numpad-btn.del { background:rgba(214,13,13,0.2); border-color:rgba(214,13,13,0.3); color:#ff6b6b; font-size:1.1rem; }
+    
+    
+    
+    
     .nfc-idle { text-align:center; padding:32px 0; }
     .nfc-icon { font-size:5rem; margin-bottom:16px; display:block; animation: nfcPulse 2s ease-in-out infinite; }
     @keyframes nfcPulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.1);opacity:0.7} }
@@ -154,26 +154,14 @@
       <p class="vault-sub">Ingresa el PIN de acceso</p>
       <form id="form-pin" onsubmit="event.preventDefault();">
         <div class="pin-grid">
-          <input type="tel" class="pin-box" maxlength="1" pattern="[0-9]" inputmode="none" autocomplete="off" readonly>
-          <input type="tel" class="pin-box" maxlength="1" pattern="[0-9]" inputmode="none" autocomplete="off" readonly>
-          <input type="tel" class="pin-box" maxlength="1" pattern="[0-9]" inputmode="none" autocomplete="off" readonly>
-          <input type="tel" class="pin-box" maxlength="1" pattern="[0-9]" inputmode="none" autocomplete="off" readonly>
+          <input type="tel" class="pin-box" maxlength="1" pattern="[0-9]" inputmode="numeric" autocomplete="off">
+          <input type="tel" class="pin-box" maxlength="1" pattern="[0-9]" inputmode="numeric" autocomplete="off">
+          <input type="tel" class="pin-box" maxlength="1" pattern="[0-9]" inputmode="numeric" autocomplete="off">
+          <input type="tel" class="pin-box" maxlength="1" pattern="[0-9]" inputmode="numeric" autocomplete="off">
         </div>
         <button type="submit" class="btn-pin-submit" id="btn-pin-enter">INGRESAR</button>
       </form>
-      <div class="numpad" id="numpad">
-        <button class="numpad-btn" data-val="1" type="button">1</button>
-        <button class="numpad-btn" data-val="2" type="button">2</button>
-        <button class="numpad-btn" data-val="3" type="button">3</button>
-        <button class="numpad-btn" data-val="4" type="button">4</button>
-        <button class="numpad-btn" data-val="5" type="button">5</button>
-        <button class="numpad-btn" data-val="6" type="button">6</button>
-        <button class="numpad-btn" data-val="7" type="button">7</button>
-        <button class="numpad-btn" data-val="8" type="button">8</button>
-        <button class="numpad-btn" data-val="9" type="button">9</button>
-        <button class="numpad-btn" data-val="0" type="button" style="grid-column:2;">0</button>
-        <button class="numpad-btn del" data-val="del" type="button">⌫</button>
-      </div>
+      
     </div>
   </div>
 
