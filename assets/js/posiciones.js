@@ -90,8 +90,7 @@ function buildTableHTML(rows, cat) {
     const dgClass = r.dg > 0 ? 'dg-pos' : r.dg < 0 ? 'dg-neg' : '';
     h += `<tr class="${zc}">`;
     h += `<td class="col-pos"><span class="pos-badge ${pc}">${i + 1}</span></td>`;
-    const logoImg = r.logo ? `<img src="${r.logo}" class="team-logo-small" crossorigin="anonymous" onerror="this.src='../assets/img/logo.png'">` : `<img src="../assets/img/logo.png" class="team-logo-small">`;
-    h += `<td class="col-team"><div class="team-name-pos">${logoImg} <span>${r.eq}</span></div></td>`;
+    h += `<td class="col-team"><div class="team-name-pos">${r.eq}</div></td>`;
     h += `<td class="col-pj">${r.pj}</td>`;
     h += `<td class="col-g st-g">${r.pg}</td>`;
     h += `<td class="col-e st-e">${r.pe}</td>`;
