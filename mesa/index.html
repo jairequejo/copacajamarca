@@ -176,18 +176,31 @@
       z-index: 1;
     }
 
-    .site-header { width: 100%; }
-    .btn-logout {
-      background: rgba(214,13,13,.15);
-      color: #ff6b6b;
-      border: 1px solid rgba(214,13,13,.4);
-      padding: 10px 20px;
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: .95rem; font-weight: 800;
-      letter-spacing: .08em; text-transform: uppercase;
-      border-radius: 8px; cursor: pointer; transition: background .15s;
+    .site-header { 
+      width: 100%;
+      position: sticky; 
+      top: 0; 
+      z-index: 50;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.4);
+      background: var(--navy);
     }
-    .btn-logout:hover { background: var(--red); color: #fff; }
+    
+    .btn-logout {
+      background: rgba(214,13,13,.12);
+      color: #ff6b6b;
+      border: 1px solid rgba(214,13,13,.35);
+      padding: 10px 18px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: .9rem;
+      font-weight: 900;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background .15s, transform .1s;
+      white-space: nowrap;
+    }
+    .btn-logout:hover { background: var(--red); color: #fff; transform: translateY(-1px); }
 
     .content-wrapper {
       max-width: 860px;
@@ -198,87 +211,95 @@
 
     /* Partido Cards */
     .partido-card {
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,186,0,0.18);
-      border-radius: 14px;
+      background: linear-gradient(160deg, rgba(255,255,255,0.07) 0%, rgba(0,0,0,0.2) 100%);
+      border: 1px solid rgba(255,186,0,0.15);
+      border-left: 4px solid rgba(255,186,0,0.4);
+      border-radius: 16px;
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
-      padding: 24px;
-      margin-bottom: 24px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-      transition: transform 0.2s ease;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
-    .partido-card:hover { transform: translateY(-2px); }
+    .partido-card:hover { 
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+    }
 
     .partido-header {
-      display: flex; justify-content: space-between;
+      display: flex; justify-content: space-between; align-items: center;
       font-family: 'Barlow Condensed', sans-serif;
-      font-size: 1.05rem; font-weight: 800;
-      text-transform: uppercase; letter-spacing: .08em; color: var(--gold);
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-      padding-bottom: 12px; margin-bottom: 20px;
+      font-size: 0.95rem; font-weight: 800;
+      text-transform: uppercase; letter-spacing: .08em; color: rgba(255,255,255,0.6);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding-bottom: 12px; margin-bottom: 16px;
     }
-    .partido-header span {
-      background: rgba(255,255,255,0.1);
-      padding: 4px 10px;
-      border-radius: 6px;
-      color: #fff;
+    .partido-header strong {
+      font-size: 0.85rem;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: rgba(255,186,0,0.15);
+      border: 1px solid rgba(255,186,0,0.3);
+      color: var(--gold);
     }
     
     .equipo-row {
-      display: flex; align-items: center;
-      justify-content: space-between; margin-bottom: 24px;
-      background: rgba(0,0,0,0.2);
-      padding: 16px;
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px;
+      background: rgba(0,0,0,0.25);
+      padding: 14px 16px;
       border-radius: 12px;
-      border: 1px solid rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.06);
     }
     .equipo-name {
       font-family: 'Barlow Condensed', sans-serif;
-      font-size: 1.8rem; font-weight: 800;
+      font-size: 1.6rem; font-weight: 900;
       text-transform: uppercase; color: #fff;
       width: 50%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+      text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      letter-spacing: .02em;
     }
     
     .score-controls { display: flex; align-items: center; gap: 16px; }
     .btn-score {
-      width: 60px; height: 60px; font-size: 2rem;
-      border-radius: 12px; border: none; cursor: pointer; color: #fff;
+      width: 64px; height: 64px; font-size: 2rem;
+      border-radius: 14px; border: none; cursor: pointer; color: #fff;
       font-weight: 900;
       display: flex; align-items: center; justify-content: center;
-      transition: transform .15s, background .15s;
+      transition: transform .12s, background .15s;
+      touch-action: manipulation;
     }
-    .btn-score:active { transform: scale(0.9); }
-    .btn-score.minus { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); }
-    .btn-score.minus:hover { background: rgba(255,255,255,0.25); }
-    .btn-score.plus  { background: var(--gold); color: #5a4400; box-shadow: 0 4px 16px rgba(255,186,0,.3); }
-    .btn-score.plus:hover { background: var(--gold-dark); }
+    .btn-score:active { transform: scale(0.88); }
+    .btn-score.minus { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.18); }
+    .btn-score.minus:hover { background: rgba(255,255,255,0.2); }
+    .btn-score.plus { background: linear-gradient(to bottom, #ffc933, #ffba00); color: #3d2e00; box-shadow: 0 4px 16px rgba(255,186,0,.35); }
+    .btn-score.plus:hover { background: linear-gradient(to bottom, #ffd54f, #ffc933); }
     
     .score-display {
       font-family: 'Bebas Neue', sans-serif;
-      font-size: 4rem; color: #fff;
-      width: 72px; text-align: center; line-height: 1;
-      text-shadow: 0 4px 12px rgba(0,0,0,0.4);
-      background: rgba(0,26,77,0.5);
-      border-radius: 10px;
-      padding: 10px 0;
-      border: 2px solid rgba(255,186,0,0.3);
+      font-size: 4.5rem; color: #fff;
+      width: 80px; text-align: center; line-height: 1;
+      text-shadow: 0 4px 16px rgba(0,0,0,0.5);
+      background: rgba(0,26,77,0.6);
+      border-radius: 12px;
+      padding: 8px 0;
+      border: 2px solid rgba(255,186,0,0.25);
     }
 
     .btn-envivo {
-      background: var(--navy); color: #fff; width: 100%; padding: 16px;
+      background: rgba(255,255,255,0.06); color: #fff; width: 100%; padding: 16px;
       font-family: 'Barlow Condensed', sans-serif;
       font-size: 1.15rem; font-weight: 900;
       letter-spacing: .08em; text-transform: uppercase;
-      border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.18); border-radius: 12px; cursor: pointer;
       min-height: 56px;
       transition: transform .15s, background .2s, border-color .2s;
     }
-    .btn-envivo:hover { border-color: #fff; background: rgba(0,26,77,0.8); }
+    .btn-envivo:hover { border-color: #fff; background: rgba(255,255,255,0.12); }
     .btn-envivo:active { transform: scale(0.98); }
     .btn-envivo[disabled] {
-      opacity: 0.6 !important;
+      opacity: 0.5 !important;
       cursor: not-allowed;
     }
     .btn-envivo[style*="f97316"] {
@@ -290,15 +311,16 @@
     }
     
     .btn-finalizar {
-      background: var(--red); color: #fff; width: 100%; padding: 18px;
+      background: linear-gradient(to bottom, #ef4444, #d60d0d); color: #fff; width: 100%; padding: 18px;
       font-family: 'Barlow Condensed', sans-serif;
-      font-size: 1.25rem; font-weight: 900;
+      font-size: 1.3rem; font-weight: 900;
       letter-spacing: .08em; text-transform: uppercase;
-      border: none; border-radius: 10px; cursor: pointer;
+      border: none; border-radius: 12px; cursor: pointer;
       margin-top: 16px; transition: transform .15s, box-shadow .15s;
-      min-height: 56px;
+      min-height: 58px;
+      box-shadow: 0 4px 20px rgba(214,13,13,.3);
     }
-    .btn-finalizar:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(214,13,13,.4); }
+    .btn-finalizar:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(214,13,13,.45); }
     .btn-finalizar:active { transform: scale(0.98); }
 
     /* Toast */
@@ -320,11 +342,18 @@
     /* MOBILE RESPONSIVE TWEAKS */
     @media (max-width: 500px) {
       .equipo-row { flex-direction: column; gap: 12px; padding: 20px 12px; }
-      .equipo-name { width: 100%; text-align: center; font-size: 1.8rem; }
+      .equipo-name { width: 100%; text-align: center; font-size: 1.4rem; }
       .score-controls { width: 100%; justify-content: center; }
-      .partido-header { flex-direction: column; align-items: center; gap: 8px; text-align: center; }
-      #filters-container { flex-direction: column; gap: 10px !important; }
+      .partido-header { flex-direction: column; align-items: flex-start; gap: 6px; }
+      #filters-container > div:last-child { flex-direction: column; gap: 10px !important; }
       #filters-container select { width: 100%; flex: none; }
+      .btn-score { width: 72px; height: 72px; font-size: 2.2rem; }
+      .score-display { font-size: 4rem; width: 76px; }
+      .btn-envivo, .btn-finalizar { font-size: 1.2rem; min-height: 62px; }
+      .content-wrapper { padding: 16px 12px 80px; }
+      .partido-card { padding: 16px 14px; }
+      .view-toolbar { flex-direction: column; align-items: stretch; }
+      #btn-toggle-view { width: 100%; justify-content: center; }
     }
 
     .mobile-filter {
@@ -361,6 +390,99 @@
       z-index: 1;
     }
 
+    .view-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .filters-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 8px;
+      width: 100%;
+      text-align: center;
+    }
+
+    #resumen-container {
+      width: 100%;
+      overflow-x: auto;
+      background: linear-gradient(160deg, rgba(255,255,255,0.05), rgba(0,0,0,0.3));
+      border-radius: 16px;
+      padding: 4px;
+      margin-bottom: 24px;
+      border: 1px solid rgba(255,186,0,0.15);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    }
+
+    /* ── ESTADO NAV PILLS ── */
+    .estado-pills {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .estado-pills::-webkit-scrollbar { display: none; }
+
+    .estado-pill {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 11px 20px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.07);
+      color: rgba(255,255,255,0.65);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all .2s;
+      min-height: 48px;
+      flex-shrink: 0;
+    }
+    .estado-pill:hover {
+      background: rgba(255,255,255,0.13);
+      color: #fff;
+    }
+    .estado-pill.active {
+      background: var(--gold);
+      border-color: var(--gold);
+      color: #3d2e00;
+    }
+    .estado-pill.active[data-estado="EN_VIVO"] {
+      background: #16a34a;
+      border-color: #16a34a;
+      color: #fff;
+    }
+    .estado-pill.active[data-estado="PROGRAMADO"] {
+      background: #f59e0b;
+      border-color: #f59e0b;
+      color: #000;
+    }
+    .estado-pill.active[data-estado="FINALIZADOS"] {
+      background: #3b82f6;
+      border-color: #3b82f6;
+      color: #fff;
+    }
+    .pill-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
   </style>
 </head>
 <body>
@@ -401,11 +523,14 @@
   <!-- ═══════════ DASHBOARD ═══════════ -->
   <div id="dashboard">
     <header class="site-header">
-      <div class="header-inner" style="max-width:860px; margin:0 auto; display:flex; align-items:center; gap:14px; padding:16px;">
-        <a href="/"><img src="../assets/img/logo.png" alt="Copa Cajamarca" style="width:52px;height:52px;border-radius:50%;background:#fff;object-fit:cover;box-shadow:0 0 0 2px rgba(255,186,0,.5),0 3px 10px rgba(0,0,0,.35);" onerror="this.style.display='none'"></a>
+      <div class="header-inner" style="max-width:860px; margin:0 auto; display:flex; align-items:center; gap:14px; padding:12px 16px;">
+        <a href="/"><img src="../assets/img/logo.png" alt="Copa Cajamarca" style="width:48px;height:48px;border-radius:50%;background:#fff;object-fit:cover;box-shadow:0 0 0 2px rgba(255,186,0,.5),0 3px 10px rgba(0,0,0,.35);" onerror="this.style.display='none'"></a>
         <div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:.1em;color:rgba(255,255,255,.55);text-transform:uppercase;">Copa Cajamarca</div>
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.9rem;color:#fff;letter-spacing:.04em;line-height:1;">MESA DE CONTROL</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.1em;color:rgba(255,255,255,.55);text-transform:uppercase;">Copa Cajamarca</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:#fff;letter-spacing:.04em;line-height:1;display:flex;align-items:center;gap:10px;">
+            MESA DE CONTROL
+            <span id="user-email-badge" style="font-family:'Barlow Condensed',sans-serif;font-size:0.9rem;background:rgba(255,255,255,0.1);padding:2px 8px;border-radius:20px;letter-spacing:0.05em;display:none;"></span>
+          </div>
         </div>
         <div style="margin-left:auto;">
            <button id="btn-logout" class="btn-logout">SALIR</button>
@@ -413,37 +538,73 @@
       </div>
       <!-- Gold bar -->
       <div style="background:#ffba00;border-bottom:3px solid #f1a200;">
-        <div style="max-width:860px;margin:0 auto;padding:10px 16px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1rem;letter-spacing:.06em;text-transform:uppercase;color:#001a4d;">PARTIDOS DE HOY</div>
+        <div style="max-width:860px;margin:0 auto;padding:8px 16px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:0.9rem;letter-spacing:.06em;text-transform:uppercase;color:#001a4d;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;">
+          <span>PARTIDOS DE HOY</span>
+          <div style="display:flex;gap:10px;opacity:0.9;font-size:0.8rem;">
+            <span>🟢 EN VIVO: <span id="stat-envivo">-</span></span>
+            <span>⏳ PENDIENTES: <span id="stat-pendientes">-</span></span>
+            <span>✅ FINAL: <span id="stat-finalizados">-</span></span>
+          </div>
+        </div>
       </div>
     </header>
 
     <div class="content-wrapper">
-      <div id="filters-container" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:24px; display:none; justify-content:center;">
-        <select id="filter-dia" class="mobile-filter">
-          <option value="todos">📅 Todos los días</option>
-        </select>
-        <select id="filter-lugar" class="mobile-filter">
-          <option value="todos">📍 Todos los lugares</option>
-        </select>
-        <select id="filter-cat" class="mobile-filter">
-          <option value="todos">🏆 Todas las cat.</option>
-        </select>
-        <select id="filter-estado" class="mobile-filter filter-gold">
-          <option value="todos">🎯 TODOS LOS ESTADOS</option>
-          <option value="EN_VIVO">🔴 EN VIVO</option>
-          <option value="PROGRAMADO">⏳ PENDIENTES</option>
-          <option value="FINALIZADOS">✔️ FINALIZADOS</option>
-        </select>
+      <div id="filters-container" style="display:none; flex-wrap:wrap; margin-bottom:24px; justify-content:center; padding-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.08);">
+        <div class="filters-label">FILTRAR PARTIDOS</div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; width:100%; justify-content:center;">
+          <select id="filter-dia" class="mobile-filter">
+            <option value="todos">📅 Todos los días</option>
+          </select>
+          <select id="filter-lugar" class="mobile-filter">
+            <option value="todos">📍 Todos los lugares</option>
+          </select>
+          <select id="filter-cat" class="mobile-filter">
+            <option value="todos">🏆 Todas las cat.</option>
+          </select>
+          <select id="filter-estado" class="mobile-filter filter-gold" style="display:none;">
+            <option value="todos">🎯 TODOS LOS ESTADOS</option>
+            <option value="EN_VIVO">🔴 EN VIVO</option>
+            <option value="PROGRAMADO">⏳ PENDIENTES</option>
+            <option value="FINALIZADOS">✔️ FINALIZADOS</option>
+          </select>
+        </div>
+      </div>
+      
+      <div id="estado-nav" style="display:none; margin-bottom:20px;">
+        <div class="estado-pills">
+          <button class="estado-pill active" data-estado="todos">
+            <span class="pill-dot" style="background:rgba(255,255,255,0.5);"></span>
+            Todos
+          </button>
+          <button class="estado-pill" data-estado="PROGRAMADO">
+            <span class="pill-dot" style="background:#f59e0b;"></span>
+            Pendientes
+          </button>
+          <button class="estado-pill" data-estado="EN_VIVO">
+            <span class="pill-dot" style="background:#16a34a; animation:pulse 1.3s ease-in-out infinite;"></span>
+            En Vivo
+          </button>
+          <button class="estado-pill" data-estado="FINALIZADOS">
+            <span class="pill-dot" style="background:#3b82f6;"></span>
+            Finalizados
+          </button>
+        </div>
       </div>
 
-      <div style="display:flex; justify-content:center; margin-bottom:24px;">
-        <button id="btn-toggle-view" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:12px 24px; border-radius:30px; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:1.1rem; cursor:pointer; letter-spacing:0.05em; transition:background 0.2s; display:flex; align-items:center; gap:8px;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
-          VER RESUMEN (TABLA)
-        </button>
+      <div class="view-toolbar">
+        <div class="view-toolbar-left">
+          <button id="btn-toggle-view" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:12px 24px; border-radius:30px; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:1.1rem; cursor:pointer; letter-spacing:0.05em; transition:background 0.2s; display:flex; align-items:center; gap:8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
+            VER RESUMEN (TABLA)
+          </button>
+        </div>
+        <div class="view-toolbar-right" style="font-family:'Barlow Condensed'; font-size:.85rem; color:rgba(255,255,255,.4); text-transform:uppercase; letter-spacing:.06em; display:flex; align-items:center;">
+          <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#16a34a;margin-right:6px;animation:pulse 1.5s ease-in-out infinite;"></span>Tiempo real
+        </div>
       </div>
 
-      <div id="resumen-container" style="display:none; width:100%; overflow-x:auto; background:rgba(0,0,0,0.2); border-radius:12px; padding:15px; margin-bottom:24px; border:1px solid rgba(255,255,255,0.1);">
+      <div id="resumen-container" style="display:none;">
         <table style="width:100%; min-width:600px; border-collapse:collapse; color:#fff; font-size:1rem; font-family:'Barlow',sans-serif;">
           <thead>
             <tr style="border-bottom:1px solid rgba(255,186,0,0.3); color:var(--gold); font-family:'Barlow Condensed',sans-serif; font-size:1.2rem; text-transform:uppercase; letter-spacing:0.05em;">
@@ -466,5 +627,34 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script type="module" src="mesa.js?v=16"></script>
+  
+  <script>
+    // Estado pills — conecta con el select existente sin tocar mesa.js
+    document.querySelectorAll('.estado-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Actualizar visual
+        document.querySelectorAll('.estado-pill').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        // Actualizar el select oculto y disparar su evento
+        const sel = document.getElementById('filter-estado');
+        if (sel) {
+          sel.value = btn.dataset.estado;
+          sel.dispatchEvent(new Event('change'));
+        }
+      });
+    });
+
+    // Mostrar el estado-nav cuando el JS muestra los filtros
+    const filtersContainer = document.getElementById('filters-container');
+    const estadoNav = document.getElementById('estado-nav');
+    if (filtersContainer && estadoNav) {
+      const observer = new MutationObserver(() => {
+        if (filtersContainer.style.display !== 'none' && filtersContainer.style.display !== '') {
+          estadoNav.style.display = 'block';
+        }
+      });
+      observer.observe(filtersContainer, { attributes: true, attributeFilter: ['style'] });
+    }
+  </script>
 </body>
 </html>
