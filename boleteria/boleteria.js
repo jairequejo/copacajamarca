@@ -76,8 +76,15 @@ if (singlePin) {
   singlePin.addEventListener('input', () => {
     singlePin.value = singlePin.value.replace(/[^0-9]/g, '');
     if (singlePin.value.length === 4) {
-      // Intentar auto-submit o simplemente perder focus para que el usuario aprete el botón si prefiere
       singlePin.blur();
+      // Auto-submit inmediato
+      setTimeout(() => {
+        if(typeof formPin.requestSubmit === 'function') {
+          formPin.requestSubmit();
+        } else {
+          formPin.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+        }
+      }, 50);
     }
   });
 }
@@ -86,6 +93,16 @@ if (singlePin) {
 setTimeout(() => singlePin?.focus(), 300);
 
 // Verificar PIN contra Supabase
+const btnSubmit = document.getElementById('btn-pin-enter');
+btnSubmit.addEventListener('click', (e) => {
+  // Disparar submit manualmente si no se ha disparado
+  if(typeof formPin.requestSubmit === 'function') {
+    formPin.requestSubmit();
+  } else {
+    formPin.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+  }
+});
+
 formPin.addEventListener('submit', async (e) => {
   e.preventDefault();
   const pinIngresado = singlePin ? singlePin.value : '';
