@@ -649,5 +649,3 @@ document.getElementById('btn-nfc')?.addEventListener('click', () => {
   if (isNfcScanning) detenerNFC(); else iniciarNFC();
 });
 
-
-});
