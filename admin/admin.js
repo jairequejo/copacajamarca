@@ -147,14 +147,36 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.addEventListener('click', (e) => {
         const card = e.target.closest('.partido-card');
         const inputs = card.querySelectorAll('input[type="number"]');
-        inputs.forEach(inp => {
-          inp.removeAttribute('readonly');
-          inp.style.pointerEvents = 'auto';
-          inp.style.opacity = '1';
-          inp.style.border = '1px solid var(--gold)';
-          inp.style.background = 'rgba(255,186,0,0.1)';
-        });
-        e.target.style.display = 'none';
+        
+        if (e.target.dataset.editing === 'true') {
+          // Cancelar edición
+          inputs.forEach(inp => {
+            inp.setAttribute('readonly', 'true');
+            inp.style.pointerEvents = 'none';
+            inp.style.opacity = '0.6';
+            inp.style.border = '1px solid rgba(255,255,255,0.05)';
+            inp.style.background = 'rgba(0,0,0,0.4)';
+            inp.value = inp.dataset.original; // Restaurar valor
+          });
+          e.target.dataset.editing = 'false';
+          e.target.innerHTML = '✏️ Editar';
+          e.target.style.color = 'var(--gold)';
+          e.target.style.borderColor = 'var(--gold)';
+        } else {
+          // Habilitar edición
+          inputs.forEach(inp => {
+            inp.dataset.original = inp.value; // Guardar valor original
+            inp.removeAttribute('readonly');
+            inp.style.pointerEvents = 'auto';
+            inp.style.opacity = '1';
+            inp.style.border = '1px solid var(--gold)';
+            inp.style.background = 'rgba(255,186,0,0.1)';
+          });
+          e.target.dataset.editing = 'true';
+          e.target.innerHTML = '❌ Cancelar';
+          e.target.style.color = '#ef4444';
+          e.target.style.borderColor = '#ef4444';
+        }
       });
     });
   }
