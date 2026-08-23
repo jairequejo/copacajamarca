@@ -99,7 +99,8 @@ document.addEventListener('DOMContentLoaded', () => {
       `)
       .not('fecha_hora', 'is', null)
       .gte('fecha_hora', cutoffISO)
-      .order('fecha_hora', { ascending: true });
+      .order('fecha_hora', { ascending: true })
+      .order('cancha', { ascending: true, nullsFirst: true });
 
     if (error) {
       console.error(error);
