@@ -12,8 +12,14 @@ function buildStandings(rows) {
     const cat = r.categoria;
     const grp = r.grupo;
     const mapped = {
-      eq: r.equipo, pj: r.pj, pg: r.pg, pe: r.pe, pp: r.pp, gf: r.gf, gc: r.gc, dg: r.dg, pts: r.pts
+      eq: r.equipo, logo: r.logo_url, pj: r.pj, pg: r.pg, pe: r.pe, pp: r.pp, gf: r.gf, gc: r.gc, dg: r.dg, pts: r.pts
     };
+    if (r.logo_url) {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = r.logo_url;
+      mapped.logoImgObj = img;
+    }
 
     if (!equipos[cat]) equipos[cat] = new Set();
     equipos[cat].add(r.equipo);
@@ -84,7 +90,8 @@ function buildTableHTML(rows, cat) {
     const dgClass = r.dg > 0 ? 'dg-pos' : r.dg < 0 ? 'dg-neg' : '';
     h += `<tr class="${zc}">`;
     h += `<td class="col-pos"><span class="pos-badge ${pc}">${i + 1}</span></td>`;
-    h += `<td class="col-team"><div class="team-name-pos">${r.eq}</div></td>`;
+    const logoImg = r.logo ? `<img src="${r.logo}" class="team-logo-small" crossorigin="anonymous" onerror="this.src='../assets/img/logo.png'">` : `<img src="../assets/img/logo.png" class="team-logo-small">`;
+    h += `<td class="col-team"><div class="team-name-pos">${logoImg} <span>${r.eq}</span></div></td>`;
     h += `<td class="col-pj">${r.pj}</td>`;
     h += `<td class="col-g st-g">${r.pg}</td>`;
     h += `<td class="col-e st-e">${r.pe}</td>`;
@@ -224,7 +231,17 @@ async function generateCanvasForCat(cat) {
     ctx.fillStyle = bc; ctx.fillRect(TX2, ry, 4, RH);
     const my = ry + RH / 2, fs = Math.max(15, Math.min(24, RH * .35)); ctx.textBaseline = 'middle';
     ctx.fillStyle = lead ? GOLD : OFFWH; ctx.font = `800 ${fs}px "Barlow Condensed",sans-serif`; ctx.textAlign = 'center'; ctx.fillText(i + 1, C[0].x + C[0].w / 2, my);
-    ctx.textAlign = 'left'; const es = fit(ctx, r.eq, EW - 22, fs, '700'); ctx.font = `${lead ? '800' : '700'} ${es}px "Barlow Condensed",sans-serif`; ctx.fillText(r.eq, C[1].x + 14, my);
+    ctx.textAlign = 'left'; 
+    const lsz = RH * 0.55;
+    if (r.logoImgObj && r.logoImgObj.complete && r.logoImgObj.naturalWidth > 0) {
+      ctx.drawImage(r.logoImgObj, C[1].x + 8, my - lsz/2, lsz, lsz);
+    } else {
+      if (_logo.complete) {
+        ctx.drawImage(_logo, C[1].x + 8, my - lsz/2, lsz, lsz);
+      }
+    }
+    const es = fit(ctx, r.eq, EW - 22 - lsz - 10, fs, '700'); ctx.font = `${lead ? '800' : '700'} ${es}px "Barlow Condensed",sans-serif`; 
+    ctx.fillText(r.eq, C[1].x + 14 + lsz + 6, my);
     const dg = r.dg > 0 ? `+${r.dg}` : `${r.dg}`;
     const st = [r.pj, r.pg, r.pe, r.pp, r.gf, r.gc, dg, r.pts];
     const sc = [OFFWH, '#4ade80', '#fb923c', '#f87171', OFFWH, OFFWH, r.dg > 0 ? '#4ade80' : r.dg < 0 ? '#f87171' : MUTED, lead ? GOLD : '#fde68a'];
