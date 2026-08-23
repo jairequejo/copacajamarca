@@ -478,7 +478,7 @@ function mostrarResultado(persona, warningInfo, conteo, isAlert) {
     <div class="result-body">
       <div class="result-persona">
         <img src="${safe(fotoUrl)}" class="result-foto" alt="Foto"
-             onerror="this.style.opacity='.25';">
+             onerror="this.onerror=null; this.src='${safe(persona.equipos?.logo_url)}'; this.style.objectFit='contain'; this.style.opacity='0.15'; this.style.transform='scale(1.5)';">
         <div>
           <div class="result-info-name">${safe(persona.nombre_completo)}</div>
           <div class="result-info-detail">DNI: ${safe(persona.dni)} • Total Ingresos: ${conteo}</div>
