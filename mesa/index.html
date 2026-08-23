@@ -203,7 +203,6 @@
     .btn-logout:hover { background: var(--red); color: #fff; transform: translateY(-1px); }
 
     .content-wrapper {
-  padding-bottom: 140px !important;
       max-width: 860px;
       margin: 0 auto;
       padding: 30px 16px 60px;
@@ -346,13 +345,12 @@
       .equipo-name { width: 100%; text-align: center; font-size: 1.4rem; }
       .score-controls { width: 100%; justify-content: center; }
       .partido-header { flex-direction: column; align-items: flex-start; gap: 6px; }
-      
-      
+      #filters-container > div:last-child { flex-direction: column; gap: 10px !important; }
+      #filters-container select { width: 100%; flex: none; }
       .btn-score { width: 72px; height: 72px; font-size: 2.2rem; }
       .score-display { font-size: 4rem; width: 76px; }
       .btn-envivo, .btn-finalizar { font-size: 1.2rem; min-height: 62px; }
-      .content-wrapper {
-  padding-bottom: 140px !important; padding: 16px 12px 140px; }
+      .content-wrapper { padding: 16px 12px 80px; }
       .partido-card { padding: 16px 14px; }
       .view-toolbar { flex-direction: column; align-items: stretch; }
       #btn-toggle-view { width: 100%; justify-content: center; }
@@ -434,7 +432,6 @@
       -ms-overflow-style: none;
     }
     .estado-pills::-webkit-scrollbar { display: none; }
-#filters-container::-webkit-scrollbar { display: none; }
 
     .estado-pill {
       display: flex;
@@ -549,7 +546,26 @@
     </header>
 
     <div class="content-wrapper">
-      
+      <div id="filters-container" style="display:none; flex-wrap:wrap; margin-bottom:24px; justify-content:center; padding-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.08);">
+        <div class="filters-label">FILTRAR PARTIDOS</div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; width:100%; justify-content:center;">
+          <select id="filter-dia" class="mobile-filter">
+            <option value="todos">📅 Todos los días</option>
+          </select>
+          <select id="filter-lugar" class="mobile-filter">
+            <option value="todos">📍 Todos los lugares</option>
+          </select>
+          <select id="filter-cat" class="mobile-filter">
+            <option value="todos">🏆 Todas las cat.</option>
+          </select>
+          <select id="filter-estado" class="mobile-filter filter-gold" style="display:none;">
+            <option value="todos">🎯 TODOS LOS ESTADOS</option>
+            <option value="EN_VIVO">🔴 EN VIVO</option>
+            <option value="PROGRAMADO">⏳ PENDIENTES</option>
+            <option value="FINALIZADOS">✔️ FINALIZADOS</option>
+          </select>
+        </div>
+      </div>
       
       <div id="estado-nav" style="display:none; margin-bottom:20px;">
         <div class="estado-pills">
@@ -602,51 +618,6 @@
       <div id="partidos-list"></div>
     </div>
   </div>
-
-  <div id="bottom-floater" style="position:fixed; bottom:0; left:0; right:0; background:rgba(0,26,77,0.95); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); z-index:1000; padding:10px 10px 15px; box-shadow:0 -4px 20px rgba(0,0,0,0.5); border-top:1px solid rgba(255,186,0,0.2);">
-  <div style="max-width:860px; margin:0 auto;">
-    
-    <div id="filters-container" style="display:none; flex-wrap:nowrap; gap:8px; overflow-x:auto; padding-bottom:8px; scrollbar-width:none; -ms-overflow-style:none;">
-      <select id="filter-dia" style="background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.2); color:#fff; border-radius:8px; padding:8px 12px; font-family:'Barlow',sans-serif; flex:0 0 auto; min-width:max-content; outline:none;">
-        <option value="todos">📅 Todos los días</option>
-      </select>
-      <select id="filter-lugar" style="background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.2); color:#fff; border-radius:8px; padding:8px 12px; font-family:'Barlow',sans-serif; flex:0 0 auto; min-width:max-content; outline:none;">
-        <option value="todos">📍 Todos los lugares</option>
-      </select>
-      <select id="filter-cat" style="background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.2); color:#fff; border-radius:8px; padding:8px 12px; font-family:'Barlow',sans-serif; flex:0 0 auto; min-width:max-content; outline:none;">
-        <option value="todos">🏆 Todas las cat.</option>
-      </select>
-      <select id="filter-estado" style="display:none;">
-        <option value="todos">🎯 TODOS LOS ESTADOS</option>
-        <option value="EN_VIVO">🔴 EN VIVO</option>
-        <option value="PROGRAMADO">⏳ PENDIENTES</option>
-        <option value="FINALIZADOS">✔️ FINALIZADOS</option>
-      </select>
-    </div>
-
-    <div id="estado-nav" style="display:none;">
-      <div class="estado-pills" style="display:flex; gap:10px; overflow-x:auto; scrollbar-width:none; -ms-overflow-style:none;">
-        <button class="estado-pill active" data-estado="todos">
-          <span class="pill-dot" style="background:rgba(255,255,255,0.5);"></span>
-          Todos
-        </button>
-        <button class="estado-pill" data-estado="PROGRAMADO">
-          <span class="pill-dot" style="background:#f59e0b;"></span>
-          Pendientes
-        </button>
-        <button class="estado-pill" data-estado="EN_VIVO">
-          <span class="pill-dot" style="background:#16a34a; animation:pulse 1.3s ease-in-out infinite;"></span>
-          En Vivo
-        </button>
-        <button class="estado-pill" data-estado="FINALIZADOS">
-          <span class="pill-dot" style="background:#3b82f6;"></span>
-          Finalizados
-        </button>
-      </div>
-    </div>
-    
-  </div>
-</div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script type="module" src="mesa.js?v=16"></script>
