@@ -123,14 +123,17 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="score-row" style="display:flex; align-items:center; justify-content:center; margin:15px 0;">
           <div class="team-name" style="text-align:right; flex:1;">${safe(p.equipo_local?.nombre)}</div>
           <div style="display:flex; gap:10px; margin: 0 20px; align-items:center;">
-            <input type="number" id="admin-gl-${p.id}" value="${p.goles_local || 0}" style="width:50px; padding:8px; font-size:1.2rem; text-align:center; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.2); color:#fff; border-radius:6px; font-family:'Bebas Neue',sans-serif;">
+            <input type="number" id="admin-gl-${p.id}" value="${p.goles_local || 0}" readonly style="width:50px; padding:8px; font-size:1.2rem; text-align:center; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.05); color:#fff; border-radius:6px; font-family:'Bebas Neue',sans-serif; opacity:0.6; pointer-events:none;">
             <span style="font-size:1.2rem; font-weight:bold; color:var(--gold);">-</span>
-            <input type="number" id="admin-gv-${p.id}" value="${p.goles_visitante || 0}" style="width:50px; padding:8px; font-size:1.2rem; text-align:center; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.2); color:#fff; border-radius:6px; font-family:'Bebas Neue',sans-serif;">
+            <input type="number" id="admin-gv-${p.id}" value="${p.goles_visitante || 0}" readonly style="width:50px; padding:8px; font-size:1.2rem; text-align:center; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.05); color:#fff; border-radius:6px; font-family:'Bebas Neue',sans-serif; opacity:0.6; pointer-events:none;">
           </div>
           <div class="team-name" style="text-align:left; flex:1;">${safe(p.equipo_visitante?.nombre)}</div>
         </div>
         ${p.reclamo ? `<div style="background:rgba(214,13,13,0.15); border:1px solid rgba(214,13,13,0.4); padding:12px; border-radius:8px; margin-bottom:15px; color:#ffba00; font-size:0.95rem; font-family:'Barlow',sans-serif;"><strong>⚠️ OBSERVACIÓN / RECLAMO:</strong><br>${safe(p.reclamo)}</div>` : ''}
-        <button class="btn-aprobar" data-action="aprobar">Hacer Oficial</button>
+        <div style="display:flex; gap:10px;">
+          <button class="btn-editar-admin" data-action="habilitar-edicion" style="flex:1; background:transparent; border:1px solid var(--gold); color:var(--gold); padding:14px; border-radius:10px; font-family:'Barlow Condensed',sans-serif; font-size:1.1rem; font-weight:800; text-transform:uppercase; cursor:pointer; transition:0.2s;">✏️ Editar</button>
+          <button class="btn-aprobar" data-action="aprobar" style="flex:2;">Hacer Oficial</button>
+        </div>
       `;
       listaRevision.appendChild(card);
     });
@@ -138,6 +141,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // Delegación de eventos — sin window.*
     listaRevision.querySelectorAll('[data-action="aprobar"]').forEach(btn => {
       btn.addEventListener('click', () => aprobarPartido(btn.closest('.partido-card').dataset.id));
+    });
+
+    listaRevision.querySelectorAll('[data-action="habilitar-edicion"]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const card = e.target.closest('.partido-card');
+        const inputs = card.querySelectorAll('input[type="number"]');
+        inputs.forEach(inp => {
+          inp.removeAttribute('readonly');
+          inp.style.pointerEvents = 'auto';
+          inp.style.opacity = '1';
+          inp.style.border = '1px solid var(--gold)';
+          inp.style.background = 'rgba(255,186,0,0.1)';
+        });
+        e.target.style.display = 'none';
+      });
     });
   }
 
