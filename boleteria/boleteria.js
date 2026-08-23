@@ -101,7 +101,8 @@ setTimeout(() => pinBoxes[0]?.focus(), 300);
 // Verificar PIN contra Supabase
 formPin.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const pinIngresado = Array.from(pinBoxes).map(b => b.value).join('');
+  const hiddenPin = document.getElementById('hidden-pin');
+  const pinIngresado = hiddenPin ? hiddenPin.value : Array.from(pinBoxes).map(b => b.value).join('');
   if (pinIngresado.length < 4) return;
 
   const btnSubmit = document.getElementById('btn-pin-enter');
