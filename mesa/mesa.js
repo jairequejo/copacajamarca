@@ -286,6 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ${btnEnVivoHTML}
           </div>
 
+          ${!isProgramado ? `
           <div style="margin-bottom: 14px;">
             <button class="btn-toggle-reclamo" data-id="${p.id}" style="display: ${p.reclamo ? 'none' : 'block'}; width:100%; padding:14px; border-radius:10px; border:1px solid rgba(220,38,38,0.5); background:rgba(220,38,38,0.1); color:#fca5a5; font-family:'Barlow Condensed',sans-serif; font-size:1.15rem; font-weight:800; text-transform:uppercase; cursor:pointer; transition:background 0.2s;">⚠️ AÑADIR RECLAMO</button>
           </div>
@@ -301,6 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </select>
             <input type="text" id="reclamo-${p.id}" placeholder="Explica el reclamo al Admin..." style="width:100%; padding:12px; background:rgba(0,0,0,0.6); border:1px solid rgba(220,38,38,0.4); color:#fff; border-radius:8px; font-family:'Barlow',sans-serif;" value="${safe(p.reclamo ? p.reclamo.replace(/\[.*?\]\s*/, '') : '')}">
           </div>
+          ` : ''}
 
           ${isProgramado ? `
             <div style="display:flex; justify-content:space-between; align-items:center; padding:15px; background:rgba(0,0,0,0.2); border-radius:12px; border:1px solid rgba(255,255,255,0.05); margin-bottom:14px;">
