@@ -649,24 +649,5 @@ document.getElementById('btn-nfc')?.addEventListener('click', () => {
   if (isNfcScanning) detenerNFC(); else iniciarNFC();
 });
 
-// Teclado numérico para el PIN
-document.querySelectorAll('.numpad-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const val = btn.dataset.val;
-    const boxes = document.querySelectorAll('.pin-box');
-    if (val === 'del') {
-      for (let i = boxes.length - 1; i >= 0; i--) {
-        if (boxes[i].value) { boxes[i].value = ''; boxes[i].classList.remove('filled'); boxes[i].focus(); break; }
-      }
-    } else {
-      for (let i = 0; i < boxes.length; i++) {
-        if (!boxes[i].value) {
-          boxes[i].value = val; boxes[i].classList.add('filled');
-          if (i < boxes.length - 1) boxes[i + 1].focus();
-          else document.getElementById('form-pin').dispatchEvent(new Event('submit'));
-          break;
-        }
-      }
-    }
-  });
+
 });
