@@ -294,17 +294,32 @@ button { cursor: pointer; font-family: inherit; border: none; background: none; 
 }
 
 /* ════════════════════════════════════
-   FOOTER — BOTONES DE DESCARGA
+   FOOTER — BOTONES DE DESCARGA (FLOTANTE)
 ════════════════════════════════════ */
 .pos-footer {
-  background: var(--navy);
-  margin-top: 20px;
-  padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
-  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  position: fixed;
+  bottom: 85px; /* Encima de la barra de navegación */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 92%;
+  max-width: 480px;
+  background: rgba(0, 26, 77, 0.85); /* Navy traslucido */
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 12px;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  z-index: 99;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  margin: 0;
 }
 .pos-footer-btns {
-  display: flex; flex-direction: column; gap: 10px;
-  width: 100%; max-width: 380px;
+  display: flex; flex-direction: row; gap: 10px;
+  width: 100%;
+}
+body {
+  padding-bottom: 160px; /* Para que la tabla no quede tapada por el panel flotante */
 }
 .footer-note {
   font-family: 'Barlow Condensed', sans-serif;
