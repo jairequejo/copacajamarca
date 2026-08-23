@@ -69,40 +69,26 @@ function showToast(msg, ok = true) {
 // 1. LOGIN CON PIN
 // ════════════════════════════════════════════════
 
-// Lógica de navegación entre cajas del PIN
-pinBoxes.forEach((box, index) => {
-  box.addEventListener('input', () => {
-    box.value = box.value.replace(/[^0-9]/g, '');
-    if (box.value) {
-      box.classList.add('filled');
-      if (index < pinBoxes.length - 1) {
-        pinBoxes[index + 1].focus();
-      } else {
-        // Auto-submit al llenar los 4
-        formPin.dispatchEvent(new Event('submit'));
-      }
-    } else {
-      box.classList.remove('filled');
+// Lógica de ingreso PIN
+const singlePin = document.getElementById('single-pin');
+
+if (singlePin) {
+  singlePin.addEventListener('input', () => {
+    singlePin.value = singlePin.value.replace(/[^0-9]/g, '');
+    if (singlePin.value.length === 4) {
+      // Intentar auto-submit o simplemente perder focus para que el usuario aprete el botón si prefiere
+      singlePin.blur();
     }
   });
+}
 
-  box.addEventListener('keydown', (e) => {
-    if (e.key === 'Backspace' && !box.value && index > 0) {
-      pinBoxes[index - 1].focus();
-      pinBoxes[index - 1].value = '';
-      pinBoxes[index - 1].classList.remove('filled');
-    }
-  });
-});
-
-// Autofocus al primer box al cargar
-setTimeout(() => pinBoxes[0]?.focus(), 300);
+// Autofocus al box al cargar
+setTimeout(() => singlePin?.focus(), 300);
 
 // Verificar PIN contra Supabase
 formPin.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const hiddenPin = document.getElementById('hidden-pin');
-  const pinIngresado = hiddenPin ? hiddenPin.value : Array.from(pinBoxes).map(b => b.value).join('');
+  const pinIngresado = singlePin ? singlePin.value : '';
   if (pinIngresado.length < 4) return;
 
   const btnSubmit = document.getElementById('btn-pin-enter');
@@ -136,8 +122,8 @@ formPin.addEventListener('submit', async (e) => {
 });
 
 function limpiarPin() {
-  pinBoxes.forEach(b => { b.value = ''; b.classList.remove('filled'); });
-  pinBoxes[0].focus();
+  if(singlePin) singlePin.value = '';
+  if(singlePin) singlePin.focus();
 }
 
 function entrarApp() {
