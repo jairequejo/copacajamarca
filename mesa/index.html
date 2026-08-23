@@ -502,7 +502,28 @@
 
     /* Ocultar el pill CSS viejo si queda algo */
 
-  </style>
+  
+    @media (max-width: 480px) {
+      .modern-dock {
+        width: 92%;
+        padding: 4px;
+        bottom: 16px;
+      }
+      .estado-pill {
+        padding: 10px 10px;
+        font-size: 0.85rem;
+        letter-spacing: 0.04em;
+        gap: 4px;
+        flex: 1; /* Esto hace que se dividan el espacio en partes iguales */
+        justify-content: center; /* Centra el texto */
+      }
+      .estado-pills {
+        gap: 2px;
+        width: 100%; /* Toma todo el ancho del dock */
+      }
+    }
+
+</style>
 </head>
 <body>
 
