@@ -302,23 +302,41 @@ document.addEventListener('DOMContentLoaded', () => {
             <input type="text" id="reclamo-${p.id}" placeholder="Explica el reclamo al Admin..." style="width:100%; padding:12px; background:rgba(0,0,0,0.6); border:1px solid rgba(220,38,38,0.4); color:#fff; border-radius:8px; font-family:'Barlow',sans-serif;" value="${safe(p.reclamo ? p.reclamo.replace(/\[.*?\]\s*/, '') : '')}">
           </div>
 
-          <div class="equipo-row">
-            <div class="equipo-name">${safe(p.equipo_local?.nombre || 'Local')}</div>
-            <div class="score-controls">
-              ${!isProgramado ? `<button class="btn-score minus" data-team="local" data-delta="-1" ${scoreControlsDisabled}>-</button>` : ''}
-              <div class="score-display" id="local-${p.id}">${gl}</div>
-              ${!isProgramado ? `<button class="btn-score plus" data-team="local" data-delta="1" ${scoreControlsDisabled}>+</button>` : ''}
+          ${isProgramado ? `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:15px; background:rgba(0,0,0,0.2); border-radius:12px; border:1px solid rgba(255,255,255,0.05); margin-bottom:14px;">
+              <div style="flex:1; text-align:right; font-family:'Barlow Condensed',sans-serif; font-size:1.3rem; font-weight:800; color:#fff; text-transform:uppercase; padding-right:15px; line-height:1.1;">
+                ${safe(p.equipo_local?.nombre)}
+              </div>
+              
+              <div style="display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; font-size:2.2rem; color:var(--gold); background:rgba(0,0,0,0.6); padding:5px 15px; border-radius:10px; border:2px solid rgba(255,186,0,0.3); min-width:80px; line-height:1;">
+                VS
+              </div>
+              
+              <div style="flex:1; text-align:left; font-family:'Barlow Condensed',sans-serif; font-size:1.3rem; font-weight:800; color:#fff; text-transform:uppercase; padding-left:15px; line-height:1.1;">
+                ${safe(p.equipo_visitante?.nombre)}
+              </div>
             </div>
-          </div>
+            <div style="display:none;" id="local-${p.id}">${gl}</div>
+            <div style="display:none;" id="visita-${p.id}">${gv}</div>
+          ` : `
+            <div class="equipo-row">
+              <div class="equipo-name">${safe(p.equipo_local?.nombre || 'Local')}</div>
+              <div class="score-controls">
+                <button class="btn-score minus" data-team="local" data-delta="-1">-</button>
+                <div class="score-display" id="local-${p.id}">${gl}</div>
+                <button class="btn-score plus" data-team="local" data-delta="1">+</button>
+              </div>
+            </div>
 
-          <div class="equipo-row">
-            <div class="equipo-name">${safe(p.equipo_visitante?.nombre || 'Visita')}</div>
-            <div class="score-controls">
-              ${!isProgramado ? `<button class="btn-score minus" data-team="visitante" data-delta="-1" ${scoreControlsDisabled}>-</button>` : ''}
-              <div class="score-display" id="visita-${p.id}">${gv}</div>
-              ${!isProgramado ? `<button class="btn-score plus" data-team="visitante" data-delta="1" ${scoreControlsDisabled}>+</button>` : ''}
+            <div class="equipo-row">
+              <div class="equipo-name">${safe(p.equipo_visitante?.nombre || 'Visita')}</div>
+              <div class="score-controls">
+                <button class="btn-score minus" data-team="visitante" data-delta="-1">-</button>
+                <div class="score-display" id="visita-${p.id}">${gv}</div>
+                <button class="btn-score plus" data-team="visitante" data-delta="1">+</button>
+              </div>
             </div>
-          </div>
+          `}
 
           <button class="btn-finalizar" data-action="finalizar">Finalizar Partido</button>
         `;
