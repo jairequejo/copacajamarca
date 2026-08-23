@@ -387,9 +387,12 @@ body {
 }
 
 .team-logo-small {
-  width: 22px; height: 22px;
+  width: 26px; height: 26px;
   object-fit: contain;
   margin-right: 8px;
-  border-radius: 4px;
+  background-color: var(--navy);
+  padding: 3px;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
 }
 .team-name-pos { display: flex; align-items: center; }
