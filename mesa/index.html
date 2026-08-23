@@ -203,6 +203,7 @@
     .btn-logout:hover { background: var(--red); color: #fff; transform: translateY(-1px); }
 
     .content-wrapper {
+  padding-bottom: 90px !important;
       max-width: 860px;
       margin: 0 auto;
       padding: 30px 16px 60px;
@@ -350,7 +351,8 @@
       .btn-score { width: 72px; height: 72px; font-size: 2.2rem; }
       .score-display { font-size: 4rem; width: 76px; }
       .btn-envivo, .btn-finalizar { font-size: 1.2rem; min-height: 62px; }
-      .content-wrapper { padding: 16px 12px 80px; }
+      .content-wrapper {
+  padding-bottom: 90px !important; padding: 16px 12px 80px; }
       .partido-card { padding: 16px 14px; }
       .view-toolbar { flex-direction: column; align-items: stretch; }
       #btn-toggle-view { width: 100%; justify-content: center; }
@@ -567,7 +569,7 @@
         </div>
       </div>
       
-      <div id="estado-nav" style="display:none; margin-bottom:20px;">
+      <div id="estado-nav" style="display:none; position:fixed; bottom:0; left:0; right:0; background:rgba(0,26,77,0.95); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); z-index:1000; padding:10px 10px 15px; box-shadow:0 -4px 20px rgba(0,0,0,0.5); border-top:1px solid rgba(255,186,0,0.2);">
         <div class="estado-pills">
           <button class="estado-pill active" data-estado="todos">
             <span class="pill-dot" style="background:rgba(255,255,255,0.5);"></span>
