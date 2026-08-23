@@ -282,28 +282,6 @@ document.addEventListener('DOMContentLoaded', () => {
             ${p.estado !== 'PROGRAMADO' ? `<strong style="font-size:0.85rem; padding:4px 10px; border-radius:999px; background:rgba(255,186,0,0.15); border:1px solid rgba(255,186,0,0.3); color:var(--gold);">[${p.estado}]</strong>` : ''}
           </div>
           
-          <div style="margin-bottom: 14px;">
-            ${btnEnVivoHTML}
-          </div>
-
-          ${!isProgramado ? `
-          <div style="margin-bottom: 14px;">
-            <button class="btn-toggle-reclamo" data-id="${p.id}" style="display: ${p.reclamo ? 'none' : 'block'}; width:100%; padding:14px; border-radius:10px; border:1px solid rgba(220,38,38,0.5); background:rgba(220,38,38,0.1); color:#fca5a5; font-family:'Barlow Condensed',sans-serif; font-size:1.15rem; font-weight:800; text-transform:uppercase; cursor:pointer; transition:background 0.2s;">⚠️ AÑADIR RECLAMO</button>
-          </div>
-
-          <div id="caja-reclamo-${p.id}" style="display: ${p.reclamo ? 'block' : 'none'}; margin-bottom: 14px; background:rgba(220,38,38,0.15); border:1px solid rgba(220,38,38,0.4); padding:15px; border-radius:10px;">
-            <label style="color:#fca5a5; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:1.1rem; text-transform:uppercase; margin-bottom:10px; display:block;">⚠️ Observaciones o Reclamos:</label>
-            <select id="tipo-reclamo-${p.id}" style="width:100%; padding:12px; margin-bottom:10px; background:rgba(0,0,0,0.6); border:1px solid rgba(220,38,38,0.4); color:#fff; border-radius:8px; font-family:'Barlow',sans-serif; font-size:1.05rem;">
-              <option value="">-- Selecciona el Motivo --</option>
-              <option value="DNI Vencido" ${p.reclamo?.includes('DNI Vencido') ? 'selected' : ''}>DNI Vencido</option>
-              <option value="Niño sin DNI jugando" ${p.reclamo?.includes('Niño sin DNI jugando') ? 'selected' : ''}>Niño sin DNI jugando</option>
-              <option value="Niño de otra categoría" ${p.reclamo?.includes('Niño de otra categoría') ? 'selected' : ''}>Niño de otra categoría</option>
-              <option value="Otros" ${p.reclamo?.includes('Otros') ? 'selected' : ''}>Otros (Especificar)</option>
-            </select>
-            <input type="text" id="reclamo-${p.id}" placeholder="Explica el reclamo al Admin..." style="width:100%; padding:12px; background:rgba(0,0,0,0.6); border:1px solid rgba(220,38,38,0.4); color:#fff; border-radius:8px; font-family:'Barlow',sans-serif;" value="${safe(p.reclamo ? p.reclamo.replace(/\[.*?\]\s*/, '') : '')}">
-          </div>
-          ` : ''}
-
           ${isProgramado ? `
             <div style="display:flex; justify-content:space-between; align-items:center; padding:15px; background:rgba(0,0,0,0.2); border-radius:12px; border:1px solid rgba(255,255,255,0.05); margin-bottom:14px;">
               <div style="flex:1; text-align:right; font-family:'Barlow Condensed',sans-serif; font-size:1.3rem; font-weight:800; color:#fff; text-transform:uppercase; padding-right:15px; line-height:1.1;">
@@ -320,7 +298,31 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div style="display:none;" id="local-${p.id}">${gl}</div>
             <div style="display:none;" id="visita-${p.id}">${gv}</div>
+            
+            <div style="margin-bottom: 0px; margin-top: 14px;">
+              ${btnEnVivoHTML}
+            </div>
           ` : `
+            <div style="margin-bottom: 14px; display:flex; justify-content:flex-end;">
+              ${btnEnVivoHTML}
+            </div>
+            
+            <div style="margin-bottom: 14px;">
+              <button class="btn-toggle-reclamo" data-id="${p.id}" style="display: ${p.reclamo ? 'none' : 'block'}; width:100%; padding:14px; border-radius:10px; border:1px solid rgba(220,38,38,0.5); background:rgba(220,38,38,0.1); color:#fca5a5; font-family:'Barlow Condensed',sans-serif; font-size:1.15rem; font-weight:800; text-transform:uppercase; cursor:pointer; transition:background 0.2s;">⚠️ AÑADIR RECLAMO</button>
+            </div>
+
+            <div id="caja-reclamo-${p.id}" style="display: ${p.reclamo ? 'block' : 'none'}; margin-bottom: 14px; background:rgba(220,38,38,0.15); border:1px solid rgba(220,38,38,0.4); padding:15px; border-radius:10px;">
+              <label style="color:#fca5a5; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:1.1rem; text-transform:uppercase; margin-bottom:10px; display:block;">⚠️ Observaciones o Reclamos:</label>
+              <select id="tipo-reclamo-${p.id}" style="width:100%; padding:12px; margin-bottom:10px; background:rgba(0,0,0,0.6); border:1px solid rgba(220,38,38,0.4); color:#fff; border-radius:8px; font-family:'Barlow',sans-serif; font-size:1.05rem;">
+                <option value="">-- Selecciona el Motivo --</option>
+                <option value="DNI Vencido" ${p.reclamo?.includes('DNI Vencido') ? 'selected' : ''}>DNI Vencido</option>
+                <option value="Niño sin DNI jugando" ${p.reclamo?.includes('Niño sin DNI jugando') ? 'selected' : ''}>Niño sin DNI jugando</option>
+                <option value="Niño de otra categoría" ${p.reclamo?.includes('Niño de otra categoría') ? 'selected' : ''}>Niño de otra categoría</option>
+                <option value="Otros" ${p.reclamo?.includes('Otros') ? 'selected' : ''}>Otros (Especificar)</option>
+              </select>
+              <input type="text" id="reclamo-${p.id}" placeholder="Explica el reclamo al Admin..." style="width:100%; padding:12px; background:rgba(0,0,0,0.6); border:1px solid rgba(220,38,38,0.4); color:#fff; border-radius:8px; font-family:'Barlow',sans-serif;" value="${safe(p.reclamo ? p.reclamo.replace(/\[.*?\]\s*/, '') : '')}">
+            </div>
+
             <div class="equipo-row">
               <div class="equipo-name">${safe(p.equipo_local?.nombre || 'Local')}</div>
               <div class="score-controls">
