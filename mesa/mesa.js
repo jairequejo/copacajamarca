@@ -210,6 +210,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const resumenTbody = document.getElementById('resumen-tbody');
     if (resumenTbody) resumenTbody.innerHTML = '';
     
+    const mainFragment = document.createDocumentFragment();
+    const resumenFragment = document.createDocumentFragment();
     partidos.forEach(p => {
       // Parse hora
       let horaTexto = "Sin Hora";
@@ -345,7 +347,7 @@ document.addEventListener('DOMContentLoaded', () => {
           ${!isProgramado ? `<button class="btn-finalizar" data-action="finalizar">Finalizar Partido</button>` : ''}
         `;
       }
-      partidosList.appendChild(card);
+      mainFragment.appendChild(card);
 
       // Delegación de eventos — sin window.*
       const btnEnVivo = card.querySelector('[data-action="envivo"]');
@@ -394,9 +396,12 @@ document.addEventListener('DOMContentLoaded', () => {
           <td style="padding:12px; text-align:left; font-family:'Barlow Condensed',sans-serif; font-weight:700;">${safe(p.equipo_visitante?.nombre)}</td>
           <td style="padding:12px; text-align:center; font-family:'Barlow Condensed',sans-serif; font-weight:800; color:${colorEstado};">[${p.estado}]</td>
         `;
-        resumenTbody.appendChild(tr);
+        resumenFragment.appendChild(tr);
       }
     });
+
+    partidosList.appendChild(mainFragment);
+    if (resumenTbody) resumenTbody.appendChild(resumenFragment);
 
     // Permitir que el DOM termine de dibujar antes de devolver el scroll (Safari iOS requiere mayor retraso)
     requestAnimationFrame(() => {
