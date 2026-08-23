@@ -25,6 +25,9 @@ let isScanning  = false;
 let isProcessingScan = false; // Bloqueador de escaneos múltiples
 let historial   = JSON.parse(localStorage.getItem('historial_ui') || '[]');
 let lastScanned = null;
+let scanMode = 'qr'; // 'qr' | 'nfc'
+let nfcReader = null;
+let isNfcScanning = false;
 
 // Sonidos Antifrágiles nativos (AudioContext)
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -292,6 +295,103 @@ function detenerScanner() {
   setStatus('Cámara detenida.');
 }
 
+// ════════════════════════════════════════════════
+// NFC READER — Web NFC API
+// ════════════════════════════════════════════════
+async function iniciarNFC() {
+  if (!('NDEFReader' in window)) {
+    showToast('Dispositivo sin soporte NFC. Usa QR.', false);
+    switchMode('qr');
+    return;
+  }
+  try {
+    nfcReader = new NDEFReader();
+    await nfcReader.scan();
+    isNfcScanning = true;
+    const btnNfc = document.getElementById('btn-nfc');
+    if (btnNfc) { btnNfc.textContent = '⏹ DETENER NFC'; btnNfc.classList.add('activo'); }
+    setStatus('📡 NFC activo — Acerca el carnet', true);
+    showToast('NFC activo — Acerca el carnet al teléfono');
+    nfcReader.addEventListener('reading', ({ message, serialNumber }) => {
+      if (isProcessingScan) return;
+      let dni = null;
+      for (const record of message.records) {
+        if (record.recordType === 'text') {
+          const text = new TextDecoder(record.encoding || 'utf-8').decode(record.data).trim();
+          try { const p = JSON.parse(text); if (p.dni) { dni = String(p.dni); break; } } catch(_) {}
+          if (text.includes('dni=')) { const m = text.match(/dni=([a-zA-Z0-9_-]+)/); if (m) { dni = m[1]; break; } }
+          if (/^[a-zA-Z0-9_-]{4,15}$/.test(text)) { dni = text; break; }
+        }
+        if (record.recordType === 'url') {
+          const url = new TextDecoder().decode(record.data);
+          const m = url.match(/dni=([a-zA-Z0-9_-]+)/);
+          if (m) { dni = m[1]; break; }
+        }
+      }
+      if (!dni) {
+        playBeep(false);
+        setStatus('NFC: Tag sin DNI válido', false, true);
+        showToast('Tag sin DNI. Graba el DNI como texto en el chip.', false);
+        return;
+      }
+      if (!/^[a-zA-Z0-9_-]{4,15}$/.test(dni)) {
+        playBeep(false);
+        setStatus('NFC: Formato inválido', false, true);
+        return;
+      }
+      if (dni === lastScanned) return;
+      lastScanned = dni;
+      setTimeout(() => { lastScanned = null; }, 3000);
+      isProcessingScan = true;
+      setStatus(`📡 NFC: DNI ${dni} — Consultando…`, true);
+      validarPersona(dni);
+    });
+    nfcReader.addEventListener('readingerror', () => {
+      showToast('Error leyendo tag NFC', false);
+      setStatus('Error de lectura NFC', false, true);
+    });
+  } catch (err) {
+    console.error('NFC Error:', err);
+    isNfcScanning = false;
+    if (err.name === 'NotAllowedError') showToast('Permiso NFC denegado. Actívalo en Ajustes.', false);
+    else if (err.name === 'NotSupportedError') showToast('NFC no disponible en este dispositivo', false);
+    else showToast('Error NFC: ' + err.message, false);
+    setStatus('NFC no disponible', false, true);
+    switchMode('qr');
+  }
+}
+
+function detenerNFC() {
+  nfcReader = null;
+  isNfcScanning = false;
+  const btnNfc = document.getElementById('btn-nfc');
+  if (btnNfc) { btnNfc.textContent = '📡 ACTIVAR LECTURA NFC'; btnNfc.classList.remove('activo'); }
+  setStatus('NFC detenido.');
+}
+
+function switchMode(mode) {
+  scanMode = mode;
+  const btnQrMode = document.getElementById('btn-mode-qr');
+  const btnNfcMode = document.getElementById('btn-mode-nfc');
+  const qrSection = document.getElementById('qr-section');
+  const btnScannerEl = document.getElementById('btn-scanner');
+  const nfcSection = document.getElementById('nfc-section');
+  if (!btnQrMode || !btnNfcMode) return;
+  if (mode === 'qr') {
+    btnQrMode.classList.add('active'); btnNfcMode.classList.remove('active');
+    if (qrSection) qrSection.style.display = 'block';
+    if (btnScannerEl) btnScannerEl.style.display = 'block';
+    if (nfcSection) nfcSection.style.display = 'none';
+    if (isNfcScanning) detenerNFC();
+  } else {
+    btnNfcMode.classList.add('active'); btnQrMode.classList.remove('active');
+    if (qrSection) qrSection.style.display = 'none';
+    if (btnScannerEl) btnScannerEl.style.display = 'none';
+    if (nfcSection) nfcSection.style.display = 'block';
+    if (isScanning) detenerScanner();
+  }
+}
+
 // ── VALIDAR EN SUPABASE Y LÓGICA ANTI-FRAUDE ────────
 async function validarPersona(dni) {
   try {
@@ -400,6 +500,14 @@ function mostrarResultado(persona, warningInfo, conteo, isAlert) {
 
   setStatus(`✓ ${persona.nombre_completo.split(' ')[0]} — Autorizado`, true);
   showToast(`${persona.nombre_completo.split(' ')[0]} — Acceso autorizado`);
+
+  // Auto-dismiss después de 5s si no hay alerta
+  if (!isAlert) {
+    setTimeout(() => {
+      const btnNuevo = document.getElementById('btn-nuevo');
+      if (btnNuevo) btnNuevo.click();
+    }, 5000);
+  }
 }
 
 function mostrarError(dni, mensaje) {
@@ -532,4 +640,33 @@ searchStaff.addEventListener('input', (e) => {
   renderStaff(filtered);
 });
 
+// ════════════════════════════════════════════════
+// EVENTOS: Modo QR/NFC y Teclado Numérico PIN
+// ════════════════════════════════════════════════
+document.getElementById('btn-mode-qr')?.addEventListener('click', () => switchMode('qr'));
+document.getElementById('btn-mode-nfc')?.addEventListener('click', () => switchMode('nfc'));
+document.getElementById('btn-nfc')?.addEventListener('click', () => {
+  if (isNfcScanning) detenerNFC(); else iniciarNFC();
+});
 
+// Teclado numérico para el PIN
+document.querySelectorAll('.numpad-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const val = btn.dataset.val;
+    const boxes = document.querySelectorAll('.pin-box');
+    if (val === 'del') {
+      for (let i = boxes.length - 1; i >= 0; i--) {
+        if (boxes[i].value) { boxes[i].value = ''; boxes[i].classList.remove('filled'); boxes[i].focus(); break; }
+      }
+    } else {
+      for (let i = 0; i < boxes.length; i++) {
+        if (!boxes[i].value) {
+          boxes[i].value = val; boxes[i].classList.add('filled');
+          if (i < boxes.length - 1) boxes[i + 1].focus();
+          else document.getElementById('form-pin').dispatchEvent(new Event('submit'));
+          break;
+        }
+      }
+    }
+  });
+});

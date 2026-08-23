@@ -44,15 +44,17 @@
       z-index: 1;
       width: 100%;
       max-width: 420px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,186,0,0.18);
-      border-radius: 14px;
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      padding: 40px 30px;
+      background: linear-gradient(160deg, rgba(255,255,255,0.08) 0%, rgba(0,0,0,0.3) 100%);
+      border: 1px solid rgba(255,186,0,0.25);
+      border-bottom: 4px solid rgba(255,186,0,0.5);
+      border-radius: 20px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 44px 32px 40px;
       text-align: center;
       margin: auto;
-      margin-top: max(10vh, 40px);
+      margin-top: max(8vh, 32px);
+      box-shadow: 0 24px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
     }
 
     .login-logo {
@@ -343,6 +345,22 @@
     
     .btn-toggle-reclamo:hover { background: rgba(220,38,38,0.2) !important; }
 
+    .input-icon-wrap { position: relative; margin-bottom: 16px; }
+    .input-icon-wrap #email-input,
+    .input-icon-wrap #pass-input {
+      margin-bottom: 0;
+      padding-left: 48px;
+    }
+    .input-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: rgba(255,255,255,0.4);
+      pointer-events: none;
+      z-index: 1;
+    }
+
   </style>
 </head>
 <body>
@@ -362,21 +380,21 @@
     <p class="login-sub">Staff Oficial ·</p>
 
     <form id="form-login" action="#" onsubmit="event.preventDefault();">
-      <input type="email" id="email-input" name="email"
-             placeholder="Correo de Mesa" autocomplete="username">
+      <div class="input-icon-wrap">
+        <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,12 2,6"/></svg>
+        <input type="email" id="email-input" name="email" placeholder="Correo de Mesa" autocomplete="username">
+      </div>
 
-      <div class="field-wrap">
-        <input type="password" id="pass-input" name="password"
-               placeholder="Contraseña" autocomplete="current-password">
-        <button type="button" class="btn-reveal"
-                onclick="const p=document.getElementById('pass-input');p.type=p.type==='password'?'text':'password';">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-          </svg>
+      <div class="field-wrap input-icon-wrap">
+        <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <input type="password" id="pass-input" name="password" placeholder="Contraseña" autocomplete="current-password">
+        <button type="button" class="btn-reveal" onclick="const p=document.getElementById('pass-input');p.type=p.type==='password'?'text':'password';">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         </button>
       </div>
 
       <button type="submit" id="btn-login">Ingresar al Sistema</button>
+      <p style="margin-top:16px; font-family:'Barlow Condensed',sans-serif; font-size:.8rem; color:rgba(255,255,255,.35); text-transform:uppercase; letter-spacing:.08em;">Usa tus credenciales de Copa Cajamarca</p>
     </form>
   </div>
 
@@ -419,8 +437,9 @@
       </div>
 
       <div style="display:flex; justify-content:center; margin-bottom:24px;">
-        <button id="btn-toggle-view" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:12px 24px; border-radius:30px; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:1.1rem; cursor:pointer; letter-spacing:0.05em; transition:background 0.2s;">
-          👁️ VER RESUMEN (TABLA)
+        <button id="btn-toggle-view" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:12px 24px; border-radius:30px; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:1.1rem; cursor:pointer; letter-spacing:0.05em; transition:background 0.2s; display:flex; align-items:center; gap:8px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
+          VER RESUMEN (TABLA)
         </button>
       </div>
 
