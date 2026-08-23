@@ -33,6 +33,7 @@
     .pin-box{width:68px;height:80px;background:rgba(0,0,0,0.5);border:2px solid rgba(255,255,255,0.15);color:var(--gold);border-radius:12px;font-family:'Bebas Neue',sans-serif;font-size:2.8rem;text-align:center;outline:none;transition:all .2s;}
     .pin-box:focus{border-color:var(--gold);box-shadow:0 0 0 4px rgba(255,186,0,.15);transform:translateY(-3px);}
     .pin-box.filled{border-color:rgba(255,186,0,.5);background:rgba(255,186,0,.08);}
+    .fake-box{display:flex; align-items:center; justify-content:center;}
     .btn-pin-submit{width:100%;background:linear-gradient(to bottom,#ffc933,#ffba00);color:#3d2e00;border:none;padding:18px;font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase;border-radius:12px;cursor:pointer;transition:all .2s;box-shadow:0 8px 24px rgba(255,186,0,.3),inset 0 1px 0 rgba(255,255,255,.4);}
     .btn-pin-submit:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(255,186,0,.4);}
     .content-wrapper{max-width:600px;margin:0 auto;padding:24px 16px 60px;width:100%;flex:1;}
@@ -154,11 +155,14 @@
       <h1 class="vault-title">COPA<br><span>CAJAMARCA</span></h1>
       <p class="vault-sub">Ingresa el PIN de acceso</p>
       <form id="form-pin" onsubmit="event.preventDefault();">
-        <div class="pin-grid">
-          <input type="tel" class="pin-box" maxlength="1" pattern="[0-9]" inputmode="numeric" autocomplete="off">
-          <input type="tel" class="pin-box" maxlength="1" pattern="[0-9]" inputmode="numeric" autocomplete="off">
-          <input type="tel" class="pin-box" maxlength="1" pattern="[0-9]" inputmode="numeric" autocomplete="off">
-          <input type="tel" class="pin-box" maxlength="1" pattern="[0-9]" inputmode="numeric" autocomplete="off">
+        <div style="position:relative; width:fit-content; margin:0 auto;">
+          <input type="tel" id="hidden-pin" maxlength="4" pattern="[0-9]*" inputmode="numeric" autocomplete="off" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; z-index:10; font-size:16px;">
+          <div class="pin-grid" style="pointer-events:none;">
+            <div class="pin-box fake-box"></div>
+            <div class="pin-box fake-box"></div>
+            <div class="pin-box fake-box"></div>
+            <div class="pin-box fake-box"></div>
+          </div>
         </div>
         <button type="submit" class="btn-pin-submit" id="btn-pin-enter">INGRESAR</button>
       </form>
