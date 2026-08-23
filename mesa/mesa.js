@@ -243,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <span style="background:rgba(255,255,255,0.12); padding:4px 8px; border-radius:6px; color:#fff; font-weight:800; font-size:0.95rem; display:flex; align-items:center; gap:4px;">📍 ${safe(p.cancha || 'Cancha')}</span>
               <span style="background:rgba(255,255,255,0.12); padding:4px 8px; border-radius:6px; color:#fff; font-weight:800; font-size:0.95rem; display:flex; align-items:center; gap:4px;">🏆 ${safe(p.categoria || 'N/A')}</span>
             </div>
-            <strong style="font-size:0.85rem; padding:4px 10px; border-radius:999px; background:rgba(255,186,0,0.15); border:1px solid rgba(255,186,0,0.3); color:var(--gold);">[${p.estado}]</strong>
+            ${p.estado !== 'PROGRAMADO' ? `<strong style="font-size:0.85rem; padding:4px 10px; border-radius:999px; background:rgba(255,186,0,0.15); border:1px solid rgba(255,186,0,0.3); color:var(--gold);">[${p.estado}]</strong>` : ''}
           </div>
           
           <div class="equipo-row" style="flex-direction:column; align-items:center; text-align:center; padding:20px 15px; gap:12px; margin-bottom:0;">
@@ -276,7 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <span style="background:rgba(255,255,255,0.12); padding:4px 8px; border-radius:6px; color:#fff; font-weight:800; font-size:0.95rem; display:flex; align-items:center; gap:4px;">📍 ${safe(p.cancha || 'Cancha')}</span>
               <span style="background:rgba(255,255,255,0.12); padding:4px 8px; border-radius:6px; color:#fff; font-weight:800; font-size:0.95rem; display:flex; align-items:center; gap:4px;">🏆 ${safe(p.categoria || 'N/A')}</span>
             </div>
-            <strong style="font-size:0.85rem; padding:4px 10px; border-radius:999px; background:rgba(255,186,0,0.15); border:1px solid rgba(255,186,0,0.3); color:var(--gold);">[${p.estado}]</strong>
+            ${p.estado !== 'PROGRAMADO' ? `<strong style="font-size:0.85rem; padding:4px 10px; border-radius:999px; background:rgba(255,186,0,0.15); border:1px solid rgba(255,186,0,0.3); color:var(--gold);">[${p.estado}]</strong>` : ''}
           </div>
           
           <div style="margin-bottom: 14px;">
