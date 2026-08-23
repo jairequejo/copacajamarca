@@ -338,7 +338,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
           `}
 
-          <button class="btn-finalizar" data-action="finalizar">Finalizar Partido</button>
+          ${!isProgramado ? `<button class="btn-finalizar" data-action="finalizar">Finalizar Partido</button>` : ''}
         `;
       }
       partidosList.appendChild(card);
