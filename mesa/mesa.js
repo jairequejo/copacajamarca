@@ -246,19 +246,22 @@ document.addEventListener('DOMContentLoaded', () => {
             ${p.estado !== 'PROGRAMADO' ? `<strong style="font-size:0.85rem; padding:4px 10px; border-radius:999px; background:rgba(255,186,0,0.15); border:1px solid rgba(255,186,0,0.3); color:var(--gold);">[${p.estado}]</strong>` : ''}
           </div>
           
-          <div class="equipo-row" style="flex-direction:column; align-items:center; text-align:center; padding:20px 15px; gap:12px; margin-bottom:0;">
-            <div style="font-family:'Barlow Condensed',sans-serif; font-size:1.6rem; font-weight:800; color:#fff; text-transform:uppercase;">${safe(p.equipo_local?.nombre)}</div>
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:15px; background:rgba(0,0,0,0.2); border-radius:12px; border:1px solid rgba(255,255,255,0.05); margin-bottom:10px;">
+            <div style="flex:1; text-align:right; font-family:'Barlow Condensed',sans-serif; font-size:1.3rem; font-weight:800; color:#fff; text-transform:uppercase; padding-right:15px; line-height:1.1;">
+              ${safe(p.equipo_local?.nombre)}
+            </div>
             
-            <div style="font-family:'Bebas Neue',sans-serif; font-size:3.5rem; color:var(--gold); background:rgba(0,0,0,0.5); padding:5px 25px; border-radius:12px; border:2px solid rgba(255,186,0,0.2); line-height:1; display:flex; align-items:center; justify-content:center; gap:15px; width:100%;">
+            <div style="display:flex; align-items:center; justify-content:center; gap:8px; font-family:'Bebas Neue',sans-serif; font-size:2.8rem; color:var(--gold); background:rgba(0,0,0,0.6); padding:5px 15px; border-radius:10px; border:2px solid rgba(255,186,0,0.3); min-width:90px; line-height:1;">
               <span>${gl}</span>
-              <span style="color:rgba(255,255,255,0.3); font-size:1.5rem; font-family:'Barlow Condensed',sans-serif;">VS</span>
+              <span style="color:rgba(255,255,255,0.3); font-size:1.5rem; font-family:'Barlow Condensed',sans-serif; position:relative; top:-2px;">-</span>
               <span>${gv}</span>
             </div>
             
-            <div style="font-family:'Barlow Condensed',sans-serif; font-size:1.6rem; font-weight:800; color:#fff; text-transform:uppercase;">${safe(p.equipo_visitante?.nombre)}</div>
-            
-            ${p.reclamo ? `<div style="margin-top:10px; width:100%; padding:12px; background:rgba(214,13,13,0.15); border:1px solid rgba(214,13,13,0.3); border-radius:8px; color:#ffba00; font-size:1rem; font-family:'Barlow',sans-serif; line-height:1.4;"><strong>⚠️ RECLAMO:</strong><br>${safe(p.reclamo)}</div>` : ''}
+            <div style="flex:1; text-align:left; font-family:'Barlow Condensed',sans-serif; font-size:1.3rem; font-weight:800; color:#fff; text-transform:uppercase; padding-left:15px; line-height:1.1;">
+              ${safe(p.equipo_visitante?.nombre)}
+            </div>
           </div>
+          ${p.reclamo ? `<div style="margin-bottom:15px; width:100%; padding:12px; background:rgba(214,13,13,0.15); border:1px solid rgba(214,13,13,0.3); border-radius:8px; color:#ffba00; font-size:1rem; font-family:'Barlow',sans-serif; line-height:1.4;"><strong>⚠️ RECLAMO:</strong><br>${safe(p.reclamo)}</div>` : ''}
 
           ${isFinalizado ? `<button class="btn-envivo" data-action="editar" style="background:var(--navy); border:1px solid var(--gold); color:var(--gold); padding:16px; margin-top:16px; border-radius:10px; width:100%;">✏️ EDITAR RESULTADO / RECLAMO</button>` : ''}
         `;
