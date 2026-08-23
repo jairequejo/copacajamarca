@@ -393,6 +393,7 @@ function switchMode(mode) {
     if (btnScannerEl) btnScannerEl.style.display = 'none';
     if (nfcSection) nfcSection.style.display = 'block';
     if (isScanning) detenerScanner();
+    iniciarNFC();
   }
 }
 
