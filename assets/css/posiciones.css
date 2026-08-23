@@ -385,3 +385,11 @@ body {
 @media (min-width: 640px) {
   .pos-main { padding: 16px 14px; }
 }
+
+.team-logo-small {
+  width: 22px; height: 22px;
+  object-fit: contain;
+  margin-right: 8px;
+  border-radius: 4px;
+}
+.team-name-pos { display: flex; align-items: center; }
