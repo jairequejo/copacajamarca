@@ -47,19 +47,23 @@ function buildStandings(rows) {
     }
   });
 }
-function renderAll() {
+function getStandingTabs() {
   const tabs = [];
   Object.keys(equipos).sort((a, b) => a.localeCompare(b)).forEach(c => {
     if (standingsByGrupo[c]) {
       Object.keys(standingsByGrupo[c]).sort().forEach(g => {
-        tabs.push({ id: c + '_' + g, label: 'Cat. ' + c + ' GRP ' + g, cat: c, grupo: g });
+        tabs.push({ id: c + '_' + g, label: 'Cat. ' + c + ' GRP ' + g, cat: c, grupo: g, rows: standingsByGrupo[c][g] });
       });
     } else {
-      tabs.push({ id: c, label: 'Cat. ' + c, cat: c, grupo: null });
+      tabs.push({ id: c, label: 'Cat. ' + c, cat: c, grupo: null, rows: standings[c] });
     }
   });
+  return tabs;
+}
+function renderAll() {
+  const tabs = getStandingTabs();
   if (!tabs.length) return;
-  if (!activeCat) activeCat = tabs[0].id;
+  if (!tabs.some(t => t.id === activeCat)) activeCat = tabs[0].id;
   
   el('catFilterBar').innerHTML = tabs.map(t => `<button class="cat-btn${activeCat === t.id ? ' active' : ''}" data-cat="${t.id}">${t.label}</button>`).join('');
   el('catFilterWrap').hidden = false;
@@ -147,182 +151,505 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 const _logo = new Image(); _logo.src = '../assets/img/logo.png'; _logo.crossOrigin = 'anonymous';
-const _bgPos = new Image(); _bgPos.src = '../assets/img/fondo-posiciones.png'; _bgPos.crossOrigin = 'anonymous';
+const _bgPos = new Image(); _bgPos.src = '../assets/img/fondo-posiciones-pro.png'; _bgPos.crossOrigin = 'anonymous';
 function fit(ctx, txt, maxW, base, wt) { let s = base; while (s > 8) { ctx.font = `${wt} ${s}px "Barlow Condensed",sans-serif`; if (ctx.measureText(txt).width <= maxW) break; s--; } return s; }
 function pill(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r); ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h); ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r); ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.closePath(); }
-function ball(ctx, x, y, r, a) { ctx.save(); ctx.globalAlpha = a; ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke(); ctx.beginPath(); for (let i = 0; i < 5; i++) { const an = Math.PI * 2 * i / 5 - Math.PI / 2; ctx.moveTo(x + Math.cos(an) * r * .3, y + Math.sin(an) * r * .3); ctx.lineTo(x + Math.cos(an) * r, y + Math.sin(an) * r); } ctx.stroke(); ctx.beginPath(); ctx.arc(x, y, r * .3, 0, Math.PI * 2); ctx.stroke(); ctx.restore(); }
-function jersey(ctx, x, y, w, h, a) { ctx.save(); ctx.globalAlpha = a; ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x, y + h * .2); ctx.lineTo(x + w * .3, y + h * .2); ctx.lineTo(x + w / 2, y + h * .35); ctx.lineTo(x + w * .7, y + h * .2); ctx.lineTo(x + w, y + h * .2); ctx.lineTo(x + w, y + h * .5); ctx.lineTo(x + w * .85, y + h * .5); ctx.lineTo(x + w * .85, y + h); ctx.lineTo(x + w * .15, y + h); ctx.lineTo(x + w * .15, y + h * .5); ctx.lineTo(x, y + h * .5); ctx.closePath(); ctx.stroke(); ctx.restore(); }
 
-async function generateCanvasForCat(cat) {
-  const rows = standings[cat];
-  if (!rows || !rows.length) return null;
-  const W = 1080, H = 1080, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
-  const ctx = cv.getContext('2d');
-  const NAVY = '#001a4d', RED = '#b80000', RED2 = '#d60d0d', GOLD = '#ffba00', GOLD2 = '#f1a200', WHITE = '#fff', OFFWH = '#eef2ff', MUTED = 'rgba(255,255,255,0.38)';
+function drawImageCover(ctx, image, width, height) {
+  const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight);
+  const sourceWidth = width / scale, sourceHeight = height / scale;
+  const sourceX = (image.naturalWidth - sourceWidth) / 2;
+  const sourceY = (image.naturalHeight - sourceHeight) / 2;
+  ctx.drawImage(image, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, width, height);
+}
 
-  // FONDO
+function drawImageContain(ctx, image, x, y, width, height) {
+  const scale = Math.min(width / image.naturalWidth, height / image.naturalHeight);
+  const drawWidth = image.naturalWidth * scale, drawHeight = image.naturalHeight * scale;
+  ctx.drawImage(image, x + (width - drawWidth) / 2, y + (height - drawHeight) / 2, drawWidth, drawHeight);
+}
+
+function drawTeamMark(ctx, row, x, y, size) {
+  if (row.logoImgObj && row.logoImgObj.complete && row.logoImgObj.naturalWidth > 0) {
+    drawImageContain(ctx, row.logoImgObj, x, y, size, size);
+    return;
+  }
+  const initials = row.eq.split(/\s+/).filter(Boolean).slice(0, 2).map(word => word[0]).join('').toUpperCase();
+  const mark = ctx.createLinearGradient(x, y, x + size, y + size);
+  mark.addColorStop(0, '#123b8f');
+  mark.addColorStop(1, '#0047ff');
+  ctx.beginPath();
+  ctx.arc(x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2);
+  ctx.fillStyle = mark;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,196,0,.75)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = '800 ' + Math.max(14, size * .36) + 'px "Barlow Condensed",sans-serif';
+  ctx.fillText(initials || 'CC', x + size / 2, y + size / 2 + 1);
+}
+
+function drawExportBackground(ctx, width, height) {
   if (_bgPos.complete && _bgPos.naturalWidth > 0) {
-    ctx.drawImage(_bgPos, 0, 0, W, H);
+    drawImageCover(ctx, _bgPos, width, height);
   } else {
-    const bg = ctx.createLinearGradient(0, 0, W, H); bg.addColorStop(0, '#0a0f1e'); bg.addColorStop(.6, '#111827'); bg.addColorStop(1, '#060c18');
-    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+    const base = ctx.createLinearGradient(0, 0, width, height);
+    base.addColorStop(0, '#020617');
+    base.addColorStop(.52, '#050b24');
+    base.addColorStop(1, '#001a4d');
+    ctx.fillStyle = base;
+    ctx.fillRect(0, 0, width, height);
   }
 
-  // FRANJA DORADA
-  const gG = ctx.createLinearGradient(0, 0, W, 0); gG.addColorStop(0, GOLD2); gG.addColorStop(.5, GOLD); gG.addColorStop(1, GOLD2);
-  ctx.fillStyle = gG; ctx.fillRect(0, 0, W, 10);
+  // Conserva las luces y gradas del estadio, pero protege la lectura en el centro.
+  const veil = ctx.createLinearGradient(0, 0, 0, height);
+  veil.addColorStop(0, 'rgba(2,6,23,.42)');
+  veil.addColorStop(.26, 'rgba(5,11,36,.68)');
+  veil.addColorStop(.76, 'rgba(2,12,38,.52)');
+  veil.addColorStop(1, 'rgba(1,7,24,.28)');
+  ctx.fillStyle = veil;
+  ctx.fillRect(0, 0, width, height);
 
-  // TÍTULO MASIVO
-  const TX = 205, TW = W - TX - 20, TY = 18;
-  ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.9)'; ctx.shadowBlur = 14; ctx.shadowOffsetX = 3; ctx.shadowOffsetY = 3;
-  ctx.fillStyle = WHITE; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-  const ts = fit(ctx, 'TABLA DE POSICIONES', TW, 92, '900');
-  ctx.font = `900 ${ts}px "Barlow Condensed",sans-serif`; ctx.fillText('TABLA DE POSICIONES', TX, TY); ctx.restore();
+  const centerShade = ctx.createLinearGradient(0, 0, width, 0);
+  centerShade.addColorStop(0, 'rgba(1,6,22,.08)');
+  centerShade.addColorStop(.18, 'rgba(1,6,22,.28)');
+  centerShade.addColorStop(.5, 'rgba(1,6,22,.48)');
+  centerShade.addColorStop(.82, 'rgba(1,6,22,.28)');
+  centerShade.addColorStop(1, 'rgba(1,6,22,.08)');
+  ctx.fillStyle = centerShade;
+  ctx.fillRect(0, 0, width, height);
 
-  // FILA 2: CATEGORIA pill rojo + ETAPA REGIONAL dorado derecha
-  const R2 = TY + ts + 8;
-  const catTxt = `CATEGORÍA ${cat}`;
-  ctx.font = `italic 800 42px "Barlow Condensed",sans-serif`;
-  const cW = ctx.measureText(catTxt).width + 34;
-  pill(ctx, TX, R2, cW, 54, 8); ctx.fillStyle = RED; ctx.fill(); ctx.strokeStyle = GOLD; ctx.lineWidth = 1.5; ctx.stroke();
-  ctx.fillStyle = WHITE; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(catTxt, TX + 17, R2 + 27);
-  ctx.fillStyle = GOLD; ctx.textAlign = 'right'; ctx.font = `italic 800 44px "Barlow Condensed",sans-serif`; ctx.fillText('ETAPA REGIONAL', W - 26, R2 + 27);
+  const broadcastGlow = ctx.createRadialGradient(width * .5, 210, 20, width * .5, 210, 620);
+  broadcastGlow.addColorStop(0, 'rgba(0,71,255,.15)');
+  broadcastGlow.addColorStop(.55, 'rgba(0,71,255,.04)');
+  broadcastGlow.addColorStop(1, 'rgba(0,71,255,0)');
+  ctx.fillStyle = broadcastGlow;
+  ctx.fillRect(0, 0, width, 720);
 
-  // SEPARADOR DEBAJO DEL TEXTO
-  const SEP = R2 + 62; ctx.fillStyle = gG; ctx.fillRect(0, SEP, W, 3);
-
-  // LOGO GRANDE IZQUIERDA
-  const LR = 82, LX = 104, LY = 122;
-  ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 22;
-  const lg = ctx.createRadialGradient(LX, LY, 0, LX, LY, LR); lg.addColorStop(0, '#1e3a8a'); lg.addColorStop(1, '#060d1f');
-  ctx.beginPath(); ctx.arc(LX, LY, LR, 0, Math.PI * 2); ctx.fillStyle = lg; ctx.fill();
-  ctx.shadowColor = 'transparent'; ctx.strokeStyle = GOLD; ctx.lineWidth = 4; ctx.stroke();
-  ctx.strokeStyle = 'rgba(255,186,0,0.28)'; ctx.lineWidth = 9; ctx.stroke(); ctx.restore();
-  ctx.save(); ctx.beginPath(); ctx.arc(LX, LY, LR * .89, 0, Math.PI * 2); ctx.clip();
-  if (_logo.complete && _logo.naturalWidth > 0) { const ls = LR * 2.1; ctx.drawImage(_logo, LX - ls / 2, LY - ls / 2, ls, ls); }
-  else { ctx.fillStyle = WHITE; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `900 ${LR * .38}px "Barlow Condensed"`; ctx.fillText('CC', LX, LY); }
+  ctx.save();
+  ctx.globalAlpha = .07;
+  ctx.fillStyle = '#20a4ff';
+  [[720, -40, 900, -40, 540, 560, 360, 560], [930, -40, 1080, -40, 710, 560, 560, 560]].forEach(points => {
+    ctx.beginPath();
+    ctx.moveTo(points[0], points[1]);
+    for (let i = 2; i < points.length; i += 2) ctx.lineTo(points[i], points[i + 1]);
+    ctx.closePath();
+    ctx.fill();
+  });
   ctx.restore();
 
-  // TABLA (Se baja a Y=295 para asegurar que no se sobreponga con el texto del logo)
-  const TY2 = 295, TW2 = 1038, TX2 = (W - TW2) / 2, TH = 48;
-  const MAX = Math.min(rows.length, 10);
-  const FH_BOT = 72;
-  let RH = Math.min(70, Math.floor((H - TY2 - FH_BOT - TH - 16) / MAX)); if (RH < 44) RH = 44;
-  const PW = 52, EW = 302, NW = Math.floor((TW2 - PW - EW) / 8);
-  let cx = TX2;
-  const C = [{ x: cx, w: PW, l: '#' }, { x: cx += PW, w: EW, l: 'EQUIPO' }, { x: cx += EW, w: NW, l: 'PJ' }, { x: cx += NW, w: NW, l: 'PG' }, { x: cx += NW, w: NW, l: 'PE' }, { x: cx += NW, w: NW, l: 'PP' }, { x: cx += NW, w: NW, l: 'GF' }, { x: cx += NW, w: NW, l: 'GC' }, { x: cx += NW, w: NW, l: 'DF' }, { x: cx += NW, w: NW, l: 'Pts' }];
+  // Microtrama solo en la cabecera: detalle editorial sin ensuciar la tabla.
+  ctx.fillStyle = 'rgba(255,255,255,.045)';
+  for (let y = 36; y < 410; y += 34) {
+    for (let x = 28; x < width; x += 34) ctx.fillRect(x, y, 2, 2);
+  }
+}
 
-  // header tabla
-  const hG = ctx.createLinearGradient(TX2, TY2, TX2 + TW2, TY2); hG.addColorStop(0, '#1a2744'); hG.addColorStop(1, '#1e3a8a');
-  ctx.fillStyle = hG; ctx.fillRect(TX2, TY2, TW2, TH);
-  ctx.fillStyle = GOLD; ctx.font = `800 20px "Barlow Condensed",sans-serif`; ctx.textBaseline = 'middle';
-  C.forEach(c => { ctx.textAlign = c.l === 'EQUIPO' ? 'left' : 'center'; ctx.fillText(c.l, c.l === 'EQUIPO' ? c.x + 14 : c.x + c.w / 2, TY2 + TH / 2); });
+function getFileSlug(value) {
+  return String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
 
-  // filas
-  const mxPJ = rows.reduce((s, r) => Math.max(s, r.pj), 0);
-  rows.slice(0, MAX).forEach((r, i) => {
-    const ry = TY2 + TH + i * RH, lead = i === 0;
-    ctx.fillStyle = lead ? 'rgba(185,28,28,0.14)' : i % 2 === 0 ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.02)';
-    ctx.fillRect(TX2, ry, TW2, RH);
-    if (lead) { ctx.strokeStyle = RED2; ctx.lineWidth = 1.5; ctx.strokeRect(TX2, ry, TW2, RH); }
-    else { ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 1; ctx.strokeRect(TX2, ry, TW2, RH); }
-    const bc = [RED2, '#94a3b8', '#c97b3a', 'rgba(255,255,255,0.1)'][Math.min(i, 3)];
-    ctx.fillStyle = bc; ctx.fillRect(TX2, ry, 4, RH);
-    const my = ry + RH / 2, fs = Math.max(15, Math.min(24, RH * .35)); ctx.textBaseline = 'middle';
-    ctx.fillStyle = lead ? GOLD : OFFWH; ctx.font = `800 ${fs}px "Barlow Condensed",sans-serif`; ctx.textAlign = 'center'; ctx.fillText(i + 1, C[0].x + C[0].w / 2, my);
-    ctx.textAlign = 'left'; 
-    const lsz = RH * 0.55;
-    if (r.logoImgObj && r.logoImgObj.complete && r.logoImgObj.naturalWidth > 0) {
-      ctx.drawImage(r.logoImgObj, C[1].x + 8, my - lsz/2, lsz, lsz);
-    } else {
-      if (_logo.complete) {
-        ctx.drawImage(_logo, C[1].x + 8, my - lsz/2, lsz, lsz);
-      }
-    }
-    const es = fit(ctx, r.eq, EW - 22 - lsz - 10, fs, '700'); ctx.font = `${lead ? '800' : '700'} ${es}px "Barlow Condensed",sans-serif`; 
-    ctx.fillText(r.eq, C[1].x + 14 + lsz + 6, my);
-    const dg = r.dg > 0 ? `+${r.dg}` : `${r.dg}`;
-    const st = [r.pj, r.pg, r.pe, r.pp, r.gf, r.gc, dg, r.pts];
-    const sc = [OFFWH, '#4ade80', '#fb923c', '#f87171', OFFWH, OFFWH, r.dg > 0 ? '#4ade80' : r.dg < 0 ? '#f87171' : MUTED, lead ? GOLD : '#fde68a'];
-    const fw = [600, 700, 600, 600, 600, 600, 600, 800];
-    st.forEach((n, ni) => { ctx.fillStyle = sc[ni]; ctx.font = `${fw[ni]} ${ni === 7 ? fs + 3 : fs}px "Barlow Condensed",sans-serif`; ctx.textAlign = 'center'; ctx.fillText(n, C[2 + ni].x + C[2 + ni].w / 2, my); });
+function getExportName(item) {
+  const group = item.grupo ? '-Grupo-' + getFileSlug(item.grupo) : '';
+  return 'Tabla-Posiciones-Cat-' + getFileSlug(item.cat) + group + '.png';
+}
+
+function waitForImage(image) {
+  if (image.complete) return Promise.resolve();
+  return new Promise(resolve => {
+    const done = () => resolve();
+    image.addEventListener('load', done, { once: true });
+    image.addEventListener('error', done, { once: true });
+    setTimeout(done, 3000);
   });
-  ctx.strokeStyle = 'rgba(255,186,0,0.28)'; ctx.lineWidth = 2; ctx.strokeRect(TX2, TY2, TW2, TH + MAX * RH);
-  ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(C[2].x, TY2); ctx.lineTo(C[2].x, TY2 + TH + MAX * RH); ctx.stroke();
+}
 
-  // FOOTER
-  const FY = H - FH_BOT;
-  ctx.fillStyle = 'rgba(5,8,18,0.95)'; ctx.fillRect(0, FY, W, FH_BOT);
-  ctx.fillStyle = 'rgba(255,255,255,0.06)'; ctx.fillRect(0, FY, W, 1);
+async function waitForExportAssets() {
+  const teamLogos = Object.values(standings).flat()
+    .map(row => row.logoImgObj)
+    .filter(Boolean)
+    .map(waitForImage);
+  const fontTimeout = new Promise(resolve => setTimeout(resolve, 3000));
+  const fonts = document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready, fontTimeout]) : Promise.resolve();
+  await Promise.all([waitForImage(_logo), waitForImage(_bgPos), fonts, ...teamLogos]);
+}
 
+function canvasToBlob(canvas) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('No se pudo crear la imagen.')), 'image/png');
+  });
+}
 
-  // Fecha derecha
+function downloadBlob(blob, fileName) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.download = fileName;
+  link.href = url;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
+async function generateCanvasForStanding(item) {
+  const rows = item.rows || [];
+  if (!rows.length) return null;
+
+  const WIDTH = 1080, TABLE_Y = 430, TABLE_HEAD_H = 62, FOOTER_H = 104;
+  const ROW_H = rows.length <= 8 ? 82 : rows.length <= 10 ? 70 : rows.length <= 13 ? 58 : 54;
+  const HEIGHT = Math.max(1350, TABLE_Y + TABLE_HEAD_H + rows.length * ROW_H + FOOTER_H + 42);
+  const canvas = document.createElement('canvas');
+  canvas.width = WIDTH;
+  canvas.height = HEIGHT;
+  const ctx = canvas.getContext('2d');
+  const ELECTRIC = '#0047ff', NAVY = '#050b24', GOLD = '#ffc400', WHITE = '#ffffff';
+  const OFF_WHITE = '#eef4ff', RED = '#e60000', GREEN = '#36e38a', ORANGE = '#ff9b52', CORAL = '#ff6b72';
+
+  drawExportBackground(ctx, WIDTH, HEIGHT);
+
+  const topLine = ctx.createLinearGradient(0, 0, WIDTH, 0);
+  topLine.addColorStop(0, GOLD);
+  topLine.addColorStop(.72, '#ffe16b');
+  topLine.addColorStop(1, RED);
+  ctx.fillStyle = topLine;
+  ctx.fillRect(0, 0, WIDTH, 12);
+
+  // El escudo es circular: halo, placa y recorte comparten la misma geometría.
+  const logoCenterX = 130, logoCenterY = 188, logoRadius = 100;
+  ctx.save();
+  const logoGlow = ctx.createRadialGradient(logoCenterX, logoCenterY, 34, logoCenterX, logoCenterY, logoRadius + 28);
+  logoGlow.addColorStop(0, 'rgba(0,71,255,.34)');
+  logoGlow.addColorStop(.7, 'rgba(0,71,255,.1)');
+  logoGlow.addColorStop(1, 'rgba(0,71,255,0)');
+  ctx.beginPath();
+  ctx.arc(logoCenterX, logoCenterY, logoRadius + 28, 0, Math.PI * 2);
+  ctx.fillStyle = logoGlow;
+  ctx.fill();
+
+  ctx.shadowColor = 'rgba(0,0,0,.72)';
+  ctx.shadowBlur = 28;
+  ctx.beginPath();
+  ctx.arc(logoCenterX, logoCenterY, logoRadius, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(2,8,28,.86)';
+  ctx.fill();
+  ctx.shadowColor = 'transparent';
+  ctx.strokeStyle = GOLD;
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(logoCenterX, logoCenterY, logoRadius + 8, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(47,138,255,.48)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  if (_logo.complete && _logo.naturalWidth > 0) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(logoCenterX, logoCenterY, logoRadius - 7, 0, Math.PI * 2);
+    ctx.clip();
+    drawImageContain(ctx, _logo, logoCenterX - logoRadius + 7, logoCenterY - logoRadius + 7, (logoRadius - 7) * 2, (logoRadius - 7) * 2);
+    ctx.restore();
+  } else {
+    ctx.fillStyle = WHITE;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = '900 64px "Barlow Condensed",sans-serif';
+    ctx.fillText('CC', logoCenterX, logoCenterY);
+  }
+  ctx.restore();
+
+  const titleX = 252;
+  pill(ctx, titleX, 67, 246, 38, 7);
+  ctx.fillStyle = RED;
+  ctx.fill();
+  ctx.fillStyle = WHITE;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.font = 'italic 800 21px "Barlow Condensed",sans-serif';
+  ctx.fillText('CLASIFICACIÓN OFICIAL', titleX + 16, 87);
+  ctx.fillStyle = 'rgba(255,255,255,.7)';
+  ctx.font = '700 22px "Barlow Condensed",sans-serif';
+  ctx.fillText('CAMPEONATO DE MENORES', titleX, 129);
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,.7)';
+  ctx.shadowBlur = 14;
+  ctx.shadowOffsetY = 5;
+  ctx.fillStyle = WHITE;
+  ctx.textBaseline = 'top';
+  ctx.font = 'italic 900 69px "Barlow Condensed",sans-serif';
+  ctx.fillText('TABLA DE', titleX, 145);
+  const titleSize = fit(ctx, 'POSICIONES', WIDTH - titleX - 34, 105, 'italic 900');
+  ctx.fillStyle = GOLD;
+  ctx.font = 'italic 900 ' + titleSize + 'px "Barlow Condensed",sans-serif';
+  ctx.fillText('POSICIONES', titleX, 204);
+  ctx.restore();
+
+  // Cabecera compacta de la tabla, igual a la referencia compartida.
+  const infoX = 40, infoY = 332, infoW = WIDTH - 80, infoH = 74, splitX = 586;
+  const infoGradient = ctx.createLinearGradient(infoX, infoY, infoX + infoW, infoY);
+  infoGradient.addColorStop(0, 'rgba(10,43,103,.96)');
+  infoGradient.addColorStop(.55, 'rgba(4,22,56,.96)');
+  infoGradient.addColorStop(1, 'rgba(2,12,34,.98)');
+  pill(ctx, infoX, infoY, infoW, infoH, 12);
+  ctx.fillStyle = infoGradient;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(64,132,255,.72)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.fillStyle = GOLD;
+  ctx.fillRect(infoX, infoY, 7, infoH);
+  ctx.fillStyle = ELECTRIC;
+  ctx.fillRect(infoX + 7, infoY, 150, 4);
+  ctx.strokeStyle = 'rgba(255,255,255,.14)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(splitX, infoY + 14);
+  ctx.lineTo(splitX, infoY + infoH - 14);
+  ctx.stroke();
+
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = 'rgba(174,207,255,.68)';
+  ctx.font = '800 16px "Barlow Condensed",sans-serif';
+  ctx.fillText('DIVISIÓN DEL CAMPEONATO', infoX + 28, infoY + 21);
+  const categoryText = 'CATEGORÍA ' + item.cat;
+  ctx.fillStyle = WHITE;
+  ctx.font = 'italic 900 34px "Barlow Condensed",sans-serif';
+  const categoryWidth = ctx.measureText(categoryText).width;
+  ctx.fillText(categoryText, infoX + 28, infoY + 51);
+  if (item.grupo) {
+    ctx.font = '800 18px "Barlow Condensed",sans-serif';
+    const groupText = 'GRUPO ' + item.grupo;
+    const groupX = infoX + 28 + categoryWidth + 20;
+    pill(ctx, groupX, infoY + 35, 104, 30, 15);
+    ctx.fillStyle = 'rgba(255,196,0,.13)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,196,0,.5)';
+    ctx.stroke();
+    ctx.fillStyle = GOLD;
+    ctx.textAlign = 'center';
+    ctx.fillText(groupText, groupX + 52, infoY + 51);
+  }
+
+  const leader = rows[0];
+  ctx.textAlign = 'left';
+  ctx.fillStyle = GOLD;
+  ctx.font = '800 16px "Barlow Condensed",sans-serif';
+  ctx.fillText('LÍDER ACTUAL', splitX + 28, infoY + 21);
+  const pointsW = 76, pointsX = infoX + infoW - pointsW - 18;
+  const leaderSize = fit(ctx, leader.eq, pointsX - splitX - 48, 29, '800');
+  ctx.fillStyle = WHITE;
+  ctx.font = '800 ' + leaderSize + 'px "Barlow Condensed",sans-serif';
+  ctx.fillText(leader.eq, splitX + 28, infoY + 52);
+  pill(ctx, pointsX, infoY + 17, pointsW, 42, 21);
+  ctx.fillStyle = GOLD;
+  ctx.fill();
+  ctx.fillStyle = NAVY;
+  ctx.textAlign = 'center';
+  ctx.font = '900 23px "Barlow Condensed",sans-serif';
+  ctx.fillText(leader.pts + ' PTS', pointsX + pointsW / 2, infoY + 39);
+
+  const TABLE_X = 40, TABLE_W = 1000;
+  const widths = [64, 392, 64, 64, 64, 64, 64, 64, 72, 88];
+  const labels = ['#', 'EQUIPO', 'PJ', 'PG', 'PE', 'PP', 'GF', 'GC', 'DG', 'PTS'];
+  const columns = [];
+  let cursor = TABLE_X;
+  widths.forEach((width, index) => {
+    columns.push({ x: cursor, w: width, label: labels[index] });
+    cursor += width;
+  });
+
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,.72)';
+  ctx.shadowBlur = 36;
+  ctx.shadowOffsetY = 18;
+  pill(ctx, TABLE_X, TABLE_Y, TABLE_W, TABLE_HEAD_H + rows.length * ROW_H, 12);
+  ctx.fillStyle = 'rgba(1,8,29,.93)';
+  ctx.fill();
+  ctx.restore();
+
+  const headerGradient = ctx.createLinearGradient(TABLE_X, TABLE_Y, TABLE_X + TABLE_W, TABLE_Y);
+  headerGradient.addColorStop(0, ELECTRIC);
+  headerGradient.addColorStop(.62, '#063891');
+  headerGradient.addColorStop(1, '#07183e');
+  ctx.save();
+  pill(ctx, TABLE_X, TABLE_Y, TABLE_W, TABLE_HEAD_H, 12);
+  ctx.clip();
+  ctx.fillStyle = headerGradient;
+  ctx.fillRect(TABLE_X, TABLE_Y, TABLE_W, TABLE_HEAD_H + 14);
+  ctx.restore();
+  ctx.fillStyle = ELECTRIC;
+  ctx.fillRect(TABLE_X, TABLE_Y, TABLE_W, 5);
+  ctx.fillStyle = GOLD;
+  ctx.font = '800 21px "Barlow Condensed",sans-serif';
+  ctx.textBaseline = 'middle';
+  columns.forEach(column => {
+    ctx.textAlign = column.label === 'EQUIPO' ? 'left' : 'center';
+    ctx.fillText(column.label, column.label === 'EQUIPO' ? column.x + 20 : column.x + column.w / 2, TABLE_Y + TABLE_HEAD_H / 2 + 1);
+  });
+
+  rows.forEach((row, index) => {
+    const rowY = TABLE_Y + TABLE_HEAD_H + index * ROW_H;
+    const centerY = rowY + ROW_H / 2;
+    const isLeader = index === 0;
+    ctx.fillStyle = isLeader ? 'rgba(255,196,0,.16)' : index % 2 === 0 ? 'rgba(9,37,84,.9)' : 'rgba(3,17,43,.9)';
+    ctx.fillRect(TABLE_X, rowY, TABLE_W, ROW_H);
+    ctx.fillStyle = isLeader ? GOLD : index === 1 ? '#cbd5e1' : index === 2 ? '#d69358' : 'rgba(0,126,255,.42)';
+    ctx.fillRect(TABLE_X, rowY, isLeader ? 7 : 3, ROW_H);
+    ctx.strokeStyle = 'rgba(151,192,255,.16)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(TABLE_X, rowY + ROW_H);
+    ctx.lineTo(TABLE_X + TABLE_W, rowY + ROW_H);
+    ctx.stroke();
+
+    const rankX = columns[0].x + columns[0].w / 2;
+    if (index < 3) {
+      ctx.beginPath();
+      ctx.arc(rankX, centerY, Math.min(22, ROW_H * .3), 0, Math.PI * 2);
+      ctx.fillStyle = isLeader ? GOLD : index === 1 ? '#dce4ef' : '#d69358';
+      ctx.fill();
+      ctx.fillStyle = isLeader ? NAVY : '#24324a';
+    } else {
+      ctx.fillStyle = 'rgba(255,255,255,.62)';
+    }
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = '900 ' + Math.min(26, ROW_H * .4) + 'px "Barlow Condensed",sans-serif';
+    ctx.fillText(index + 1, rankX, centerY + 1);
+
+    const teamLogoSize = Math.min(48, ROW_H * .64);
+    const markX = columns[1].x + 18, markY = centerY - teamLogoSize / 2;
+    pill(ctx, markX - 5, markY - 5, teamLogoSize + 10, teamLogoSize + 10, 10);
+    ctx.fillStyle = 'rgba(255,255,255,.08)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.1)';
+    ctx.stroke();
+    drawTeamMark(ctx, row, markX, markY, teamLogoSize);
+    const teamX = columns[1].x + 18 + teamLogoSize + 15;
+    const teamSize = fit(ctx, row.eq, columns[1].x + columns[1].w - teamX - 14, Math.min(30, ROW_H * .42), isLeader ? '900' : '700');
+    ctx.fillStyle = isLeader ? GOLD : OFF_WHITE;
+    ctx.textAlign = 'left';
+    ctx.font = (isLeader ? '900 ' : '700 ') + teamSize + 'px "Barlow Condensed",sans-serif';
+    ctx.fillText(row.eq, teamX, centerY + 1);
+
+    const goalDifference = row.dg > 0 ? '+' + row.dg : String(row.dg);
+    const values = [row.pj, row.pg, row.pe, row.pp, row.gf, row.gc, goalDifference];
+    values.forEach((value, valueIndex) => {
+      const column = columns[valueIndex + 2];
+      const colors = [OFF_WHITE, GREEN, ORANGE, CORAL, OFF_WHITE, OFF_WHITE, row.dg > 0 ? GREEN : row.dg < 0 ? CORAL : 'rgba(255,255,255,.62)'];
+      ctx.fillStyle = colors[valueIndex];
+      ctx.textAlign = 'center';
+      ctx.font = (valueIndex === 1 || valueIndex === 6 ? '800 ' : '700 ') + Math.min(27, ROW_H * .4) + 'px "Barlow Condensed",sans-serif';
+      ctx.fillText(value, column.x + column.w / 2, centerY + 1);
+    });
+
+    const pointsColumn = columns[9], pointsWidth = 58, pointsHeight = Math.min(42, ROW_H * .58);
+    pill(ctx, pointsColumn.x + (pointsColumn.w - pointsWidth) / 2, centerY - pointsHeight / 2, pointsWidth, pointsHeight, pointsHeight / 2);
+    ctx.fillStyle = isLeader ? GOLD : 'rgba(0,71,255,.84)';
+    ctx.fill();
+    ctx.strokeStyle = isLeader ? GOLD : 'rgba(79,152,255,.7)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.fillStyle = isLeader ? NAVY : WHITE;
+    ctx.textAlign = 'center';
+    ctx.font = '900 ' + Math.min(29, ROW_H * .42) + 'px "Barlow Condensed",sans-serif';
+    ctx.fillText(row.pts, pointsColumn.x + pointsColumn.w / 2, centerY + 1);
+  });
+
+  columns.slice(2).forEach(column => {
+    ctx.strokeStyle = 'rgba(118,173,255,.1)';
+    ctx.beginPath();
+    ctx.moveTo(column.x, TABLE_Y + 14);
+    ctx.lineTo(column.x, TABLE_Y + TABLE_HEAD_H + rows.length * ROW_H - 14);
+    ctx.stroke();
+  });
+  pill(ctx, TABLE_X, TABLE_Y, TABLE_W, TABLE_HEAD_H + rows.length * ROW_H, 12);
+  ctx.strokeStyle = 'rgba(126,178,255,.48)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  const footerY = HEIGHT - FOOTER_H;
+  ctx.fillStyle = 'rgba(2,6,23,.94)';
+  ctx.fillRect(0, footerY, WIDTH, FOOTER_H);
+  ctx.fillStyle = ELECTRIC;
+  ctx.fillRect(0, footerY, WIDTH, 4);
+  ctx.fillStyle = WHITE;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.font = '900 27px "Barlow Condensed",sans-serif';
+  ctx.fillText('COPA CAJAMARCA', 40, footerY + 39);
+  ctx.fillStyle = GOLD;
+  ctx.font = '700 16px "Barlow Condensed",sans-serif';
+  ctx.fillText('COMPETENCIA  ·  TALENTO  ·  FÚTBOL BASE', 40, footerY + 68);
+
   const now = new Date();
-  const fecha = now.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-  const hora = now.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
-  ctx.fillStyle = 'rgba(255,255,255,0.22)'; ctx.textAlign = 'right'; ctx.font = `500 16px "Barlow Condensed",sans-serif`;
-  ctx.fillText(`Emitido el ${fecha} a las ${hora}`, W - 32, FY + FH_BOT / 2);
+  const issued = now.toLocaleString('es-PE', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).replace('.', '').toUpperCase();
+  ctx.textAlign = 'right';
+  ctx.fillStyle = WHITE;
+  ctx.font = '700 18px "Barlow Condensed",sans-serif';
+  ctx.fillText('copacajamarca.com', WIDTH - 40, footerY + 38);
+  ctx.fillStyle = 'rgba(255,255,255,.42)';
+  ctx.font = '600 15px "Barlow Condensed",sans-serif';
+  ctx.fillText('ACTUALIZADO · ' + issued, WIDTH - 40, footerY + 68);
 
-  return cv;
+  return canvas;
 }
 
 async function downloadPNG() {
-  if (!standings[activeCat] || !standings[activeCat].length) { showToast('No hay datos'); return; }
-  const btn = el('btnDownload'); btn.classList.add('loading'); btn.innerHTML = '<span class="spin"></span> Generando…';
+  const item = getStandingTabs().find(tab => tab.id === activeCat);
+  if (!item || !item.rows.length) { showToast('No hay datos'); return; }
+  const btn = el('btnDownload');
+  const originalContent = btn.innerHTML;
+  btn.classList.add('loading'); btn.innerHTML = '<span class="spin"></span> Diseñando banner…';
   await new Promise(r => setTimeout(r, 50));
   try {
-    const w = [
-      (!_logo.complete || !_logo.naturalWidth) ? new Promise(res => { _logo.onload = res; _logo.onerror = res; setTimeout(res, 3000); }) : null,
-      (!_bgPos.complete || !_bgPos.naturalWidth) ? new Promise(res => { _bgPos.onload = res; _bgPos.onerror = res; setTimeout(res, 3000); }) : null
-    ].filter(Boolean);
-    if (w.length) await Promise.all(w);
-    const cv = await generateCanvasForCat(activeCat);
+    await waitForExportAssets();
+    const cv = await generateCanvasForStanding(item);
     if (cv) {
-      const lnk = document.createElement('a'); lnk.download = `Posiciones-Cat${activeCat}-${new Date().getTime()}.png`;
-      lnk.href = cv.toDataURL('image/png'); lnk.click();
-      showToast('¡Imagen descargada!');
+      downloadBlob(await canvasToBlob(cv), getExportName(item));
+      showToast('¡Banner PNG descargado!');
     }
   } catch (err) { console.error(err); showToast('Error: ' + err.message); }
   finally {
     btn.classList.remove('loading');
-    btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Descargar PNG`;
+    btn.innerHTML = originalContent;
   }
 }
 
 async function downloadAllPNGs() {
-  const cats = Object.keys(standings).filter(c => standings[c].length > 0);
-  if (!cats.length) { showToast('No hay datos'); return; }
-  const btn = el('btnDownloadAll'); btn.classList.add('loading'); btn.innerHTML = '<span class="spin"></span> Generando ZIP…';
+  const items = getStandingTabs().filter(item => item.rows.length > 0);
+  if (!items.length) { showToast('No hay datos'); return; }
+  const btn = el('btnDownloadAll');
+  const originalContent = btn.innerHTML;
+  btn.classList.add('loading'); btn.innerHTML = '<span class="spin"></span> Preparando banners…';
   await new Promise(r => setTimeout(r, 50));
   try {
-    const w = [
-      (!_logo.complete || !_logo.naturalWidth) ? new Promise(res => { _logo.onload = res; _logo.onerror = res; setTimeout(res, 3000); }) : null,
-      (!_bgPos.complete || !_bgPos.naturalWidth) ? new Promise(res => { _bgPos.onload = res; _bgPos.onerror = res; setTimeout(res, 3000); }) : null
-    ].filter(Boolean);
-    if (w.length) await Promise.all(w);
+    await waitForExportAssets();
     const zip = new JSZip();
     let count = 0;
-    for (const cat of cats) {
-      const cv = await generateCanvasForCat(cat);
+    for (const [index, item] of items.entries()) {
+      btn.innerHTML = '<span class="spin"></span> Banner ' + (index + 1) + ' de ' + items.length + '…';
+      const cv = await generateCanvasForStanding(item);
       if (cv) {
-        const dataUrl = cv.toDataURL('image/png');
-        const base64Data = dataUrl.replace(/^data:image\/png;base64,/, "");
-        zip.file(`Posiciones-Cat${cat}.png`, base64Data, { base64: true });
+        zip.file(getExportName(item), await canvasToBlob(cv));
         count++;
       }
     }
     if (count > 0) {
-      const content = await zip.generateAsync({ type: "blob" });
-      const lnk = document.createElement('a'); lnk.download = `Posiciones-Todas-${new Date().getTime()}.zip`;
-      lnk.href = URL.createObjectURL(content); lnk.click();
-      showToast(`¡ZIP con ${count} tablas descargado!`);
+      btn.innerHTML = '<span class="spin"></span> Comprimiendo ZIP…';
+      const content = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+      const date = new Date().toISOString().slice(0, 10);
+      downloadBlob(content, 'Banners-Posiciones-' + date + '.zip');
+      showToast('¡ZIP con ' + count + ' banners descargado!');
     } else {
       showToast('No se generó ninguna imagen.');
     }
   } catch (err) { console.error(err); showToast('Error: ' + err.message); }
   finally {
     btn.classList.remove('loading');
-    btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg> Descargar ZIP`;
+    btn.innerHTML = originalContent;
   }
 }
 
