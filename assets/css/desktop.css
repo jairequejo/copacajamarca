@@ -341,6 +341,7 @@
     margin: 0;
     font-size: 1.55rem;
     line-height: 1;
+    color: #ffffff;
   }
 
   .page-home .footer-sub {
@@ -348,6 +349,7 @@
     display: block;
     margin: 4px 0 0;
     font-size: .65rem;
+    color: #ffffff;
   }
 
   .page-home .footer-social {
