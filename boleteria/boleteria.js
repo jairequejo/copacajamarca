@@ -155,6 +155,17 @@ function entrarApp() {
   if (typeof loadStaff === 'function') {
     loadStaff();
   }
+
+  // NFC Pasivo / Lectura por URL (Anti-fragilidad para iOS)
+  const params = new URLSearchParams(window.location.search);
+  const dniParam = params.get('dni') || params.get('scan');
+  if (dniParam) {
+    isProcessingScan = true;
+    setStatus(`📡 Procesando DNI: ${dniParam}…`, true);
+    validarPersona(dniParam);
+    // Limpiar la URL para evitar re-escaneo al refrescar
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
 }
 
 // Animación shake para PIN incorrecto
@@ -649,7 +660,17 @@ searchStaff.addEventListener('input', (e) => {
 // EVENTOS: Modo QR/NFC y Teclado Numérico PIN
 // ════════════════════════════════════════════════
 document.getElementById('btn-mode-qr')?.addEventListener('click', () => switchMode('qr'));
-document.getElementById('btn-mode-nfc')?.addEventListener('click', () => switchMode('nfc'));
+
+const btnModeNfc = document.getElementById('btn-mode-nfc');
+if (btnModeNfc) {
+  if (!('NDEFReader' in window)) {
+    // Vía Negativa: Ocultar botón si el sistema es frágil/iOS
+    btnModeNfc.style.display = 'none';
+  } else {
+    btnModeNfc.addEventListener('click', () => switchMode('nfc'));
+  }
+}
+
 document.getElementById('btn-nfc')?.addEventListener('click', () => {
   if (isNfcScanning) detenerNFC(); else iniciarNFC();
 });
