@@ -661,15 +661,7 @@ searchStaff.addEventListener('input', (e) => {
 // ════════════════════════════════════════════════
 document.getElementById('btn-mode-qr')?.addEventListener('click', () => switchMode('qr'));
 
-const btnModeNfc = document.getElementById('btn-mode-nfc');
-if (btnModeNfc) {
-  if (!('NDEFReader' in window)) {
-    // Vía Negativa: Ocultar botón si el sistema es frágil/iOS
-    btnModeNfc.style.display = 'none';
-  } else {
-    btnModeNfc.addEventListener('click', () => switchMode('nfc'));
-  }
-}
+document.getElementById('btn-mode-nfc')?.addEventListener('click', () => switchMode('nfc'));
 
 document.getElementById('btn-nfc')?.addEventListener('click', () => {
   if (isNfcScanning) detenerNFC(); else iniciarNFC();
