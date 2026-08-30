@@ -511,7 +511,6 @@
       .tab-btn { flex: 1 1 40%; font-size: 0.95rem; padding: 12px 10px; }
       .partido-header { flex-direction: column; align-items: center; gap: 8px; text-align: center; }
     }
-    }
   </style>
 
   <style>
@@ -757,6 +756,132 @@
       right: 0;
       z-index: 4;
     }
+
+    /* --- Buscador y selección del lote de carnets --- */
+    .carnets-selection-panel {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(52,211,153,0.22);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 18px;
+    }
+    .carnets-selection-label {
+      display: block;
+      color: #a7f3d0;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+    .carnets-selection-row {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) auto auto;
+      gap: 10px;
+    }
+    .carnets-selection-action {
+      min-height: 46px;
+      padding: 10px 14px;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      cursor: pointer;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .carnets-selection-action:hover { background: rgba(255,255,255,0.14); }
+    .carnets-selection-action:disabled { cursor: not-allowed; opacity: 0.45; }
+    .carnets-selection-summary {
+      color: rgba(255,255,255,0.72);
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-top: 12px;
+      text-align: center;
+    }
+    .carnets-selection-summary strong { color: var(--gold); }
+    .carnet-select-item {
+      align-items: stretch;
+      background: #e5e7eb;
+      border: 3px solid transparent;
+      border-radius: 11px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      padding: 7px;
+      transition: border-color .15s, background .15s, box-shadow .15s;
+    }
+    .carnet-select-item.is-selected {
+      background: #d1fae5;
+      border-color: #10b981;
+      box-shadow: 0 0 0 2px rgba(16,185,129,0.2);
+    }
+    .carnet-select-toggle {
+      align-items: center;
+      background: #fff;
+      border: 1px solid #cbd5e1;
+      border-radius: 7px;
+      color: #475569;
+      cursor: pointer;
+      display: flex;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 900;
+      gap: 7px;
+      justify-content: center;
+      min-height: 32px;
+      padding: 5px 8px;
+      text-transform: uppercase;
+      width: 100%;
+    }
+    .carnet-select-item.is-selected .carnet-select-toggle {
+      background: #047857;
+      border-color: #047857;
+      color: #fff;
+    }
+    .carnet-select-icon {
+      align-items: center;
+      border: 2px solid currentColor;
+      border-radius: 4px;
+      display: inline-flex;
+      height: 17px;
+      justify-content: center;
+      line-height: 1;
+      width: 17px;
+    }
+    .carnet-select-item:not(.is-selected) .carnet-select-icon { color: transparent; }
+    .carnet-export-staging {
+      display: flex !important;
+      left: -10000px !important;
+      pointer-events: none;
+      position: fixed !important;
+      top: 0 !important;
+    }
+    #carnets-empty-search {
+      color: #475569;
+      display: none;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1rem;
+      font-weight: 800;
+      padding: 24px;
+      text-align: center;
+      text-transform: uppercase;
+      width: 100%;
+    }
+
+    @media (max-width: 760px) {
+      .carnets-selection-row { grid-template-columns: 1fr 1fr; }
+      .carnets-selection-row .input-dark { grid-column: 1 / -1; }
+    }
+
+    @media (max-width: 480px) {
+      .carnets-selection-row { grid-template-columns: 1fr; }
+      .carnets-selection-row .input-dark { grid-column: auto; }
+    }
   </style>
 </head>
 <body>
@@ -988,17 +1113,27 @@
           </div>
 
           <div id="carnets-preview-container" style="display:none;">
+            <div class="carnets-selection-panel">
+              <label for="carnets-search" class="carnets-selection-label">Buscar y seleccionar carnets</label>
+              <div class="carnets-selection-row">
+                <input type="search" id="carnets-search" class="input-dark" placeholder="Nombre, DNI, equipo o rol" autocomplete="off">
+                <button type="button" id="btn-seleccionar-carnets-visibles" class="carnets-selection-action">Seleccionar visibles</button>
+                <button type="button" id="btn-limpiar-seleccion-carnets" class="carnets-selection-action">Limpiar selección</button>
+              </div>
+              <p id="carnets-selection-summary" class="carnets-selection-summary" aria-live="polite"></p>
+            </div>
             <div style="display:flex; justify-content:center; gap:10px; margin-bottom:24px;">
               <button id="btn-descargar-zip-carnets" class="btn-guardar" style="width:100%; max-width:500px; background:#eab308; color:#000; font-size:1.2rem; box-shadow:0 0 20px rgba(234,179,8,0.4);">
-                 ⬇️ DESCARGAR TODOS LOS CARNETS (.ZIP)
+                 ⬇️ DESCARGAR CARNETS SELECCIONADOS (.ZIP PDF)
               </button>
             </div>
             <p style="color:rgba(255,255,255,0.6); text-align:center; margin-top:-16px; margin-bottom:16px; font-size:0.9rem;">
-              * Se descargará un archivo .zip que contiene un PDF individual por cada carnet (tamaño CR80 - Tarjeta de Crédito).
+              * Se descargará un archivo .zip con un PDF individual por cada carnet seleccionado (tamaño CR80 - Tarjeta de Crédito).
             </p>
             <div style="text-align:center; color:var(--gold); font-family:'Barlow Condensed'; letter-spacing:0.1em; margin-bottom:12px;">VISTA PREVIA DEL DOCUMENTO:</div>
             <div id="carnets-render-area" style="background:#fff; color:#000; padding:20px; border-radius:8px; display:flex; flex-wrap:wrap; gap:10px; justify-content:center;">
               <!-- Se inyectan carnets aquí -->
+              <p id="carnets-empty-search">No hay carnets que coincidan con la búsqueda.</p>
             </div>
           </div>
         </div>
@@ -1076,7 +1211,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="../assets/js/qrcode.min.js"></script>
-  <script type="module" src="admin.js?v=33"></script>
+  <script type="module" src="admin.js?v=34"></script>
 </body>
 </html>
-
