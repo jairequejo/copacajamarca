@@ -610,7 +610,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let query = supabase.from('personas').select('*, equipos(nombre)').order('nombre_completo');
     
     const term = dirSearch.value.trim();
-    if (term) query = query.or(`dni.eq.${term},nombre_completo.ilike.%${term}%`);
+    if (term) query = query.or(`dni.eq.${term},dni_qr_impreso.eq.${term},nombre_completo.ilike.%${term}%`);
     if (dirRol.value) query = query.eq('rol', dirRol.value);
     if (dirEquipo.value) query = query.eq('equipo_id', dirEquipo.value);
 
@@ -756,15 +756,104 @@ document.addEventListener('DOMContentLoaded', () => {
   const carnetsPreviewContainer = document.getElementById('carnets-preview-container');
   const carnetsRenderArea = document.getElementById('carnets-render-area');
   const btnDescargarZipCarnets = document.getElementById('btn-descargar-zip-carnets');
+  const carnetsSearchInput = document.getElementById('carnets-search');
+  const carnetsSelectionSummary = document.getElementById('carnets-selection-summary');
+  const btnSeleccionarCarnetsVisibles = document.getElementById('btn-seleccionar-carnets-visibles');
+  const btnLimpiarSeleccionCarnets = document.getElementById('btn-limpiar-seleccion-carnets');
+  let generandoZipCarnets = false;
+
+  const normalizarTextoCarnet = value => String(value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+
+  function obtenerItemsCarnet() {
+    return Array.from(carnetsRenderArea.querySelectorAll('.carnet-select-item'));
+  }
+
+  function asegurarMensajeBusquedaCarnets() {
+    let message = document.getElementById('carnets-empty-search');
+    if (!message) {
+      message = document.createElement('p');
+      message.id = 'carnets-empty-search';
+      message.textContent = 'No hay carnets que coincidan con la búsqueda.';
+      carnetsRenderArea.appendChild(message);
+    }
+    return message;
+  }
+
+  function marcarCarnet(item, selected) {
+    item.classList.toggle('is-selected', selected);
+    const toggle = item.querySelector('.carnet-select-toggle');
+    if (!toggle) return;
+
+    toggle.setAttribute('aria-pressed', String(selected));
+    toggle.setAttribute('aria-label', `${selected ? 'Quitar' : 'Seleccionar'} carnet de ${item.dataset.name || 'persona'}`);
+    const label = toggle.querySelector('.carnet-select-toggle-text');
+    if (label) label.textContent = selected ? 'Seleccionado' : 'Seleccionar';
+  }
+
+  function actualizarSeleccionCarnets() {
+    const items = obtenerItemsCarnet();
+    const visibles = items.filter(item => !item.hidden);
+    const seleccionados = items.filter(item => item.classList.contains('is-selected'));
+    const seleccionadosVisibles = visibles.filter(item => item.classList.contains('is-selected'));
+
+    carnetsSelectionSummary.innerHTML = `<strong>${seleccionados.length}</strong> seleccionados de ${items.length} &middot; ${visibles.length} visibles`;
+
+    if (!generandoZipCarnets) {
+      btnDescargarZipCarnets.disabled = seleccionados.length === 0;
+      btnDescargarZipCarnets.innerHTML = seleccionados.length > 0
+        ? `⬇️ DESCARGAR ${seleccionados.length} CARNET${seleccionados.length === 1 ? '' : 'S'} (.ZIP PDF)`
+        : 'SELECCIONA AL MENOS UN CARNET';
+    }
+
+    carnetsSearchInput.disabled = generandoZipCarnets;
+    btnSeleccionarCarnetsVisibles.disabled = generandoZipCarnets || visibles.length === 0 || seleccionadosVisibles.length === visibles.length;
+    btnLimpiarSeleccionCarnets.disabled = generandoZipCarnets || seleccionados.length === 0;
+    asegurarMensajeBusquedaCarnets().style.display = visibles.length === 0 ? 'block' : 'none';
+  }
+
+  function filtrarCarnets() {
+    const term = normalizarTextoCarnet(carnetsSearchInput.value);
+    obtenerItemsCarnet().forEach(item => {
+      item.hidden = Boolean(term) && !item.dataset.search.includes(term);
+    });
+    actualizarSeleccionCarnets();
+  }
+
+  carnetsSearchInput?.addEventListener('input', filtrarCarnets);
+
+  btnSeleccionarCarnetsVisibles?.addEventListener('click', () => {
+    obtenerItemsCarnet().filter(item => !item.hidden).forEach(item => marcarCarnet(item, true));
+    actualizarSeleccionCarnets();
+  });
+
+  btnLimpiarSeleccionCarnets?.addEventListener('click', () => {
+    obtenerItemsCarnet().forEach(item => marcarCarnet(item, false));
+    actualizarSeleccionCarnets();
+  });
+
+  carnetsRenderArea?.addEventListener('click', event => {
+    const toggle = event.target.closest('.carnet-select-toggle');
+    if (!toggle) return;
+
+    const item = toggle.closest('.carnet-select-item');
+    marcarCarnet(item, !item.classList.contains('is-selected'));
+    actualizarSeleccionCarnets();
+  });
 
   btnDescargarZipCarnets?.addEventListener('click', async () => {
+    generandoZipCarnets = true;
     btnDescargarZipCarnets.disabled = true;
-    btnDescargarZipCarnets.innerText = 'GENERANDO ZIP... ESTO PUEDE TOMAR UNOS MINUTOS';
+    actualizarSeleccionCarnets();
+    btnDescargarZipCarnets.innerText = 'PREPARANDO PDF...';
     
     try {
-      const carnets = carnetsRenderArea.querySelectorAll('.carnet-box');
+      const carnets = carnetsRenderArea.querySelectorAll('.carnet-select-item.is-selected .carnet-box');
       if (carnets.length === 0) {
-        showToast('No hay carnets para descargar', true);
+        showToast('Selecciona al menos un carnet para descargar', true);
         return;
       }
 
@@ -773,17 +862,35 @@ document.addEventListener('DOMContentLoaded', () => {
       
       for (let i = 0; i < carnets.length; i++) {
         const carnet = carnets[i];
+        const item = carnet.closest('.carnet-select-item');
+        const estabaOculto = item.hidden;
+        btnDescargarZipCarnets.innerText = `GENERANDO PDF ${i + 1} DE ${carnets.length}...`;
+
+        // Los carnets seleccionados conservan su selección aunque otra búsqueda los oculte.
+        // Para exportarlos sin mostrarlos en pantalla, se renderizan temporalmente fuera del viewport.
+        if (estabaOculto) {
+          item.hidden = false;
+          item.classList.add('carnet-export-staging');
+        }
         
-        // Renderizar usando html2canvas desde cero
-        const canvas = await window.html2canvas(carnet, {
-          scale: 3, // Alta calidad
-          useCORS: true,
-          logging: false,
-          allowTaint: false,
-          backgroundColor: '#ffffff', // Forzar blanco en las esquinas para evitar bugs negros de jsPDF
-          width: carnet.offsetWidth,
-          height: carnet.offsetHeight
-        });
+        let canvas;
+        try {
+          // Renderizar usando html2canvas desde cero
+          canvas = await window.html2canvas(carnet, {
+            scale: 3, // Alta calidad
+            useCORS: true,
+            logging: false,
+            allowTaint: false,
+            backgroundColor: '#ffffff', // Forzar blanco en las esquinas para evitar bugs negros de jsPDF
+            width: carnet.offsetWidth,
+            height: carnet.offsetHeight
+          });
+        } finally {
+          if (estabaOculto) {
+            item.classList.remove('carnet-export-staging');
+            item.hidden = true;
+          }
+        }
         
         // Exportar a JPEG (más ligero, y el blanco ya tapó las esquinas)
         const imgData = canvas.toDataURL('image/jpeg', 1.0);
@@ -810,20 +917,23 @@ document.addEventListener('DOMContentLoaded', () => {
         zip.file(`${equipo}/${rol}_${nombre}.pdf`, pdfBlob);
       }
       
+      btnDescargarZipCarnets.innerText = 'COMPRIMIENDO ARCHIVO ZIP...';
       const content = await zip.generateAsync({ type: 'blob' });
       const a = document.createElement('a');
-      a.href = URL.createObjectURL(content);
+      const downloadUrl = URL.createObjectURL(content);
+      a.href = downloadUrl;
       a.download = `Carnets_CopaCajamarca.zip`;
       a.click();
+      setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
       
-      showToast('Descarga iniciada con éxito');
+      showToast(`Descarga iniciada: ${carnets.length} carnet${carnets.length === 1 ? '' : 's'}`);
       
     } catch (err) {
       console.error(err);
       showToast('Error al generar ZIP: ' + err.message, true);
     } finally {
-      btnDescargarZipCarnets.disabled = false;
-      btnDescargarZipCarnets.innerHTML = '⬇️ DESCARGAR TODOS LOS CARNETS (.ZIP)';
+      generandoZipCarnets = false;
+      actualizarSeleccionCarnets();
     }
   });
 
@@ -832,6 +942,7 @@ document.addEventListener('DOMContentLoaded', () => {
     carnetsStatus.textContent = 'Descargando base de datos y renderizando...';
     carnetsPreviewContainer.style.display = 'none';
     carnetsRenderArea.innerHTML = '';
+    carnetsSearchInput.value = '';
 
     const { data, error } = await supabase
       .from('personas')
@@ -857,6 +968,23 @@ document.addEventListener('DOMContentLoaded', () => {
       const isRed = p.rol === 'ENTRENADOR';
       const className = isRed ? 'carnet-rojo' : 'carnet-azul';
       
+      const item = document.createElement('div');
+      item.className = 'carnet-select-item is-selected';
+      item.dataset.name = p.nombre_completo || 'persona';
+      item.dataset.search = normalizarTextoCarnet([
+        p.nombre_completo,
+        p.dni,
+        p.rol,
+        p.equipos?.nombre
+      ].join(' '));
+
+      const toggle = document.createElement('button');
+      toggle.type = 'button';
+      toggle.className = 'carnet-select-toggle';
+      toggle.setAttribute('aria-pressed', 'true');
+      toggle.setAttribute('aria-label', `Quitar carnet de ${p.nombre_completo || 'persona'}`);
+      toggle.innerHTML = '<span class="carnet-select-icon" aria-hidden="true">✓</span><span class="carnet-select-toggle-text">Seleccionado</span>';
+
       const carnet = document.createElement('div');
       carnet.className = `carnet-box ${className}`;
 
@@ -885,15 +1013,18 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
         <div class="carnet-footer">DNI: ${safe(p.dni)} &middot; PERSONAL E INTRANSFERIBLE</div>
       `;
-      docFrag.appendChild(carnet);
+      item.append(toggle, carnet);
+      docFrag.appendChild(item);
       
       // Store the DOM node and data for later generation
       carnet.dataset.qr = p.dni;
     });
 
     carnetsRenderArea.appendChild(docFrag);
+    asegurarMensajeBusquedaCarnets();
     carnetsStatus.style.display = 'none';
     carnetsPreviewContainer.style.display = 'block';
+    actualizarSeleccionCarnets();
 
     // Generar los QRs después de que el DOM sea visible (para evitar fallos de offsetWidth = 0)
     setTimeout(() => {
@@ -1027,4 +1158,3 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
 });
-
