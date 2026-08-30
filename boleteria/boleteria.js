@@ -414,7 +414,7 @@ async function validarPersona(dni) {
     const { data, error } = await supabase
       .from('personas')
       .select('nombre_completo, dni, rol, categorias, equipos(nombre, logo_url)')
-      .eq('dni', dni)
+      .or(`dni.eq.${dni},dni_qr_impreso.eq.${dni}`)
       .in('rol', ['DELEGADO', 'ENTRENADOR', 'JUGADOR'])
       .single();
 

@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const { data, error } = await supabase
       .from('personas')
       .select('nombre_completo, rol, equipo_id, equipos(nombre, logo_url, categorias)')
-      .eq('dni', dni)
+      .or(`dni.eq.${dni},dni_qr_impreso.eq.${dni}`)
       .in('rol', ['DELEGADO', 'ENTRENADOR'])
       .maybeSingle();
 
@@ -219,7 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .from('personas')
         .select('dni, nombre_completo, categorias, fecha_nacimiento, equipos(nombre)')
         .eq('rol', 'JUGADOR')
-        .or(`dni.eq.${term},nombre_completo.ilike.%${term}%`)
+        .or(`dni.eq.${term},dni_qr_impreso.eq.${term},nombre_completo.ilike.%${term}%`)
         .limit(10);
 
       if (error) {
