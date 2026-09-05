@@ -371,18 +371,30 @@ async function generateCanvasForStanding(item) {
   ctx.fillStyle = 'rgba(255,255,255,.7)';
   ctx.font = '700 22px "Barlow Condensed",sans-serif';
   ctx.fillText('CAMPEONATO DE MENORES', titleX, 129);
+  
   ctx.save();
-  ctx.shadowColor = 'rgba(0,0,0,.7)';
-  ctx.shadowBlur = 14;
-  ctx.shadowOffsetY = 5;
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+  ctx.shadowBlur = 15;
+  ctx.shadowOffsetX = 4;
+  ctx.shadowOffsetY = 4;
   ctx.fillStyle = WHITE;
+  ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
-  ctx.font = 'italic 900 69px "Barlow Condensed",sans-serif';
-  ctx.fillText('TABLA DE', titleX, 145);
-  const titleSize = fit(ctx, 'POSICIONES', WIDTH - titleX - 34, 105, 'italic 900');
+  
+  // Título con fuente Anton (eSports vibe)
+  ctx.save();
+  ctx.transform(1, 0, -0.1, 1, 0, 0); // Falsa cursiva para Anton
+  ctx.font = '100px "Anton", sans-serif';
+  ctx.fillText('TABLA DE', titleX + 10, 90);
+  
+  const titleSize = fit(ctx, 'POSICIONES', WIDTH - titleX - 34, 110, 'normal');
   ctx.fillStyle = GOLD;
-  ctx.font = 'italic 900 ' + titleSize + 'px "Barlow Condensed",sans-serif';
-  ctx.fillText('POSICIONES', titleX, 204);
+  ctx.font = titleSize + 'px "Anton", sans-serif';
+  // Agregar borde luminiscente
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(255, 196, 0, 0.4)';
+  ctx.strokeText('POSICIONES', titleX + 25, 185);
+  ctx.fillText('POSICIONES', titleX + 25, 185);
   ctx.restore();
 
   // Cabecera compacta de la tabla, igual a la referencia compartida.
