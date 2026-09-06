@@ -319,7 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let equiposCargados = [];
 
   async function cargarEquiposParaSelect() {
-    const { data, error } = await supabase.from('equipos').select('id, nombre').order('nombre');
+    const { data, error } = await supabase.from('equipos').select('id, nombre, categorias').order('nombre');
     if (error) {
       console.error('Error RLS Equipos:', error.message);
       showToast('Error al cargar equipos: ' + error.message, true);
@@ -339,8 +339,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const regEquipo = document.getElementById('reg-equipo');
     const dirEquipo = document.getElementById('dir-equipo');
+    const fichaEquipo = document.getElementById('upload-ficha-equipo');
     if (regEquipo) regEquipo.innerHTML = options;
     if (dirEquipo) dirEquipo.innerHTML = '<option value="">Todos los Equipos</option>' + options.replace('<option value="">-- Seleccionar --</option>', '');
+    if (fichaEquipo) fichaEquipo.innerHTML = options;
   }
 
   document.getElementById('btn-crear').addEventListener('click', async () => {
@@ -1156,5 +1158,145 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelector('[data-target="tab-boleteria"]')?.addEventListener('click', () => {
     if (!pinActual) cargarPinActual();
   });
+
+  // --- TAB: FICHAS (AVANZADO) ---
+  const fichaEquipoSelect = document.getElementById('upload-ficha-equipo');
+  const fichaContainer = document.getElementById('fichas-lista-categorias');
+
+  if (fichaEquipoSelect && fichaContainer) {
+    fichaEquipoSelect.addEventListener('change', async () => {
+      const equipoId = fichaEquipoSelect.value;
+      fichaContainer.innerHTML = '';
+      if (!equipoId) return;
+
+      const eq = equiposCargados.find(e => e.id === equipoId);
+      if (!eq) return;
+
+      const rawCats = eq.categorias || '';
+      const catsArray = rawCats.split(',').map(c => c.trim()).filter(Boolean);
+
+      if (catsArray.length === 0) {
+        fichaContainer.innerHTML = '<p style="color:var(--gold);">El equipo no tiene categorías inscritas en la BD.</p>';
+        return;
+      }
+
+      fichaContainer.innerHTML = '<p>Revisando estado de fichas...</p>';
+
+      // Consultar lista de archivos del bucket para este equipo
+      const { data: filesList, error } = await supabase.storage.from('fichas').list('', {
+        search: equipoId
+      });
+
+      fichaContainer.innerHTML = '';
+
+      if (error) {
+        fichaContainer.innerHTML = '<p style="color:var(--red);">Error consultando Storage. Revisa RLS de SELECT.</p>';
+        return;
+      }
+
+      const uploadedFiles = new Set(filesList.map(f => f.name));
+
+      catsArray.forEach(cat => {
+        const expectedFilename = `${equipoId}_${cat}.pdf`;
+        const exists = uploadedFiles.has(expectedFilename);
+        const fileUrl = `https://uzyqpruqiqubwnqttnwf.supabase.co/storage/v1/object/public/fichas/${expectedFilename}`;
+
+        const card = document.createElement('div');
+        card.style.background = 'rgba(0,0,0,0.3)';
+        card.style.border = `1px solid ${exists ? '#10b981' : '#ef4444'}`;
+        card.style.borderRadius = '12px';
+        card.style.padding = '16px';
+        card.style.display = 'flex';
+        card.style.flexDirection = 'column';
+        card.style.gap = '12px';
+
+        let uiHtml = `
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="font-family:'Bebas Neue'; font-size:2rem; color:var(--gold);">${safe(cat)}</div>
+            <div style="color:${exists ? '#10b981' : '#ef4444'}; font-weight:800; font-family:'Barlow Condensed'; font-size:1.1rem; text-transform:uppercase;">
+              ${exists ? '✅ SUBIDA' : '❌ PENDIENTE'}
+            </div>
+          </div>
+        `;
+
+        if (exists) {
+          uiHtml += `
+            <div style="display:flex; gap:8px;">
+              <a href="${fileUrl}?t=${Date.now()}" target="_blank" class="btn-guardar" style="flex:1; background:#3b82f6; text-align:center; text-decoration:none;">VER PDF</a>
+              <button class="btn-guardar btn-delete-ficha" data-filename="${expectedFilename}" style="flex:1; background:#ef4444;">ELIMINAR</button>
+            </div>
+          `;
+        }
+
+        uiHtml += `
+          <div style="border-top:1px solid rgba(255,255,255,0.1); padding-top:12px;">
+            <label style="font-size:0.8rem; color:rgba(255,255,255,0.6); display:block; margin-bottom:4px;">${exists ? 'Reemplazar' : 'Subir'} PDF</label>
+            <input type="file" class="input-dark file-upload-ficha" accept="application/pdf" style="padding:8px; font-size:0.8rem; margin-bottom:8px;">
+            <button class="btn-guardar btn-subir-ficha" data-filename="${expectedFilename}" style="width:100%; padding:10px; font-size:1rem; display:none;">${exists ? 'REEMPLAZAR' : 'SUBIR'} A SUPABASE</button>
+            <div class="ficha-upload-status" style="font-size:0.85rem; text-align:center; font-weight:bold; margin-top:4px;"></div>
+          </div>
+        `;
+
+        card.innerHTML = uiHtml;
+        fichaContainer.appendChild(card);
+
+        // Lógica de archivo y subida
+        const fileInput = card.querySelector('.file-upload-ficha');
+        const btnSubir = card.querySelector('.btn-subir-ficha');
+        const statusEl = card.querySelector('.ficha-upload-status');
+        let selectedFile = null;
+
+        fileInput.addEventListener('change', (e) => {
+          selectedFile = e.target.files[0];
+          btnSubir.style.display = selectedFile ? 'block' : 'none';
+        });
+
+        btnSubir.addEventListener('click', async () => {
+          if (!selectedFile) return;
+          btnSubir.disabled = true;
+          btnSubir.innerText = 'SUBIENDO...';
+          statusEl.style.color = 'var(--gold)';
+          statusEl.innerText = 'Transfiriendo...';
+
+          try {
+            const { error: upErr } = await supabase.storage.from('fichas').upload(expectedFilename, selectedFile, {
+              cacheControl: '0',
+              upsert: true
+            });
+            if (upErr) throw upErr;
+            showToast('Ficha subida con éxito');
+            fichaEquipoSelect.dispatchEvent(new Event('change')); // Refrescar UI
+          } catch (err) {
+            statusEl.style.color = '#ef4444';
+            statusEl.innerText = 'Error: ' + err.message;
+            btnSubir.disabled = false;
+            btnSubir.innerText = 'REINTENTAR';
+          }
+        });
+
+        // Lógica de eliminación
+        if (exists) {
+          const btnDelete = card.querySelector('.btn-delete-ficha');
+          btnDelete.addEventListener('click', async () => {
+            if (!confirm(`¿ESTÁS ABSOLUTAMENTE SEGURO de eliminar la ficha de la categoría ${cat}?\nEsta acción es irreversible.`)) return;
+            
+            btnDelete.disabled = true;
+            btnDelete.innerText = 'BORRANDO...';
+            
+            try {
+              const { error: delErr } = await supabase.storage.from('fichas').remove([expectedFilename]);
+              if (delErr) throw delErr;
+              showToast('Ficha eliminada');
+              fichaEquipoSelect.dispatchEvent(new Event('change')); // Refrescar UI
+            } catch (err) {
+              alert('Error al borrar: ' + err.message);
+              btnDelete.disabled = false;
+              btnDelete.innerText = 'ELIMINAR';
+            }
+          });
+        }
+      });
+    });
+  }
 
 });
