@@ -952,6 +952,7 @@
         <button class="tab-btn" data-target="tab-directorio">Directorio</button>
         <button class="tab-btn" data-target="tab-carnets">Carnets</button>
         <button class="tab-btn" data-target="tab-boleteria">Boletería</button>
+        <button class="tab-btn" data-target="tab-fichas">Fichas</button>
       </div>
 
       <!-- Pestaña Revisión -->
@@ -1199,6 +1200,25 @@
               transition:transform .15s, box-shadow .15s; box-shadow:0 4px 16px rgba(124,58,237,.3);
               width:100%; display:block; text-align:center;
             ">GUARDAR NUEVO PIN</button>
+          </div>
+        </div>
+      </div>
+      <!-- Pestaña Fichas -->
+      <div id="tab-fichas" class="tab-content">
+        <div class="card" style="border-left: 4px solid var(--gold);">
+          <h2 class="card-header-title" style="color: var(--gold); border-bottom-color: rgba(255, 186, 0, 0.2);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+            GESTOR DE FICHAS PDF
+          </h2>
+          <p class="help-text">Selecciona un equipo para ver el estado de sus fichas por categoría. Podrás visualizar, subir o eliminar las fichas existentes.</p>
+          
+          <div class="form-group" style="margin-bottom: 24px;">
+            <label>1. Selecciona el Equipo</label>
+            <select id="upload-ficha-equipo" class="input-dark"><option>Cargando...</option></select>
+          </div>
+
+          <div id="fichas-lista-categorias" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+            <!-- Renderizado dinámico de categorías y su estado -->
           </div>
         </div>
       </div>
