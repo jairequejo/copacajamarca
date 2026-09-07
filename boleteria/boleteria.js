@@ -413,7 +413,7 @@ async function validarPersona(dni) {
   try {
     const { data, error } = await supabase
       .from('personas')
-      .select('nombre_completo, dni, rol, categorias, equipos(nombre, logo_url)')
+      .select('nombres, apellidos, dni, rol, categorias, equipos(nombre, logo_url)')
       .or(`dni.eq.${dni},dni_qr_impreso.eq.${dni}`)
       .in('rol', ['DELEGADO', 'ENTRENADOR', 'JUGADOR'])
       .single();
@@ -496,7 +496,7 @@ function mostrarResultado(persona, warningInfo, conteo, isAlert) {
         <img src="${safe(fotoUrl)}" class="result-foto" alt="Foto"
              onerror="this.onerror=null; this.src='${safe(persona.equipos?.logo_url)}'; this.style.objectFit='contain'; this.style.opacity='0.15'; this.style.transform='scale(1.5)';">
         <div>
-          <div class="result-info-name">${safe(persona.nombre_completo)}</div>
+          <div class="result-info-name">${safe((persona.apellidos ? persona.apellidos + ', ' : '') + (persona.nombres || ''))}</div>
           <div class="result-info-detail">DNI: ${safe(persona.dni)} • Total Ingresos: ${conteo}</div>
         </div>
       </div>
@@ -514,8 +514,8 @@ function mostrarResultado(persona, warningInfo, conteo, isAlert) {
     isProcessingScan = false; // Desbloquear motor para escanear de nuevo
   });
 
-  setStatus(`✓ ${persona.nombre_completo.split(' ')[0]} — Autorizado`, true);
-  showToast(`${persona.nombre_completo.split(' ')[0]} — Acceso autorizado`);
+  setStatus(`✓ ${(persona.nombres || '').split(' ')[0]} — Autorizado`, true);
+  showToast(`${(persona.nombres || '').split(' ')[0]} — Acceso autorizado`);
 
   // Auto-dismiss después de 5s si no hay alerta
   if (!isAlert) {
@@ -567,7 +567,7 @@ function renderHistorial() {
     const item = document.createElement('div');
     item.className = 'historial-item';
     item.innerHTML = `
-      <span class="hist-name">${safe(h.persona?.nombre_completo || 'Desconocido')}</span>
+      <span class="hist-name">${safe(h.persona ? ((h.persona.apellidos ? h.persona.apellidos + ', ' : '') + (h.persona.nombres || '')) : 'Desconocido')}</span>
       <span class="hist-rol">${safe(h.persona?.rol || 'N/A')} · ${safe(h.hora)}</span>
       <span class="${h.ok ? 'hist-ok' : 'hist-err'}">${h.ok ? '✓' : '✗'}</span>
     `;
@@ -610,7 +610,7 @@ async function loadStaff() {
     .from('personas')
     .select('*, equipos(nombre)')
     .in('rol', ['ENTRENADOR', 'DELEGADO'])
-    .order('nombre_completo');
+    .order('apellidos').order('nombres');
     
   if (error) {
     staffStatus.textContent = 'Error cargando staff.';
@@ -638,7 +638,7 @@ function renderStaff(list) {
     
     card.innerHTML = `
       <img class="dir-foto" src="${safe(fotoUrl)}" onerror="this.src='../assets/img/logo.png'">
-      <div class="dir-name">${safe(p.nombre_completo)}</div>
+      <div class="dir-name">${safe((p.apellidos ? p.apellidos + ', ' : '') + (p.nombres || ''))}</div>
       <div class="dir-rol" style="color:${isRed ? '#d60d0d' : '#3b82f6'};">${safe(p.rol)}</div>
       <div class="dir-team">${safe(p.equipos?.nombre || 'Independiente')}</div>
       <div style="font-size:0.7rem; color:rgba(255,255,255,0.4); margin-top:8px;">DNI: ${safe(p.dni)}</div>
@@ -650,7 +650,7 @@ function renderStaff(list) {
 searchStaff.addEventListener('input', (e) => {
   const term = e.target.value.toLowerCase();
   const filtered = allStaff.filter(p => 
-    p.nombre_completo.toLowerCase().includes(term) || 
+    (p.nombres || '').toLowerCase().includes(term) || (p.apellidos || '').toLowerCase().includes(term) || 
     p.dni.includes(term)
   );
   renderStaff(filtered);

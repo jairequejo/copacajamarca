@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const { data, error } = await supabase
       .from('personas')
-      .select('nombre_completo, rol, equipo_id, equipos(nombre, logo_url, categorias)')
+      .select('nombres, apellidos, rol, equipo_id, equipos(nombre, logo_url, categorias)')
       .or(`dni.eq.${dni},dni_qr_impreso.eq.${dni}`)
       .in('rol', ['DELEGADO', 'ENTRENADOR'])
       .maybeSingle();
@@ -131,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (bNav) bNav.style.display = 'flex';
       
       const rolLabel = data.rol === 'ENTRENADOR' ? 'Entrenador' : 'Delegado';
-      delNombre.innerText = `HOLA, ${data.nombre_completo.split(' ')[0].toUpperCase()}`;
+      delNombre.innerText = `HOLA, ${data.nombres.split(' ')[0].toUpperCase()}`;
       delEquipo.innerText = `${rolLabel}: ${data.equipos?.nombre || 'SIN EQUIPO'}`;
       
       if (data.equipos?.logo_url) {
@@ -217,9 +217,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const { data, error } = await supabase
         .from('personas')
-        .select('dni, nombre_completo, categorias, fecha_nacimiento, equipos(nombre)')
+        .select('dni, nombres, apellidos, categorias, fecha_nacimiento, equipos(nombre)')
         .eq('rol', 'JUGADOR')
-        .or(`dni.eq.${term},dni_qr_impreso.eq.${term},nombre_completo.ilike.%${term}%`)
+        .or(`dni.eq.${term},dni_qr_impreso.eq.${term},nombres.ilike.%${term}%,apellidos.ilike.%${term}%`)
         .limit(10);
 
       if (error) {
@@ -247,7 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
         div.innerHTML = `
           <img src="${safe(fotoUrl)}" class="autocomplete-img" onerror="this.src='../assets/img/logo.png'; this.style.opacity='0.3';">
           <div class="autocomplete-info">
-            <h4>${safe(jugador.nombre_completo)}</h4>
+            <h4>${safe((jugador.apellidos ? jugador.apellidos + ", " : "") + (jugador.nombres || ""))}</h4>
             <p>${safe(jugador.dni)} | ${edad} años | Cat: ${safe(jugador.categorias || 'N/A')} | ${safe(jugador.equipos?.nombre || 'Libre')}</p>
           </div>
         `;
@@ -364,7 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    players.sort((a,b) => a.nombre_completo.localeCompare(b.nombre_completo));
+    players.sort((a,b) => (a.apellidos || '').localeCompare(b.apellidos || ''));
     
     players.forEach(p => {
       const card = document.createElement('div');
@@ -380,7 +380,7 @@ document.addEventListener('DOMContentLoaded', () => {
       card.innerHTML = `
         <img src="${safe(fotoUrl)}" class="jugador-foto" alt="Foto" onerror="this.src='../assets/img/logo.png'; this.style.opacity='0.3';">
         <div class="jugador-info">
-          <h4>${safe(p.nombre_completo)}</h4>
+          <h4>${safe((p.apellidos ? p.apellidos + ", " : "") + (p.nombres || ""))}</h4>
           <p>DNI: <strong>${safe(p.dni)}</strong></p>
           <p>Edad: <strong>${edad} años</strong> (F. Nac: ${safe(p.fecha_nacimiento || 'N/A')})</p>
           <a href="${safe(fotoUrl)}" download="${safe(p.dni)}.jpg" target="_blank" class="btn-action">⬇️ Descargar DNI</a>
