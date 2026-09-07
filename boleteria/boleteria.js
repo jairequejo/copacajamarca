@@ -667,3 +667,109 @@ document.getElementById('btn-nfc')?.addEventListener('click', () => {
   if (isNfcScanning) detenerNFC(); else iniciarNFC();
 });
 
+
+// ════════════════════════════════════════════════
+// EXPLORADOR DE FICHAS (TIPO ADMIN/FICHAS)
+// ════════════════════════════════════════════════
+const fichasViewEquipos = document.getElementById('fichas-view-equipos');
+const fichasViewCats = document.getElementById('fichas-view-categorias');
+const fichasViewFicha = document.getElementById('fichas-view-ficha');
+const btnFichasBack = document.getElementById('btn-fichas-back');
+const fichasTitle = document.getElementById('fichas-title');
+
+let galeriaCurrentView = 'equipos';
+let galeriaCurrentTeam = null;
+
+async function loadGaleriaEquipos() {
+  if (!fichasViewEquipos) return;
+  fichasViewEquipos.innerHTML = '<p style="color:#fff;text-align:center;width:100%;grid-column:1/-1;">Cargando equipos...</p>';
+  const { data } = await supabase.from('equipos').select('id, nombre, logo_url').order('nombre');
+  if (!data) return;
+  
+  fichasViewEquipos.innerHTML = '';
+  data.forEach(eq => {
+    const card = document.createElement('div');
+    card.className = 'grid-card';
+    const logo = eq.logo_url || '../assets/img/logo.png';
+    card.innerHTML = `
+      <img src="${safe(logo)}" alt="Logo" onerror="this.src='../assets/img/logo.png'">
+      <h4>${safe(eq.nombre)}</h4>
+    `;
+    card.addEventListener('click', () => selectGaleriaEquipo(eq));
+    fichasViewEquipos.appendChild(card);
+  });
+}
+
+async function selectGaleriaEquipo(eq) {
+  galeriaCurrentTeam = eq;
+  galeriaCurrentView = 'categorias';
+  fichasTitle.innerText = eq.nombre;
+  btnFichasBack.style.display = 'block';
+  
+  fichasViewEquipos.style.display = 'none';
+  fichasViewFicha.style.display = 'none';
+  fichasViewCats.style.display = 'grid';
+  
+  fichasViewCats.innerHTML = '<p style="color:#fff;text-align:center;width:100%;grid-column:1/-1;">Cargando categorías...</p>';
+
+  const { data: inscripcionesEq } = await supabase
+    .from('inscripciones_equipos')
+    .select('categoria')
+    .eq('equipo_id', eq.id);
+  
+  fichasViewCats.innerHTML = '';
+  const catsArray = inscripcionesEq ? inscripcionesEq.map(i => i.categoria) : [];
+
+  if (catsArray.length === 0) {
+    fichasViewCats.innerHTML = '<p style="color:#fff;grid-column:1/-1;text-align:center;">No tiene categorías inscritas.</p>';
+    return;
+  }
+  
+  catsArray.sort().forEach(cat => {
+    const btn = document.createElement('div');
+    btn.className = 'cat-card';
+    btn.innerText = cat;
+    btn.addEventListener('click', () => selectGaleriaCategoria(cat));
+    fichasViewCats.appendChild(btn);
+  });
+}
+
+function selectGaleriaCategoria(cat) {
+  galeriaCurrentView = 'ficha';
+  fichasTitle.innerText = `${cat} - ${galeriaCurrentTeam.nombre}`;
+  
+  fichasViewCats.style.display = 'none';
+  fichasViewFicha.style.display = 'block';
+  
+  fichasViewFicha.innerHTML = '';
+  const fichaUrl = `https://uzyqpruqiqubwnqttnwf.supabase.co/storage/v1/object/public/fichas/${galeriaCurrentTeam.id}_${cat}.pdf`;
+  
+  const fichaBtn = document.createElement('a');
+  fichaBtn.className = 'btn-ficha-general';
+  fichaBtn.target = '_blank';
+  fichaBtn.href = `../fichas/visor.html?v=2&file=${encodeURIComponent(fichaUrl)}`;
+  fichaBtn.innerText = '📄 VER FICHA FOTOGRÁFICA (PDF)';
+  fichasViewFicha.appendChild(fichaBtn);
+}
+
+if (btnFichasBack) {
+  btnFichasBack.addEventListener('click', () => {
+    if (galeriaCurrentView === 'ficha') {
+      selectGaleriaEquipo(galeriaCurrentTeam); // vuelve a categorías
+    } else if (galeriaCurrentView === 'categorias') {
+      galeriaCurrentView = 'equipos';
+      galeriaCurrentTeam = null;
+      fichasTitle.innerText = 'EQUIPOS';
+      btnFichasBack.style.display = 'none';
+      fichasViewCats.style.display = 'none';
+      fichasViewFicha.style.display = 'none';
+      fichasViewEquipos.style.display = 'grid';
+    }
+  });
+}
+
+// Cargar equipos al iniciar
+document.addEventListener('DOMContentLoaded', () => {
+  loadGaleriaEquipos();
+});
+
