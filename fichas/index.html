@@ -256,6 +256,37 @@
     .search-section {
       margin-bottom: 24px;
     }
+    .dni-grid { 
+      display: block; 
+      margin-bottom: 30px; 
+      width: 100%; 
+    }
+    #dni-input-single {
+      background: rgba(0,0,0,0.5); 
+      border: 2px solid rgba(255,255,255,0.1); 
+      border-radius: 12px; 
+      color: var(--gold); 
+      text-align: center; 
+      font-size: clamp(2rem, 6vw, 3rem); 
+      font-family: 'Bebas Neue', sans-serif; 
+      letter-spacing: 0.3em;
+      padding: 15px 20px;
+      width: 100%;
+      outline: none; 
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    #dni-input-single:focus {
+      border-color: var(--gold); 
+      box-shadow: 0 0 20px rgba(255,183,3,0.3); 
+      transform: translateY(-2px);
+    }
+    #dni-input-single::placeholder {
+      color: rgba(255,255,255,0.2);
+      letter-spacing: 0.05em;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(1.2rem, 4vw, 1.5rem);
+      font-weight: 500;
+    }
     .search-row {
       display: flex;
       align-items: center;
@@ -431,7 +462,7 @@
 
       <form id="form-login">
         <div class="dni-grid">
-          <input type="tel" id="dni-input-single" class="input-dark" maxlength="8" pattern="[0-9]{8}" inputmode="numeric" placeholder="DNI" style="width:100%; text-align:center; font-size:2rem; letter-spacing:10px; font-weight:bold; height:60px; padding-left:10px;" autofocus>
+          <input type="tel" id="dni-input-single" maxlength="8" pattern="[0-9]{8}" inputmode="numeric" placeholder="ESCRIBE TU DNI" autofocus>
         </div>
         <input type="hidden" id="dni-input">
         <button type="submit" id="btn-login" class="btn-primary">AUTENTICAR</button>
@@ -497,6 +528,6 @@
   </nav>
 
   <div id="toast"></div>
-  <script type="module" src="fichas.js?v=5"></script>
+  <script type="module" src="fichas.js?v=6"></script>
 </body>
 </html>
