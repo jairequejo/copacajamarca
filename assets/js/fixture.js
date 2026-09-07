@@ -296,7 +296,7 @@ async function loadAll() {
 
       return {
         id: m.id,
-        cat: catStr,
+        cat: tabId,
         tabId: tabId,
         categoria: catStr,
         jornada: jorStr,
