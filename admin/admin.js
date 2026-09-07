@@ -609,10 +609,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (contadorEl) contadorEl.textContent = 'Calculando...';
     dirResultados.innerHTML = '<p style="color:rgba(255,255,255,0.5); text-align:center; grid-column: 1 / -1;">Cargando directorio...</p>';
     
-    let query = supabase.from('personas').select('*, equipos(nombre)').order('nombre_completo');
+    let query = supabase.from('personas').select('*, equipos(nombre)').order('apellidos').order('nombres');
     
     const term = dirSearch.value.trim();
-    if (term) query = query.or(`dni.eq.${term},dni_qr_impreso.eq.${term},nombre_completo.ilike.%${term}%`);
+    if (term) query = query.or(`dni.eq.${term},dni_qr_impreso.eq.${term},apellidos.ilike.%${term}%`);
     if (dirRol.value) query = query.eq('rol', dirRol.value);
     if (dirEquipo.value) query = query.eq('equipo_id', dirEquipo.value);
 
@@ -643,7 +643,7 @@ document.addEventListener('DOMContentLoaded', () => {
       card.innerHTML = `
         <img src="${safe(fotoUrl)}" style="width: 50px; height: 50px; border-radius: 8px; object-fit: cover; border: 1px solid rgba(255,255,255,0.2);" onerror="this.src='../assets/img/logo.png'; this.style.opacity='0.3';">
         <div style="flex: 1; min-width: 0;">
-          <h4 style="margin: 0; font-size: 1.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--white);">${safe(p.nombre_completo)}</h4>
+          <h4 style="margin: 0; font-size: 1.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--white);">${safe((p.apellidos ? p.apellidos + ", " : "") + (p.nombres || ""))}</h4>
           <p style="margin: 4px 0 0; font-size: 0.85rem; color: rgba(255,255,255,0.6);">
             <strong style="color:${rolColor};">${safe(p.rol)}</strong> | DNI: ${safe(p.dni)}
           </p>
@@ -660,8 +660,8 @@ document.addEventListener('DOMContentLoaded', () => {
         modoEdicion = true;
         document.getElementById('reg-dni').value = p.dni;
         document.getElementById('reg-dni').readOnly = true;
-        document.getElementById('reg-nombre').value = p.nombre_completo;
-        document.getElementById('reg-rol').value = p.rol;
+        document.getElementById('reg-nombre').value = p.nombres || '';
+        document.getElementById('reg-apellido').value = p.apellidos || '';
         document.getElementById('reg-equipo').value = p.equipo_id || '';
         document.getElementById('reg-cat').value = p.categorias || '';
         document.getElementById('reg-nac').value = p.fecha_nacimiento || '';
@@ -712,18 +712,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
   formRegistro?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const nombre = document.getElementById('reg-nombre').value.trim().toUpperCase();
+    const dni = document.getElementById('reg-dni').value.trim();
+    const nombres = document.getElementById('reg-nombre').value.trim();
+    const apellidos = document.getElementById('reg-apellido').value.trim();
+
+    if (!dni || !nombres || !apellidos) {
+      alert('DNI, Nombres y Apellidos son obligatorios');
+      return;
+    }
 
     if (modoEdicion) {
-      if(!confirm(`Estás a punto de actualizar los datos de ${nombre}.\n\n¿Confirmar cambios?`)) return;
+      if(!confirm(`Estás a punto de actualizar los datos de ${nombres} ${apellidos}.\n\n¿Confirmar cambios?`)) return;
     }
 
     btnGuardarRegistro.innerText = 'Guardando...';
     btnGuardarRegistro.disabled = true;
 
     const payload = {
-      dni: document.getElementById('reg-dni').value.trim(),
-      nombre_completo: nombre,
+      dni: dni,
+      nombres: nombres,
+      apellidos: apellidos,
       rol: document.getElementById('reg-rol').value,
       equipo_id: document.getElementById('reg-equipo').value || null,
       categorias: document.getElementById('reg-cat').value.trim() || null,
@@ -951,7 +959,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .select('*, equipos(nombre, logo_url)')
       .in('rol', ['ENTRENADOR', 'DELEGADO', 'JUGADOR'])
       .order('equipo_id')
-      .order('nombre_completo');
+      .order('apellidos').order('nombres');
 
     if (error) {
       carnetsStatus.textContent = `Error: ${error.message}`;
@@ -1001,7 +1009,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
         <div class="carnet-bottom">
           <div class="carnet-rol">${safe(p.rol)}</div>
-          <div class="carnet-nombre">${safe(p.nombre_completo)}</div>
+          <div class="carnet-nombre">${safe((p.apellidos ? p.apellidos + ", " : "") + (p.nombres || ""))}</div>
           
           <div style="flex: 1; min-height: 2px;"></div> <!-- Spacer superior -->
           
