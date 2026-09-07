@@ -36,59 +36,15 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => toast.classList.remove('show'), 3000);
   }
 
-  const dniBoxes = document.querySelectorAll('.dni-box');
+  const dniSingle = document.getElementById('dni-input-single');
   const hiddenDni = document.getElementById('dni-input');
 
-  function updateHiddenDni() {
-    hiddenDni.value = Array.from(dniBoxes).map(b => b.value).join('');
+  if (dniSingle) {
+    dniSingle.addEventListener('input', () => {
+      dniSingle.value = dniSingle.value.replace(/[^0-9]/g, '');
+      hiddenDni.value = dniSingle.value;
+    });
   }
-
-  dniBoxes.forEach((box, index) => {
-    box.addEventListener('input', () => {
-      box.value = box.value.replace(/[^0-9]/g, '');
-      if (box.value) {
-        box.classList.add('filled');
-        if (index < dniBoxes.length - 1) {
-          setTimeout(() => {
-            dniBoxes[index + 1].focus();
-            // Move cursor to end just in case
-            const nextBox = dniBoxes[index + 1];
-            nextBox.selectionStart = nextBox.selectionEnd = nextBox.value.length;
-          }, 10);
-        }
-      } else {
-        box.classList.remove('filled');
-      }
-      updateHiddenDni();
-    });
-
-    box.addEventListener('keydown', (e) => {
-      if (e.key === 'Backspace' && !box.value && index > 0) {
-        dniBoxes[index - 1].focus();
-        dniBoxes[index - 1].value = '';
-        dniBoxes[index - 1].classList.remove('filled');
-        updateHiddenDni();
-      }
-    });
-
-    box.addEventListener('paste', (e) => {
-      e.preventDefault();
-      const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '').slice(0, 8);
-      if (pasteData) {
-        let i = 0;
-        for (i; i < pasteData.length; i++) {
-          dniBoxes[i].value = pasteData[i];
-          dniBoxes[i].classList.add('filled');
-        }
-        updateHiddenDni();
-        if (i < 8) dniBoxes[i].focus();
-        else {
-          dniBoxes[7].focus();
-          btnLogin.click();
-        }
-      }
-    });
-  });
 
   async function performLogin(dni, isAuto = false) {
     if (!isAuto) {
@@ -98,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const { data, error } = await supabase
       .from('personas')
-      .select('nombres, apellidos, rol, equipo_id, equipos(nombre, logo_url, categorias)')
+      .select('nombres, apellidos, rol, equipo_id, equipos(nombre, logo_url)')
       .or(`dni.eq.${dni},dni_qr_impreso.eq.${dni}`)
       .in('rol', ['DELEGADO', 'ENTRENADOR'])
       .maybeSingle();
