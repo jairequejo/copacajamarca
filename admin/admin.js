@@ -1175,7 +1175,7 @@ document.addEventListener('DOMContentLoaded', () => {
       fichaContainer.innerHTML = '<p>Revisando estado de fichas...</p>';
 
       const { data: inscripcionesEq } = await supabase
-        .from('inscripciones')
+        .from('inscripciones_equipos')
         .select('categoria')
         .eq('equipo_id', equipoId);
       

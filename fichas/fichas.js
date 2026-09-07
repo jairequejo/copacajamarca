@@ -298,7 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
     viewCategorias.innerHTML = '<p style="color:#fff;">Cargando categorías...</p>';
 
     const { data: inscripcionesEq } = await supabase
-      .from('inscripciones')
+      .from('inscripciones_equipos')
       .select('categoria')
       .eq('equipo_id', eq.id);
     

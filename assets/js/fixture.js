@@ -213,11 +213,12 @@ async function loadAll() {
   const empty = document.getElementById('emptyState');
 
   try {
-    const [resEquipos, resPartidos, resInsc] = await Promise.all([
+    const [resEquipos, resPartidos] = await Promise.all([
       supabase.from('equipos').select('id, nombre'),
-      supabase.from('partidos').select('id, categoria, jornada, estado, equipo_local_id, equipo_visitante_id, equipo_local:equipos!partidos_equipo_local_id_fkey(nombre), equipo_visitante:equipos!partidos_equipo_visitante_id_fkey(nombre), goles_local, goles_visitante, cancha, fecha_hora'),
-      supabase.from('inscripciones').select('equipo_id, categoria, grupo')
+      supabase.from('partidos').select('id, categoria, jornada, estado, equipo_local_id, equipo_visitante_id, equipo_local:equipos!partidos_equipo_local_id_fkey(nombre), equipo_visitante:equipos!partidos_equipo_visitante_id_fkey(nombre), goles_local, goles_visitante, cancha, fecha_hora')
     ]);
+
+    const resInsc = await supabase.from('inscripciones_equipos').select('equipo_id, categoria, grupo');
 
     if (resPartidos.error) throw resPartidos.error;
     if (resEquipos.error) throw resEquipos.error;
