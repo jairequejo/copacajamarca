@@ -104,14 +104,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const urlDni = urlParams.get('dni');
   
   if (urlDni) {
-    // Rellenar visualmente las cajas del DNI
-    for (let i = 0; i < 8 && i < urlDni.length; i++) {
-      if (dniBoxes[i]) {
-        dniBoxes[i].value = urlDni[i];
-        dniBoxes[i].classList.add('filled');
-      }
+    if (dniSingle) {
+      dniSingle.value = urlDni;
+      hiddenDni.value = urlDni;
     }
-    updateHiddenDni();
     
     localStorage.setItem('fichas_dni', urlDni);
     window.history.replaceState({}, document.title, window.location.pathname);
