@@ -215,7 +215,7 @@ async function loadAll() {
   try {
     const [resEquipos, resPartidos] = await Promise.all([
       supabase.from('equipos').select('id, nombre'),
-      supabase.from('partidos').select('id, categoria, jornada, estado, equipo_local_id, equipo_visitante_id, equipo_local:equipos!partidos_equipo_local_id_fkey(nombre), equipo_visitante:equipos!partidos_equipo_visitante_id_fkey(nombre), goles_local, goles_visitante, cancha, fecha_hora')
+      supabase.from('partidos').select('id, categoria, grupo, jornada, estado, equipo_local_id, equipo_visitante_id, equipo_local:equipos!partidos_equipo_local_id_fkey(nombre), equipo_visitante:equipos!partidos_equipo_visitante_id_fkey(nombre), goles_local, goles_visitante, cancha, fecha_hora')
     ]);
 
     const resInsc = await supabase.from('inscripciones_equipos').select('equipo_id, categoria, grupo');
@@ -244,6 +244,9 @@ async function loadAll() {
       
       // Determinar a qué tabId pertenece
       let tabId = String(m.categoria || '').trim();
+      if (m.grupo) {
+        tabId += ' ' + String(m.grupo).trim();
+      }
       
       if (!G.equipos[tabId]) G.equipos[tabId] = new Set();
       if (loc) G.equipos[tabId].add(loc);
@@ -255,7 +258,11 @@ async function loadAll() {
 
     // Mapear partidos a G.fixture
     G.fixture = matches.map(m => {
-      const catStr = String(m.categoria || '').trim();
+      let catStr = String(m.categoria || '').trim();
+      let tabId = catStr;
+      if (m.grupo) {
+        tabId += ' ' + String(m.grupo).trim();
+      }
       const jorStr = String(m.jornada || '').trim();
       const localName = m.equipo_local?.nombre?.trim().toUpperCase() || '';
       const visitanteName = m.equipo_visitante?.nombre?.trim().toUpperCase() || '';
