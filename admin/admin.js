@@ -1172,8 +1172,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const eq = equiposCargados.find(e => e.id === equipoId);
       if (!eq) return;
 
-      const rawCats = eq.categorias || '';
-      const catsArray = rawCats.split(',').map(c => c.trim()).filter(Boolean);
+      fichaContainer.innerHTML = '<p>Revisando estado de fichas...</p>';
+
+      const { data: inscripcionesEq } = await supabase
+        .from('inscripciones')
+        .select('categoria')
+        .eq('equipo_id', equipoId);
+      
+      const catsArray = inscripcionesEq ? inscripcionesEq.map(i => i.categoria) : [];
 
       if (catsArray.length === 0) {
         fichaContainer.innerHTML = '<p style="color:var(--gold);">El equipo no tiene categorías inscritas en la BD.</p>';
