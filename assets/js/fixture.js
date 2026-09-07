@@ -294,8 +294,6 @@ async function loadAll() {
         } catch (e) {}
       }
 
-      let tabId = catStr;
-
       return {
         id: m.id,
         cat: catStr,
