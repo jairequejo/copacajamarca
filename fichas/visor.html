@@ -31,18 +31,21 @@
                 for(let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
                     pdf.getPage(pageNum).then(page => {
                         // Calcular escala para móvil vs desktop
-                        const screenWidth = window.innerWidth;
-                        const unscaledViewport = page.getViewport({ scale: 1.0 });
-                        const scale = Math.min(2.0, (screenWidth * 0.95) / unscaledViewport.width);
-                        
+                        const scale = 4.0; // Renderizar a super alta resolución
                         const viewport = page.getViewport({ scale: scale });
                         
                         const canvas = document.createElement('canvas');
                         canvas.className = 'pdf-page';
                         const context = canvas.getContext('2d');
                         
+                        // Tamaño físico del canvas (alta resolución)
                         canvas.height = viewport.height;
                         canvas.width = viewport.width;
+                        
+                        // Tamaño visual en la pantalla (ajustado al contenedor)
+                        canvas.style.width = '100%';
+                        canvas.style.height = 'auto';
+                        
                         container.appendChild(canvas);
                         
                         page.render({ canvasContext: context, viewport: viewport });
