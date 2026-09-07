@@ -310,7 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const fichaBtn = document.createElement('a');
     fichaBtn.className = 'btn-ficha-general';
     fichaBtn.target = '_blank';
-    fichaBtn.href = `https://docs.google.com/viewer?url=${encodeURIComponent(fichaUrl)}`;
+    fichaBtn.href = `../fichas/visor.html?file=${encodeURIComponent(fichaUrl)}`;
     fichaBtn.innerText = '📄 VER FICHA FOTOGRÁFICA (PDF)';
     viewJugadores.appendChild(fichaBtn);
 
