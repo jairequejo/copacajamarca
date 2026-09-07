@@ -140,6 +140,30 @@
     .nfc-icon { font-size:5rem; margin-bottom:16px; display:block; animation: nfcPulse 2s ease-in-out infinite; }
     @keyframes nfcPulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.1);opacity:0.7} }
     .nfc-hint { font-family:'Barlow Condensed',sans-serif; font-size:1.05rem; font-weight:700; color:rgba(255,255,255,0.55); text-transform:uppercase; letter-spacing:.08em; line-height:1.5; }
+
+    .grid-card {
+      background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px; padding: 15px; text-align: center; cursor: pointer;
+      transition: all 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .grid-card:hover { border-color: var(--gold); background: rgba(255,183,3,0.1); }
+    .grid-card img { width: 60px; height: 60px; object-fit: contain; margin-bottom: 10px; }
+    .grid-card h4 { margin: 0; font-family: 'Barlow Condensed', sans-serif; font-size: 1.1rem; color: #fff; }
+    
+    .cat-card {
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px; padding: 15px 10px; text-align: center; cursor: pointer;
+      font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; letter-spacing: 1px; color: var(--gold);
+    }
+    .cat-card:hover { background: var(--gold); color: #000; }
+    
+    .btn-ficha-general {
+      display: block; width: 100%; text-align: center; background: #3b82f6; color: #fff;
+      padding: 15px; border-radius: 8px; font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 800; font-size: 1.2rem; letter-spacing: 0.05em; text-decoration: none;
+      margin-top: 15px; border: none; cursor: pointer;
+    }
+
   </style>
 </head>
 <body>
@@ -222,9 +246,21 @@
 
       <!-- TAB 3: FICHAS -->
       <div id="tab-galeria" class="app-tab">
-        <div style="text-align:center; color:rgba(255,255,255,0.5); margin:20px 0;">Fichas fotográficas de los equipos (PDFs)</div>
-        <div id="fichas-container" style="display:flex; flex-direction:column; gap:12px; padding:10px;">
-          <!-- Placeholder para que el usuario agregue sus enlaces a los PDFs -->
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px;">
+          <button id="btn-fichas-back" class="btn-secundario" style="display:none; padding:8px 12px; font-size:0.9rem; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; border-radius:6px; cursor:pointer;">← Volver</button>
+          <div id="fichas-title" style="color:var(--gold); font-family:'Bebas Neue', sans-serif; font-size:1.5rem; text-align:right; flex:1;">EQUIPOS</div>
+        </div>
+        
+        <div id="fichas-view-equipos" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:15px; padding:10px;">
+          <!-- Equipos se cargan aquí -->
+        </div>
+        
+        <div id="fichas-view-categorias" style="display:none; grid-template-columns:repeat(auto-fill, minmax(100px, 1fr)); gap:10px; padding:10px;">
+          <!-- Categorías se cargan aquí -->
+        </div>
+
+        <div id="fichas-view-ficha" style="display:none; padding:10px;">
+          <!-- Botón PDF se carga aquí -->
         </div>
       </div>
 
