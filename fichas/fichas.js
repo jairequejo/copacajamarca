@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // EXPLORADOR
   async function loadEquipos() {
     viewEquipos.innerHTML = '<p style="color:#fff;">Cargando equipos...</p>';
-    const { data } = await supabase.from('equipos').select('id, nombre, logo_url, categorias').order('nombre');
+    const { data } = await supabase.from('equipos').select('id, nombre, logo_url').order('nombre');
     if (!data) return;
     
     allTeams = data;
@@ -234,7 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function selectEquipo(eq) {
+  async function selectEquipo(eq) {
     currentTeam = eq;
     currentView = 'categorias';
     sectionTitle.innerText = eq.nombre;

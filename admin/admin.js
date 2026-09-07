@@ -319,7 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let equiposCargados = [];
 
   async function cargarEquiposParaSelect() {
-    const { data, error } = await supabase.from('equipos').select('id, nombre, categorias').order('nombre');
+    const { data, error } = await supabase.from('equipos').select('id, nombre').order('nombre');
     if (error) {
       console.error('Error RLS Equipos:', error.message);
       showToast('Error al cargar equipos: ' + error.message, true);
