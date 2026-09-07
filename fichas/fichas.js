@@ -47,6 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function performLogin(dni, isAuto = false) {
+  try {
     if (!isAuto) {
       btnLogin.innerText = "VALIDANDO...";
       btnLogin.disabled = true;
@@ -97,6 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       loadEquipos();
     }, isAuto ? 0 : 500);
+  } catch (err) { alert("performLogin error: " + err.message); }
   }
 
   // AUTO LOGIN VIA URL OR LOCALSTORAGE
@@ -104,14 +106,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const urlDni = urlParams.get('dni');
   
   if (urlDni) {
-    if (dniSingle) {
-      dniSingle.value = urlDni;
-      hiddenDni.value = urlDni;
+    try {
+        if (dniSingle) {
+          dniSingle.value = urlDni;
+          hiddenDni.value = urlDni;
+        }
+        
+        localStorage.setItem('fichas_dni', urlDni);
+        window.history.replaceState({}, document.title, window.location.pathname);
+        performLogin(urlDni, true).catch(err => alert("Login err: " + err.message));
+    } catch(e) {
+        alert("Auto login error: " + e.message);
     }
-    
-    localStorage.setItem('fichas_dni', urlDni);
-    window.history.replaceState({}, document.title, window.location.pathname);
-    performLogin(urlDni, true);
   } else {
     const savedDni = localStorage.getItem('fichas_dni');
     if (savedDni) {
