@@ -1222,7 +1222,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (exists) {
           uiHtml += `
             <div style="display:flex; gap:8px;">
-              <a href="${fileUrl}?t=${Date.now()}" target="_blank" class="btn-guardar" style="flex:1; background:#3b82f6; text-align:center; text-decoration:none;">VER PDF</a>
+              <a href="https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl + '?t=' + Date.now())}" target="_blank" class="btn-guardar" style="flex:1; background:#3b82f6; text-align:center; text-decoration:none;">VER PDF</a>
               <button class="btn-guardar btn-delete-ficha" data-filename="${expectedFilename}" style="flex:1; background:#ef4444;">ELIMINAR</button>
             </div>
           `;

@@ -345,8 +345,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const fichaBtn = document.createElement('a');
     fichaBtn.className = 'btn-ficha-general';
     fichaBtn.target = '_blank';
-    fichaBtn.href = fichaUrl;
-    fichaBtn.innerText = '📄 ABRIR FICHA FOTOGRÁFICA (PDF)';
+    fichaBtn.href = `https://docs.google.com/viewer?url=${encodeURIComponent(fichaUrl)}`;
+    fichaBtn.innerText = '📄 VER FICHA FOTOGRÁFICA (PDF)';
     viewJugadores.appendChild(fichaBtn);
 
     if (!players || players.length === 0) {
