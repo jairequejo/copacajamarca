@@ -192,9 +192,7 @@
     .login-sub { font-family: 'Barlow Condensed', sans-serif; color: rgba(255,255,255,0.7); margin-bottom: 30px; font-size: clamp(0.95rem, 3vw, 1.1rem); }
     
     .dni-grid { 
-      display: grid; 
-      grid-template-columns: repeat(8, minmax(0, 1fr)); 
-      gap: clamp(2px, 1.2vw, 8px); 
+      display: block; 
       margin-bottom: 30px; 
       width: 100%; 
     }
@@ -433,14 +431,7 @@
 
       <form id="form-login">
         <div class="dni-grid">
-          <input type="tel" class="dni-box" maxlength="1" pattern="[0-9]" inputmode="numeric" autofocus>
-          <input type="tel" class="dni-box" maxlength="1" pattern="[0-9]" inputmode="numeric">
-          <input type="tel" class="dni-box" maxlength="1" pattern="[0-9]" inputmode="numeric">
-          <input type="tel" class="dni-box" maxlength="1" pattern="[0-9]" inputmode="numeric">
-          <input type="tel" class="dni-box" maxlength="1" pattern="[0-9]" inputmode="numeric">
-          <input type="tel" class="dni-box" maxlength="1" pattern="[0-9]" inputmode="numeric">
-          <input type="tel" class="dni-box" maxlength="1" pattern="[0-9]" inputmode="numeric">
-          <input type="tel" class="dni-box" maxlength="1" pattern="[0-9]" inputmode="numeric">
+          <input type="tel" id="dni-input-single" class="input-dark" maxlength="8" pattern="[0-9]{8}" inputmode="numeric" placeholder="DNI" style="width:100%; text-align:center; font-size:2rem; letter-spacing:10px; font-weight:bold; height:60px; padding-left:10px;" autofocus>
         </div>
         <input type="hidden" id="dni-input">
         <button type="submit" id="btn-login" class="btn-primary">AUTENTICAR</button>
@@ -506,6 +497,6 @@
   </nav>
 
   <div id="toast"></div>
-  <script type="module" src="fichas.js?v=2"></script>
+  <script type="module" src="fichas.js?v=4"></script>
 </body>
 </html>
