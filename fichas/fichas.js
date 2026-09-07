@@ -295,8 +295,15 @@ document.addEventListener('DOMContentLoaded', () => {
     
     viewCategorias.innerHTML = '';
 
-    const rawCats = eq.categorias || '';
-    const catsArray = rawCats.split(',').map(c => c.trim().replace(/\r?\n|\r/g, '')).filter(c => c);
+    viewCategorias.innerHTML = '<p style="color:#fff;">Cargando categorías...</p>';
+
+    const { data: inscripcionesEq } = await supabase
+      .from('inscripciones')
+      .select('categoria')
+      .eq('equipo_id', eq.id);
+    
+    viewCategorias.innerHTML = '';
+    const catsArray = inscripcionesEq ? inscripcionesEq.map(i => i.categoria) : [];
 
     if (catsArray.length === 0) {
       viewCategorias.innerHTML = '<p style="color:#fff;">Este equipo no tiene categorías inscritas.</p>';
