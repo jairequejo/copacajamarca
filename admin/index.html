@@ -217,16 +217,14 @@
 
     .tabs-container {
       display: flex;
+      flex-wrap: wrap;
       gap: 8px;
       margin-bottom: 24px;
       background: rgba(255,255,255,0.04);
       padding: 8px;
       border-radius: 16px;
       border: 1px solid rgba(255,255,255,0.08);
-      overflow-x: auto;
-      scrollbar-width: none;
     }
-    .tabs-container::-webkit-scrollbar { display: none; }
 
     .tab-btn {
       flex: 1;

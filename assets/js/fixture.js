@@ -37,6 +37,49 @@ function getByeTeams(cat, jornada) {
 // ═══════════════════════════════════════════════════════════
 // RENDER
 // ═══════════════════════════════════════════════════════════
+function escapeMatchText(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[char]);
+}
+
+const OFFICIAL_SCHEDULE_TTL = 24 * 60 * 60 * 1000;
+
+function scheduleExpiresAt(m) {
+  const timestamp = Date.parse(m.oficializadoAt || '');
+  return Number.isFinite(timestamp) ? timestamp + OFFICIAL_SCHEDULE_TTL : null;
+}
+
+function shouldShowSchedule(m, now = Date.now()) {
+  const state = String(m.estadoOriginal || '').toUpperCase();
+  if (state === 'EN_VIVO') return true;
+  if (state === 'OFICIAL') {
+    const expiresAt = scheduleExpiresAt(m);
+    // Los resultados históricos no tienen una hora de oficialización verificable.
+    return expiresAt !== null && now < expiresAt;
+  }
+  return ['PROGRAMADO', 'EN_REVISION', 'FINALIZADO'].includes(state)
+    && Number.isFinite(Date.parse(m.fechaHora || ''));
+}
+
+function renderDesktopSchedule(m) {
+  if (!shouldShowSchedule(m)) return '';
+  const date = m.fechaHora ? new Date(m.fechaHora) : null;
+  const validDate = date && !Number.isNaN(date.getTime());
+  const dateText = validDate
+    ? new Intl.DateTimeFormat('es-PE', { timeZone: 'America/Lima', day: '2-digit', month: 'short', year: 'numeric' }).format(date)
+    : (m.estado === 'pendiente' ? 'Por programar' : 'Fecha no registrada');
+  const timeText = validDate
+    ? new Intl.DateTimeFormat('es-PE', { timeZone: 'America/Lima', hour: '2-digit', minute: '2-digit', hour12: true }).format(date)
+    : '';
+  return `<div class="desktop-match-schedule" data-expires-at="${m.estadoOriginal === 'OFICIAL' ? scheduleExpiresAt(m) : ''}" hidden style="display: none;">
+    <span class="schedule-label">Fecha programada</span>
+    <span class="schedule-date">${escapeMatchText(dateText)}${timeText ? ` · ${escapeMatchText(timeText)}` : ''}</span>
+    <span class="schedule-location"><span>Lugar</span> ${escapeMatchText(m.lugar || 'Por confirmar')}</span>
+    <span class="schedule-location"><span>Cancha</span> ${escapeMatchText(m.cancha || 'Por confirmar')}</span>
+  </div>`;
+}
+
 function renderMatchRow(m) {
   const isLive = m.estado === 'en vivo';
   const isFin  = m.estado === 'finalizado';
@@ -75,7 +118,7 @@ function renderMatchRow(m) {
     <div class="match-row" data-estado="${m.estado}">
       <div class="${localCls}">${m.local || 'Descanso'}</div>
       <div class="match-score ${scoreCls}">${scoreInner}</div>
-      <div class="${visitCls}">${m.visitante || 'Descanso'}</div>${canchaRow}
+      <div class="${visitCls}">${m.visitante || 'Descanso'}</div>${canchaRow}${renderDesktopSchedule(m)}
     </div>`;
 }
 
@@ -208,6 +251,26 @@ function buildJornadaPills() {
 // ═══════════════════════════════════════════════════════════
 // CARGA DE DATOS DESDE SUPABASE
 // ═══════════════════════════════════════════════════════════
+async function loadFixtureMatches() {
+  const fields = 'id, categoria, grupo, jornada, estado, equipo_local_id, equipo_visitante_id, equipo_local:equipos!partidos_equipo_local_id_fkey(nombre), equipo_visitante:equipos!partidos_equipo_visitante_id_fkey(nombre), goles_local, goles_visitante, lugar, cancha, fecha_hora';
+  const result = await supabase.from('partidos').select(`${fields}, oficializado_at`);
+  // Compatibilidad durante el despliegue de la migración; no inventar fechas antiguas.
+  if (['42703', 'PGRST204'].includes(result.error?.code)
+      && result.error.message.includes('oficializado_at')) {
+    return supabase.from('partidos').select(fields);
+  }
+  return result;
+}
+
+function expireDesktopSchedules() {
+  for (const panel of document.querySelectorAll('.desktop-match-schedule[data-expires-at]')) {
+    const expiry = Number(panel.dataset.expiresAt);
+    if (expiry > 0 && Date.now() >= expiry) panel.remove();
+  }
+}
+setInterval(expireDesktopSchedules, 1000);
+document.addEventListener('visibilitychange', expireDesktopSchedules);
+
 async function loadAll() {
   const loader = document.getElementById('loader');
   const empty = document.getElementById('emptyState');
@@ -215,7 +278,7 @@ async function loadAll() {
   try {
     const [resEquipos, resPartidos] = await Promise.all([
       supabase.from('equipos').select('id, nombre'),
-      supabase.from('partidos').select('id, categoria, grupo, jornada, estado, equipo_local_id, equipo_visitante_id, equipo_local:equipos!partidos_equipo_local_id_fkey(nombre), equipo_visitante:equipos!partidos_equipo_visitante_id_fkey(nombre), goles_local, goles_visitante, cancha, fecha_hora')
+      loadFixtureMatches()
     ]);
 
     const resInsc = await supabase.from('inscripciones_equipos').select('equipo_id, categoria, grupo');
@@ -245,7 +308,7 @@ async function loadAll() {
       // Determinar a qué tabId pertenece
       let tabId = String(m.categoria || '').trim();
       if (m.grupo) {
-        tabId += ' ' + String(m.grupo).trim();
+        tabId += ' GRP ' + String(m.grupo).trim();
       }
       
       if (!G.equipos[tabId]) G.equipos[tabId] = new Set();
@@ -261,7 +324,7 @@ async function loadAll() {
       let catStr = String(m.categoria || '').trim();
       let tabId = catStr;
       if (m.grupo) {
-        tabId += ' ' + String(m.grupo).trim();
+        tabId += ' GRP ' + String(m.grupo).trim();
       }
       const jorStr = String(m.jornada || '').trim();
       const localName = m.equipo_local?.nombre?.trim().toUpperCase() || '';
@@ -310,6 +373,10 @@ async function loadAll() {
         isFree,
         score: (golesL !== null && golesV !== null) ? `${golesL} - ${golesV}` : '',
         hora,
+        estadoOriginal: String(m.estado || '').trim().toUpperCase(),
+        oficializadoAt: m.oficializado_at || null,
+        fechaHora: m.fecha_hora || null,
+        lugar: m.lugar || '',
         cancha: m.cancha || ''
       };
     });

@@ -437,8 +437,9 @@
     .btn-submit:active { transform: scale(0.98); }
     .btn-submit:disabled { opacity: 0.7; cursor: not-allowed; }
   </style>
+  <link rel="stylesheet" href="../assets/css/sections-desktop.css?v=6" media="(min-width: 992px)" />
 </head>
-<body>
+<body class="page-fichas page-internal">
 
   <header class="site-header">
     <div class="header-inner">
@@ -450,23 +451,38 @@
         </div>
       </div>
       <button id="btn-logout">SALIR</button>
+      <a class="section-contact" hidden href="https://wa.me/51954408584" target="_blank" rel="noopener noreferrer">Contáctanos <span aria-hidden="true">↗</span></a>
     </div>
   </header>
+  <div class="page-bar section-page-bar" hidden>
+    <div class="page-bar-inner">
+      <div class="page-bar-title">Control de fichas</div>
+      <p class="section-description" hidden>Equipos, categorías y fichas de jugadores del campeonato.</p>
+    </div>
+  </div>
 
   <div class="content-wrapper">
     <!-- LOGIN -->
     <div id="login-view" class="card">
       <img src="../assets/img/logo.png" alt="Logo" class="login-logo">
+      <aside class="fichas-intro" hidden>
+        <span class="fichas-eyebrow">COPA CAJAMARCA</span>
+        <h2>TU EQUIPO.<br><span>TU CAMPEONATO.</span></h2>
+        <p>El espacio de delegados y entrenadores<br>para seguir a su equipo dentro del torneo.</p>
+      </aside>
+      <p class="desktop-login-kicker" hidden>CONTROL DE FICHAS</p>
       <h1 class="login-title">INICIAR SESIÓN</h1>
       <p class="login-sub">Ingrese su DNI de Delegado o Entrenador</p>
 
       <form id="form-login">
         <div class="dni-grid">
+          <label class="desktop-dni-label" hidden for="dni-input-single">DNI del delegado o entrenador</label>
           <input type="tel" id="dni-input-single" maxlength="8" pattern="[0-9]{8}" inputmode="numeric" placeholder="ESCRIBE TU DNI" autofocus>
         </div>
         <input type="hidden" id="dni-input">
         <button type="submit" id="btn-login" class="btn-primary">AUTENTICAR</button>
       </form>
+      <p class="desktop-login-help" hidden>¿Necesitas ayuda para ingresar?<a href="https://wa.me/51954408584" target="_blank" rel="noopener noreferrer">Contacta a la organización ↗</a></p>
     </div>
 
     <!-- DASHBOARD -->
@@ -525,6 +541,7 @@
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
       <span>Posiciones</span>
     </a>
+    <a href="/fichas/" class="bnav-item bnav-active" hidden style="display: none;" aria-current="page"><span>Fichas</span></a>
   </nav>
 
   <div id="toast"></div>

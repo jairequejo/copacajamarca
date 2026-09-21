@@ -14,6 +14,9 @@ actualizar_fixture.sql
 
 # Entornos Python
 .env
+.env.*
+!.env.example
+!.env.sample
 .venv/
 venv/
 
@@ -25,3 +28,17 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
+
+# Datos generados y reportes
+FICHAS_LISTAS/
+missing*.json
+posiciones.json
+reporte_fichas.md
+reporte_fichas.txt
+user_fixtures.txt
+llms.txt
+
+# Análisis locales basados en exportaciones temporales
+/scripts/analyze_per_game.py
+/scripts/analyze_posiciones.py
+/scripts/analyze_posiciones2.py
