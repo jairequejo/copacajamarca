@@ -18,6 +18,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700;1,900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../assets/css/fixture.css" />
   <link rel="stylesheet" href="../assets/css/desktop.css?v=3" />
+  <link rel="stylesheet" href="../assets/css/sections-desktop.css?v=6" media="(min-width: 992px)" />
 </head>
 <body class="page-fixture page-internal">
 
@@ -28,6 +29,7 @@
         <span class="header-sup">Campeonato de Menores ·</span>
         <h1 class="header-title">Copa Cajamarca</h1>
       </div>
+      <a class="section-contact" hidden href="https://wa.me/51954408584" target="_blank" rel="noopener noreferrer">Contáctanos <span aria-hidden="true">↗</span></a>
     </div>
   </header>
   <div class="page-bar">
@@ -41,6 +43,7 @@
         </svg>
         Fixture completo
       </div>
+      <p class="section-description" hidden>Consulta las jornadas, los horarios y las canchas de cada categoría.</p>
     </div>
   </div>
 
@@ -140,9 +143,11 @@
       <span>Posiciones</span>
     </a>
 
+    <a href="/fichas/" class="bnav-item" hidden style="display: none;"><span>Fichas</span></a>
   </nav>
 
   <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
-  <script type="module" src="../assets/js/fixture.js?v=3"></script>
+  <script type="module" src="../assets/js/fixture.js?v=5"></script>
+  <script type="module" src="../assets/js/sections-desktop.js?v=1"></script>
 </body>
 </html>
