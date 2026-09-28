@@ -323,12 +323,12 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const resp = await fetch(fichaUrl, { method: 'HEAD' });
         if (resp.ok) {
-          msg.innerText = 'ficha disponible cargada en pdf';
+          msg.innerText = 'Ficha fotográfica disponible (Cargada en PDF).';
         } else {
-          msg.innerText = 'Aún no se han registrado ficha en esta categoría.';
+          msg.innerText = 'Aún no se ha registrado la ficha en esta categoría.';
         }
       } catch (e) {
-        msg.innerText = 'Aún no se han registrado ficha en esta categoría.';
+        msg.innerText = 'Aún no se ha registrado la ficha en esta categoría.';
       }
       return;
     }
