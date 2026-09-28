@@ -317,8 +317,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!players || players.length === 0) {
       const msg = document.createElement('p');
       msg.style.color = '#fff';
-      msg.innerText = 'Aún no se han registrado jugadores en esta categoría.';
+      msg.innerText = 'Verificando ficha...';
       viewJugadores.appendChild(msg);
+
+      try {
+        const resp = await fetch(fichaUrl, { method: 'HEAD' });
+        if (resp.ok) {
+          msg.innerText = 'ficha disponible cargada en pdf';
+        } else {
+          msg.innerText = 'Aún no se han registrado ficha en esta categoría.';
+        }
+      } catch (e) {
+        msg.innerText = 'Aún no se han registrado ficha en esta categoría.';
+      }
       return;
     }
 
