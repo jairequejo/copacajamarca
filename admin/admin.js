@@ -1275,7 +1275,8 @@ document.addEventListener('DOMContentLoaded', () => {
           try {
             const { error: upErr } = await supabase.storage.from('fichas').upload(expectedFilename, selectedFile, {
               cacheControl: '0',
-              upsert: true
+              upsert: true,
+              contentType: selectedFile.type || 'application/pdf'
             });
             if (upErr) throw upErr;
             showToast('Ficha subida con éxito');
