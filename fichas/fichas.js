@@ -244,7 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
     currentTeam = eq;
     currentView = 'categorias';
     const logoUrl = eq.logo_url || '../assets/img/logo.png';
-    sectionTitle.innerHTML = `<div style="display:flex; align-items:center; gap:12px;"><img src="${safe(logoUrl)}" style="height:40px; width:40px; object-fit:contain; border-radius:50%; background:#fff; padding:2px;" onerror="this.src='../assets/img/logo.png'"> <span>${safe(eq.nombre)}</span></div>`;
+    sectionTitle.innerHTML = `<div style="display:flex; align-items:center; gap:12px;"><img src="${safe(logoUrl)}" style="height:40px; width:auto; object-fit:contain;" onerror="this.src='../assets/img/logo.png'"> <span>${safe(eq.nombre)}</span></div>`;
     btnBack.style.display = 'block';
     searchSection.style.display = 'none'; // Ocultar buscador al explorar a fondo
     
@@ -285,7 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
     currentView = 'jugadores';
     currentCat = cat;
     const logoUrl = currentTeam.logo_url || '../assets/img/logo.png';
-    sectionTitle.innerHTML = `<div style="display:flex; align-items:center; gap:12px;"><img src="${safe(logoUrl)}" style="height:40px; width:40px; object-fit:contain; border-radius:50%; background:#fff; padding:2px;" onerror="this.src='../assets/img/logo.png'"> <span>${cat} - ${safe(currentTeam.nombre)}</span></div>`;
+    sectionTitle.innerHTML = `<div style="display:flex; align-items:center; gap:12px;"><img src="${safe(logoUrl)}" style="height:40px; width:auto; object-fit:contain;" onerror="this.src='../assets/img/logo.png'"> <span>${cat} - ${safe(currentTeam.nombre)}</span></div>`;
     
     viewCategorias.style.display = 'none';
     
@@ -365,7 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (currentView === 'jugadores') {
       currentView = 'categorias';
       const logoUrl = currentTeam.logo_url || '../assets/img/logo.png';
-      sectionTitle.innerHTML = `<div style="display:flex; align-items:center; gap:12px;"><img src="${safe(logoUrl)}" style="height:40px; width:40px; object-fit:contain; border-radius:50%; background:#fff; padding:2px;" onerror="this.src='../assets/img/logo.png'"> <span>${safe(currentTeam.nombre)}</span></div>`;
+      sectionTitle.innerHTML = `<div style="display:flex; align-items:center; gap:12px;"><img src="${safe(logoUrl)}" style="height:40px; width:auto; object-fit:contain;" onerror="this.src='../assets/img/logo.png'"> <span>${safe(currentTeam.nombre)}</span></div>`;
       viewJugadores.style.display = 'none';
       
       viewCategorias.style.display = 'grid';
