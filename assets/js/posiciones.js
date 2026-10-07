@@ -131,6 +131,7 @@ function renderCat(cat, grupoId) {
   }
   
   h += `</div>`;
+  h += `<a class="knockout-link" href="/fixture/?cat=${encodeURIComponent(cat)}&fase=eliminatorias">Ver eliminatorias de esta categoría <span aria-hidden="true">↗</span></a>`;
   el('standingsContainer').innerHTML = h;
 }
 function setCat(id, btn) { 

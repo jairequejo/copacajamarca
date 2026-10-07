@@ -1,11 +1,36 @@
 import { supabase } from './supabase.js';
+import { buildKnockout, isFinished, advanceKnockout } from './eliminatorias-model.js?v=3';
+import { renderKnockout } from './eliminatorias.js?v=28';
+import { loadKnockoutResults, tournamentFor, loadMatchesWithMetadata } from './eliminatorias-data.js?v=2';
+import { fixtureCategoryTabs, fixtureGroupKey, resolveFixtureSelection } from './fixture-navigation.js?v=1';
 
 // ═══════════════════════════════════════════════════════════
 // ESTADO
 // ═══════════════════════════════════════════════════════════
 const G = { equipos: {}, fixture: [] };
+let standings = [], rawMatches = [], knockoutRecords = [], currentPhase = 'grupos';
 let currentCat = null;
 let currentJornada = 'todas';
+let categoryTabs = [], currentGroup = null;
+const selectedTab = () => categoryTabs.find(tab => tab.id === currentCat);
+const selectedFixtureKey = () => selectedTab()?.merged ? fixtureGroupKey(selectedTab().category, currentGroup) : currentCat;
+
+function buildPhaseTabs() {
+  const tab = selectedTab(), row = document.getElementById('phaseRow');
+  const groupButtons = tab?.merged ? tab.groups.map(group =>
+    `<button type="button" data-phase="grupos" data-group="${escapeMatchText(group)}" aria-pressed="false">Fase de grupos · Grupo ${escapeMatchText(group)}</button>`
+  ).join('') : '<button type="button" data-phase="grupos" aria-pressed="false">Fase de grupos</button>';
+  row.innerHTML = groupButtons + '<button type="button" data-phase="eliminatorias" aria-pressed="false">Eliminatorias <span>↗</span></button>';
+}
+
+function syncViewURL() {
+  const url = new URL(location.href);
+  url.searchParams.set('cat', currentCat);
+  url.searchParams.set('fase', currentPhase);
+  if (selectedTab()?.merged && currentPhase === 'grupos') url.searchParams.set('grupo', currentGroup);
+  else url.searchParams.delete('grupo');
+  history.replaceState(history.state, '', url);
+}
 
 // ═══════════════════════════════════════════════════════════
 // AGRUPADO POR CAT → JORNADA
@@ -161,8 +186,33 @@ function renderJornada(jornadaNum, matches, byeTeams) {
 }
 
 function renderFixture() {
+  const category = currentCat.split(' GRP ')[0];
+  const knockout = advanceKnockout(buildKnockout(category, standings, rawMatches), knockoutRecords, tournamentFor(category, rawMatches));
+  const isKnockout = currentPhase === 'eliminatorias';
+  const phaseRow = document.getElementById('phaseRow');
+  phaseRow.hidden = false;
+  document.querySelectorAll('[data-phase]').forEach(button => {
+    const active = button.dataset.phase === currentPhase && (!button.dataset.group || button.dataset.group === currentGroup);
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', String(active));
+    if (active && phaseRow.scrollWidth > phaseRow.clientWidth) {
+      const rowRect = phaseRow.getBoundingClientRect(), buttonRect = button.getBoundingClientRect();
+      if (buttonRect.right > rowRect.right) phaseRow.scrollLeft += buttonRect.right - rowRect.right;
+      else if (buttonRect.left < rowRect.left) phaseRow.scrollLeft += buttonRect.left - rowRect.left;
+    }
+  });
+  document.getElementById('knockoutContent').hidden = !isKnockout;
+  document.getElementById('jornadaRow').hidden = isKnockout;
+  document.getElementById('quickStats').hidden = isKnockout;
+  if (isKnockout) {
+    document.getElementById('fixtureContent').hidden = true;
+    document.getElementById('emptyState').hidden = true;
+    renderKnockout(document.getElementById('knockoutContent'), knockout);
+    return;
+  }
   const grouped = getGrouped();
-  const catData = grouped[currentCat] || {};
+  const fixtureKey = selectedFixtureKey();
+  const catData = grouped[fixtureKey] || {};
   const jornadas = Object.keys(catData).sort((a, b) => Number(a) - Number(b));
 
   const content = document.getElementById('fixtureContent');
@@ -182,12 +232,12 @@ function renderFixture() {
     : jornadas.filter(j => j === currentJornada);
 
   content.innerHTML = selected.map(j => {
-    const byeTeams = getByeTeams(currentCat, j);
+    const byeTeams = getByeTeams(fixtureKey, j);
     return renderJornada(j, catData[j], byeTeams);
   }).join('');
 
   const totalPartidos = jornadas.reduce((s, j) => s + catData[j].length, 0);
-  const totalEquipos = G.equipos[currentCat] ? G.equipos[currentCat].length : 0;
+  const totalEquipos = G.equipos[fixtureKey] ? G.equipos[fixtureKey].length : 0;
   document.getElementById('qsEquipos').textContent = totalEquipos;
   document.getElementById('qsJornadas').textContent = jornadas.length;
   document.getElementById('qsPartidos').textContent = totalPartidos;
@@ -197,43 +247,52 @@ function renderFixture() {
 // ═══════════════════════════════════════════════════════════
 // TABS Y PILLS
 // ═══════════════════════════════════════════════════════════
-function buildCatTabs(cats) {
+function buildCatTabs() {
   const wrap = document.getElementById('catTabs');
-  wrap.innerHTML = cats.map((c, i) => {
-    return `<button class="cat-tab ${c === currentCat ? 'active' : ''}" data-cat="${c}">Cat. ${c}</button>`;
+  wrap.innerHTML = categoryTabs.map(tab => {
+    return `<button class="cat-tab ${tab.id === currentCat ? 'active' : ''}" data-cat="${escapeMatchText(tab.id)}" aria-pressed="${tab.id === currentCat}">Cat. ${escapeMatchText(tab.id)}</button>`;
   }).join('');
 
-  wrap.addEventListener('click', e => {
+  wrap.onclick = e => {
     const btn = e.target.closest('.cat-tab');
     if (!btn) return;
-    wrap.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
     currentCat = btn.dataset.cat;
+    const tab = selectedTab();
+    currentGroup = tab.merged ? tab.groups[0] : tab.group;
+    currentPhase = buildKnockout(currentCat.split(' GRP ')[0], standings, rawMatches).ready ? 'eliminatorias' : 'grupos';
     currentJornada = 'todas';
+    wrap.querySelectorAll('.cat-tab').forEach(button => {
+      const active = button.dataset.cat === currentCat;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', String(active));
+    });
+    buildPhaseTabs();
     buildJornadaPills();
     renderFixture();
-  });
+    syncViewURL();
+  };
 }
 
 function buildJornadaPills() {
   const grouped = getGrouped();
-  const catData = grouped[currentCat] || {};
+  const catData = grouped[selectedFixtureKey()] || {};
   const jornadas = Object.keys(catData).sort((a, b) => Number(a) - Number(b));
 
   const row = document.getElementById('jornadaRow');
   const wrap = document.getElementById('jornadaPills');
 
   if (jornadas.length === 0) { row.hidden = true; return; }
+  if (currentJornada !== 'todas' && !jornadas.includes(currentJornada)) currentJornada = 'todas';
   row.hidden = false;
 
-  wrap.innerHTML = `<button class="jornada-pill active" data-j="todas">Todas</button>` +
+  wrap.innerHTML = `<button class="jornada-pill ${currentJornada === 'todas' ? 'active' : ''}" data-j="todas">Todas</button>` +
     jornadas.map(j => {
       const hasLive = catData[j].some(m => m.estado === 'en vivo');
       const dotHtml = hasLive ? '<span class="pill-dot"></span>' : '';
-      return `<button class="jornada-pill ${hasLive ? 'has-live' : ''}" data-j="${j}">${dotHtml}Jor. ${j}</button>`;
+      return `<button class="jornada-pill ${j === currentJornada ? 'active' : ''} ${hasLive ? 'has-live' : ''}" data-j="${j}">${dotHtml}Jor. ${j}</button>`;
     }).join('');
 
-  wrap.addEventListener('click', e => {
+  wrap.onclick = e => {
     const btn = e.target.closest('.jornada-pill');
     if (!btn) return;
     wrap.querySelectorAll('.jornada-pill').forEach(b => b.classList.remove('active'));
@@ -245,19 +304,19 @@ function buildJornadaPills() {
       const el = document.getElementById(`jornada-${currentJornada}`);
       if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
     }
-  });
+  };
 }
 
 // ═══════════════════════════════════════════════════════════
 // CARGA DE DATOS DESDE SUPABASE
 // ═══════════════════════════════════════════════════════════
 async function loadFixtureMatches() {
-  const fields = 'id, categoria, grupo, jornada, estado, equipo_local_id, equipo_visitante_id, equipo_local:equipos!partidos_equipo_local_id_fkey(nombre), equipo_visitante:equipos!partidos_equipo_visitante_id_fkey(nombre), goles_local, goles_visitante, lugar, cancha, fecha_hora';
-  const result = await supabase.from('partidos').select(`${fields}, oficializado_at`);
+  const fields = 'id, torneo_id, categoria, grupo, jornada, estado, equipo_local_id, equipo_visitante_id, equipo_local:equipos!partidos_equipo_local_id_fkey(nombre), equipo_visitante:equipos!partidos_equipo_visitante_id_fkey(nombre), goles_local, goles_visitante, lugar, cancha, fecha_hora';
+  const result = await loadMatchesWithMetadata(`${fields}, oficializado_at`);
   // Compatibilidad durante el despliegue de la migración; no inventar fechas antiguas.
   if (['42703', 'PGRST204'].includes(result.error?.code)
       && result.error.message.includes('oficializado_at')) {
-    return supabase.from('partidos').select(fields);
+    return loadMatchesWithMetadata(fields);
   }
   return result;
 }
@@ -271,39 +330,13 @@ function expireDesktopSchedules() {
 setInterval(expireDesktopSchedules, 1000);
 document.addEventListener('visibilitychange', expireDesktopSchedules);
 
-async function loadAll() {
-  const loader = document.getElementById('loader');
-  const empty = document.getElementById('emptyState');
-
-  try {
-    const [resEquipos, resPartidos] = await Promise.all([
-      supabase.from('equipos').select('id, nombre'),
-      loadFixtureMatches()
-    ]);
-
-    const resInsc = await supabase.from('inscripciones_equipos').select('equipo_id, categoria, grupo');
-
-    if (resPartidos.error) throw resPartidos.error;
-    if (resEquipos.error) throw resEquipos.error;
-    if (resInsc.error) throw resInsc.error;
-
-    const matches = resPartidos.data || [];
-    if (matches.length === 0) throw new Error('SIN_DATOS');
-
-    const inscripciones = resInsc.data || [];
-    const getGrupo = (eqId, cat) => {
-      const ins = inscripciones.find(i => String(i.equipo_id) === String(eqId) && String(i.categoria) === String(cat));
-      return ins ? ins.grupo : null;
-    };
-
+function mapFixture(matches) {
     // Mapear equipos por pestaña (tabId) a partir de partidos
     G.equipos = {};
     matches.forEach(m => {
       const loc = m.equipo_local?.nombre?.trim().toUpperCase();
       const vis = m.equipo_visitante?.nombre?.trim().toUpperCase();
       
-      const grpLoc = getGrupo(m.equipo_local_id, m.categoria);
-      const grpVis = getGrupo(m.equipo_visitante_id, m.categoria);
       
       // Determinar a qué tabId pertenece
       let tabId = String(m.categoria || '').trim();
@@ -335,15 +368,7 @@ async function loadAll() {
       let estado = 'pendiente';
       if (rawEstado.includes('vivo') || rawEstado.includes('live')) {
         estado = 'en vivo';
-      } else {
-        const gl = m.goles_local != null ? parseInt(m.goles_local, 10) : NaN;
-        const gv = m.goles_visitante != null ? parseInt(m.goles_visitante, 10) : NaN;
-        const hasScore = !isNaN(gl) && !isNaN(gv);
-        const explicitFin = rawEstado.includes('finaliz') || rawEstado.includes('terminad') ||
-                            rawEstado.includes('fin') || rawEstado.includes('complet') ||
-                            rawEstado === 'oficial' || rawEstado === 'en_revision';
-        if (hasScore || explicitFin) estado = 'finalizado';
-      }
+      } else if (isFinished(m)) estado = 'finalizado';
 
       const isProgramado = String(m.estado).trim().toUpperCase() === 'PROGRAMADO';
       const golesL = !isProgramado && m.goles_local != null && !isNaN(parseInt(m.goles_local, 10)) ? parseInt(m.goles_local, 10) : null;
@@ -381,16 +406,47 @@ async function loadAll() {
       };
     });
 
-    const groupedInit = getGrouped();
-    const catsConPartidos = Object.keys(groupedInit).sort();
-    if (catsConPartidos.length === 0) throw new Error('SIN_DATOS');
+}
 
-    currentCat = catsConPartidos[0];
-    buildCatTabs(catsConPartidos);
+async function loadAll() {
+  const loader = document.getElementById('loader');
+  const empty = document.getElementById('emptyState');
+
+  try {
+    const [resPartidos, resStandings, results] = await Promise.all([
+      loadFixtureMatches(),
+      supabase.from('view_posiciones').select('*'),
+      loadKnockoutResults()
+    ]);
+
+
+    if (resPartidos.error) throw resPartidos.error;
+    if (resStandings.error) throw resStandings.error;
+
+    const matches = resPartidos.data || [];
+    if (matches.length === 0) throw new Error('SIN_DATOS');
+
+    standings = resStandings.data || [];
+    rawMatches = matches;
+    knockoutRecords = results.records;
+
+    mapFixture(matches);
+
+    categoryTabs = fixtureCategoryTabs(matches, standings);
+    if (!categoryTabs.length) throw new Error('SIN_DATOS');
+
+    const params = new URLSearchParams(location.search);
+    const selection = resolveFixtureSelection(categoryTabs, params.get('cat'), params.get('grupo'));
+    currentCat = selection.tab.id;
+    currentGroup = selection.group;
+    currentPhase = params.get('fase') === 'grupos' ? 'grupos' : params.get('fase') === 'eliminatorias' || buildKnockout(currentCat.split(' GRP ')[0], standings, rawMatches).ready ? 'eliminatorias' : 'grupos';
+    buildCatTabs();
+    buildPhaseTabs();
     buildJornadaPills();
 
     loader.hidden = true;
     renderFixture();
+    syncViewURL();
 
   } catch (err) {
     loader.hidden = true;
@@ -402,4 +458,49 @@ async function loadAll() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', loadAll);
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('phaseRow').addEventListener('click', event => {
+    const button = event.target.closest('[data-phase]');
+    if (!button) return;
+    currentPhase = button.dataset.phase;
+    if (button.dataset.group) currentGroup = button.dataset.group;
+    currentJornada = 'todas';
+    buildJornadaPills();
+    renderFixture();
+    syncViewURL();
+  });
+  loadAll();
+});
+
+let refreshingFixture = false;
+async function refreshFixture() {
+  if (document.hidden || !currentCat || refreshingFixture) return;
+  refreshingFixture = true;
+  try {
+    const [resPartidos, resStandings, results] = await Promise.all([
+      loadFixtureMatches(), supabase.from('view_posiciones').select('*'), loadKnockoutResults()
+    ]);
+    if (resPartidos.error) throw resPartidos.error;
+    if (resStandings.error) throw resStandings.error;
+    const matches = resPartidos.data || [], rows = resStandings.data || [];
+    if (JSON.stringify(matches) === JSON.stringify(rawMatches) && JSON.stringify(rows) === JSON.stringify(standings) && JSON.stringify(results.records) === JSON.stringify(knockoutRecords)) return;
+    const category = selectedTab().category;
+    rawMatches = matches;
+    standings = rows;
+    knockoutRecords = results.records;
+    mapFixture(matches);
+    categoryTabs = fixtureCategoryTabs(matches, standings);
+    const selection = resolveFixtureSelection(categoryTabs, category, currentGroup);
+    if (!selection.tab) return;
+    currentCat = selection.tab.id;
+    currentGroup = selection.group;
+    buildCatTabs();
+    buildPhaseTabs();
+    buildJornadaPills();
+    renderFixture();
+    syncViewURL();
+  } catch (error) { console.warn('No se pudo actualizar el fixture:', error.message); }
+  finally { refreshingFixture = false; }
+}
+setInterval(refreshFixture, 30000);
+document.addEventListener('visibilitychange', refreshFixture);

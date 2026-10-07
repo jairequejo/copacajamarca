@@ -10,7 +10,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="../assets/img/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@600;700;800;900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
       --navy: #001a4d;
@@ -881,8 +881,11 @@
       .carnets-selection-row .input-dark { grid-column: auto; }
     }
   </style>
+  <link rel="stylesheet" href="../assets/css/eliminatorias.css?v=19">
+  <link rel="stylesheet" href="eliminatorias-admin.css?v=1">
+  <link rel="stylesheet" href="admin-shell.css?v=1">
 </head>
-<body>
+<body class="page-admin">
 
   <!-- ═══════════ LOGIN ═══════════ -->
   <div id="login-view">
@@ -900,13 +903,13 @@
       <form id="form-login" action="#" onsubmit="event.preventDefault();" style="display: flex; flex-direction: column;">
         <div class="input-group">
           <input type="email" id="email-input" name="email" class="vault-input"
-                 placeholder="CORREO ELECTRÓNICO" autocomplete="username">
+                 placeholder="Correo electrónico" aria-label="Correo electrónico" required autocomplete="username">
         </div>
 
         <div class="input-group">
           <input type="password" id="pass-input" name="password" class="vault-input"
-                 placeholder="CONTRASEÑA" autocomplete="current-password">
-          <button type="button" class="btn-reveal"
+                 placeholder="Contraseña" aria-label="Contraseña" required autocomplete="current-password">
+          <button type="button" class="btn-reveal" aria-label="Mostrar u ocultar contraseña"
                   onclick="const p=document.getElementById('pass-input');p.type=p.type==='password'?'text':'password';">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
@@ -914,7 +917,7 @@
           </button>
         </div>
 
-        <button type="submit" id="btn-login" class="vault-btn">Desbloquear Sistema</button>
+        <button type="submit" id="btn-login" class="vault-btn">Entrar al panel</button>
       </form>
     </div>
   </div>
@@ -922,49 +925,28 @@
   <!-- ═══════════ DASHBOARD ═══════════ -->
   <div id="dashboard">
     <!-- Header -->
-    <header class="site-header">
-      <div class="header-inner" style="max-width:860px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:14px; padding:16px;">
-        <div style="display:flex; align-items:center; gap:14px;">
-          <a href="/"><img src="../assets/img/logo.png" alt="Copa Cajamarca" style="width:56px;height:56px;border-radius:50%;background:#fff;object-fit:cover;box-shadow:0 0 0 2px rgba(255,186,0,.5),0 4px 12px rgba(0,0,0,.4);" onerror="this.style.display='none'"></a>
-          <div>
-            <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.8rem;font-weight:800;letter-spacing:0.15em;color:rgba(255,255,255,.6);text-transform:uppercase;">Copa Cajamarca</div>
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:2.2rem;color:#fff;letter-spacing:0.04em;line-height:0.95;">PANEL DE CONTROL</div>
-          </div>
-        </div>
-        <button id="btn-logout" class="btn-logout-header">SALIR</button>
-      </div>
-      <!-- Gold bar -->
-      <div style="background:var(--gold);border-bottom:3px solid #e0a300;">
-        <div style="max-width:860px;margin:0 auto;padding:12px 16px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--navy);">
-          ADMINISTRACIÓN CENTRAL
-        </div>
-      </div>
-    </header>
+    <header class="admin-header"><a class="admin-mobile-brand" href="/"><img src="../assets/img/logo.png" alt="Copa Cajamarca"></a><div class="admin-header-context"><span>Copa Cajamarca</span><strong>Administración del campeonato</strong></div><div class="admin-account"><span id="panel-account"></span><button type="button" id="btn-logout" class="panel-logout">Salir</button></div></header>
 
     <div class="content-wrapper">
-      <div class="tabs-container">
-        <button class="tab-btn active" data-target="tab-revision">En Revisión</button>
-        <button class="tab-btn" data-target="tab-programar">Programar</button>
-        <button class="tab-btn" data-target="tab-importar">Importar</button>
-        <button class="tab-btn" data-target="tab-salvavidas">Salvavidas</button>
-        <button class="tab-btn" data-target="tab-directorio">Directorio</button>
-        <button class="tab-btn" data-target="tab-carnets">Carnets</button>
-        <button class="tab-btn" data-target="tab-boleteria">Boletería</button>
-        <button class="tab-btn" data-target="tab-fichas">Fichas</button>
-      </div>
+      <aside class="tabs-container" aria-label="Secciones del administrador"><a class="sidebar-brand" href="/"><img src="../assets/img/logo.png" alt="Copa Cajamarca"><span>Copa<br>Cajamarca<small>Administración</small></span></a><nav><button type="button" class="tab-btn active" data-target="tab-inicio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10H3z"/><path d="M9 20v-7h6v7"/></svg><span>Inicio</span></button><button type="button" class="tab-btn" data-target="tab-partidos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16M3 9h5v6H3m18-6h-5v6h5"/><circle cx="12" cy="12" r="3"/></svg><span>Partidos</span></button><button type="button" class="tab-btn" data-target="tab-reclamos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11a8 8 0 0 1-8 8H6l-4 3V11a9 9 0 0 1 19 0Z"/><path d="M12 7v5m0 3h.01"/></svg><span>Reclamos</span></button><button type="button" class="tab-btn" data-target="tab-historial"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11a9 9 0 1 1 2 7M3 4v7h7m2-5v6l4 2"/></svg><span>Mis aprobaciones</span></button><button type="button" class="tab-btn" data-target="tab-mesa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0v4m-4 5v2"/></svg><span>Accesos de mesa</span></button><button type="button" class="tab-btn" data-target="tab-eliminatorias"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 6a4 4 0 0 0-5 5L3 17l4 4 6-6a4 4 0 0 0 5-5l-3 3-4-4Z"/></svg><span>Eliminatorias</span></button><button type="button" class="tab-btn" data-target="tab-programar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 6a4 4 0 0 0-5 5L3 17l4 4 6-6a4 4 0 0 0 5-5l-3 3-4-4Z"/></svg><span>Programación</span></button><button type="button" class="tab-btn" data-target="tab-mas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg><span>Herramientas</span></button><button type="button" class="tab-btn" data-target="tab-directorio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 6a4 4 0 0 0-5 5L3 17l4 4 6-6a4 4 0 0 0 5-5l-3 3-4-4Z"/></svg><span>Directorio</span></button><button type="button" class="tab-btn" data-target="tab-fichas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 6a4 4 0 0 0-5 5L3 17l4 4 6-6a4 4 0 0 0 5-5l-3 3-4-4Z"/></svg><span>Fichas PDF</span></button><button type="button" class="tab-btn" data-target="tab-carnets"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 6a4 4 0 0 0-5 5L3 17l4 4 6-6a4 4 0 0 0 5-5l-3 3-4-4Z"/></svg><span>Carnets</span></button><button type="button" class="tab-btn" data-target="tab-boleteria"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 6a4 4 0 0 0-5 5L3 17l4 4 6-6a4 4 0 0 0 5-5l-3 3-4-4Z"/></svg><span>Boletería</span></button><button type="button" class="tab-btn" data-target="tab-importar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 6a4 4 0 0 0-5 5L3 17l4 4 6-6a4 4 0 0 0 5-5l-3 3-4-4Z"/></svg><span>Importar fixture</span></button><button type="button" class="tab-btn" data-target="tab-salvavidas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 6a4 4 0 0 0-5 5L3 17l4 4 6-6a4 4 0 0 0 5-5l-3 3-4-4Z"/></svg><span>Crear partido</span></button></nav><a class="sidebar-public" href="/fixture/">Ver el campeonato</a></aside>
 
-      <!-- Pestaña Revisión -->
-      <div id="tab-revision" class="tab-content active">
-        <div class="card">
-          <h2 class="card-header-title">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-            PARTIDOS POR APROBAR
-          </h2>
-          <div id="lista-revision" style="color: rgba(255,255,255,0.7); font-size: 1.1rem; text-align: center; padding: 20px 0;">Cargando partidos...</div>
-        </div>
-      </div>
-
+      <div class="panel-heading"><div><h1 id="panel-title" tabindex="-1">Mesa de control</h1><p id="panel-subtitle">El campeonato, en tus manos.</p></div><button type="button" id="panel-refresh" class="panel-secondary">Actualizar</button></div><p id="panel-connection" class="panel-connection" role="status" aria-live="polite"></p>
+<div id="panel-filters" class="panel-filters"><label>Categoría<select id="panel-category"><option value="">Todas las categorías</option></select></label><label class="panel-search-label">Buscar partido<input type="search" id="panel-search" placeholder="Equipo, cancha o reclamo" autocomplete="off"></label><label id="panel-status-wrap" hidden>Estado<select id="panel-status"><option value="">Todos los estados</option><option value="EN_REVISION">Por aprobar</option><option value="EN_VIVO">En vivo</option><option value="PROGRAMADO">Programado</option><option value="OFICIAL">Oficial</option><option value="FINALIZADO">Finalizado</option></select></label></div>
+<section id="tab-inicio" class="tab-content active"><div class="panel-summary"><button data-panel-target="tab-partidos"><b data-count="review">0</b><span>Por aprobar</span></button><button data-panel-target="tab-reclamos"><b data-count="claims">0</b><span>Con reclamo</span></button><button data-panel-target="tab-partidos"><b data-count="official">0</b><span>Oficiales</span></button></div><div class="section-heading"><h2>Resultados por revisar</h2><span>La decisión final es tuya</span></div><div id="review-list" class="panel-match-list"></div><div class="section-heading"><h2>Por categoría</h2></div><div id="category-overview" class="category-overview"></div></section>
+<section id="tab-partidos" class="tab-content"><div class="section-heading"><h2>Actas del campeonato</h2><span id="matches-count"></span></div><div id="matches-list" class="panel-match-list"></div></section>
+<section id="tab-reclamos" class="tab-content"><div class="section-heading"><h2>Reclamos de mesa</h2></div><p class="panel-description">El reclamo se conserva en el acta, incluso después de oficializar el resultado.</p><div id="claims-list" class="panel-match-list"></div></section>
+<section id="tab-historial" class="tab-content"><p id="history-note" class="panel-description" role="status"></p><div id="history-list"></div><button type="button" id="history-more" class="panel-secondary" hidden>Cargar anteriores</button></section>
+<section id="tab-mesa" class="tab-content"><p id="mesa-note" class="panel-description" role="status"></p><div id="mesa-users" class="mesa-users"></div></section>
+<section id="tab-mas" class="tab-content"><div class="section-heading"><h2>Organizar el campeonato</h2></div><div class="panel-tools"><button type="button" data-tool-target="tab-mesa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0v4m-4 5v2"/></svg><strong>Accesos de mesa</strong><span>Actualiza contraseñas de las mesas.</span></button><button type="button" data-tool-target="tab-programar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 6a4 4 0 0 0-5 5L3 17l4 4 6-6a4 4 0 0 0 5-5l-3 3-4-4Z"/></svg><strong>Programación</strong><span>Fechas, horarios y canchas.</span></button><button type="button" data-tool-target="tab-eliminatorias"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 6a4 4 0 0 0-5 5L3 17l4 4 6-6a4 4 0 0 0 5-5l-3 3-4-4Z"/></svg><strong>Eliminatorias</strong><span>Resultados y banners del cuadro final.</span></button><button type="button" data-tool-target="tab-directorio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 6a4 4 0 0 0-5 5L3 17l4 4 6-6a4 4 0 0 0 5-5l-3 3-4-4Z"/></svg><strong>Directorio</strong><span>Jugadores y representantes.</span></button><button type="button" data-tool-target="tab-fichas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 6a4 4 0 0 0-5 5L3 17l4 4 6-6a4 4 0 0 0 5-5l-3 3-4-4Z"/></svg><strong>Fichas PDF</strong><span>Consulta y publica documentos.</span></button><button type="button" data-tool-target="tab-carnets"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 6a4 4 0 0 0-5 5L3 17l4 4 6-6a4 4 0 0 0 5-5l-3 3-4-4Z"/></svg><strong>Carnets</strong><span>Identificaciones para imprimir.</span></button><button type="button" data-tool-target="tab-boleteria"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 6a4 4 0 0 0-5 5L3 17l4 4 6-6a4 4 0 0 0 5-5l-3 3-4-4Z"/></svg><strong>Boletería</strong><span>Ventas y accesos al recinto.</span></button><button type="button" data-tool-target="tab-importar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 6a4 4 0 0 0-5 5L3 17l4 4 6-6a4 4 0 0 0 5-5l-3 3-4-4Z"/></svg><strong>Importar fixture</strong><span>Carga jornadas desde Excel.</span></button><button type="button" data-tool-target="tab-salvavidas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 6a4 4 0 0 0-5 5L3 17l4 4 6-6a4 4 0 0 0 5-5l-3 3-4-4Z"/></svg><strong>Crear partido</strong><span>Registra un encuentro adicional.</span></button></div></section>
       <!-- Pestaña Programar -->
+      <div id="tab-eliminatorias" class="tab-content">
+        <h2>Eliminatorias</h2>
+        <p class="ka-help">Registra semifinales, final y tercer puesto. Oficializa el marcador para avanzar al ganador; si empatan, registra los penales. Estos resultados no modifican la tabla de grupos.</p>
+        <div class="ka-toolbar"><label>Categoría <select aria-label="Categoría de eliminatorias"></select></label><button type="button" class="btn-buscar ka-reload">Actualizar</button></div>
+        <p class="ka-status" role="status" aria-live="polite"></p>
+        <div class="ka-matches"></div>
+        <div class="ka-preview"></div>
+      </div>
       <div id="tab-programar" class="tab-content">
         <div class="card">
           <h2 class="card-header-title">
@@ -1225,11 +1207,12 @@
   </div>
 
 
+<nav class="admin-bottom-nav" aria-label="Navegación del administrador"><button type="button" data-panel-target="tab-inicio" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10H3z"/><path d="M9 20v-7h6v7"/></svg><span>Inicio</span></button><button type="button" data-panel-target="tab-partidos" aria-current="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16M3 9h5v6H3m18-6h-5v6h5"/><circle cx="12" cy="12" r="3"/></svg><span>Partidos</span></button><button type="button" data-panel-target="tab-reclamos" aria-current="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11a8 8 0 0 1-8 8H6l-4 3V11a9 9 0 0 1 19 0Z"/><path d="M12 7v5m0 3h.01"/></svg><span>Reclamos</span></button><button type="button" data-panel-target="tab-historial" aria-current="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11a9 9 0 1 1 2 7M3 4v7h7m2-5v6l4 2"/></svg><span>Historial</span></button><button type="button" data-panel-target="tab-mas" aria-current="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg><span>Más</span></button></nav>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="../assets/js/qrcode.min.js"></script>
-  <script type="module" src="admin.js?v=34"></script>
+  <script type="module" src="admin.js?v=59"></script>
 </body>
 </html>

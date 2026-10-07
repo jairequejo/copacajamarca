@@ -1,6 +1,9 @@
 import { supabase } from '../assets/js/supabase.js';
+import { initAdminPanel } from './admin-panel.js?v=1';
+import { initKnockoutAdmin } from './eliminatorias-admin.js?v=25';
 
 document.addEventListener('DOMContentLoaded', () => {
+  initKnockoutAdmin();
   const loginView = document.getElementById('login-view');
   const dashboardView = document.getElementById('dashboard');
   const btnLogin = document.getElementById('btn-login');
@@ -33,14 +36,22 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  const panel = initAdminPanel(supabase, showToast);
+  async function isAdminUser(user) {
+    const {data,error}=await supabase.rpc('es_admin_panel');
+    if(!error)return data===true;
+    if(error.code==='PGRST202')return user.email?.includes('admin');
+    throw error;
+  }
+
   // --- AUTH LOGIC ---
   const checkSession = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
-      if (session.user.email.includes('admin')) {
+      if (await isAdminUser(session.user)) {
         loginView.style.display = 'none';
         dashboardView.style.display = 'block';
-        cargarRevisiones();
+        panel.start(session);
         cargarEquiposParaSelect(); // solo aquí — no duplicar en submit
       } else {
         showToast('Acceso denegado. No eres Administrador.', true);
@@ -48,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   };
-  checkSession();
+  checkSession().catch(() => showToast('No se pudo verificar la sesión. Reintenta el ingreso.', true));
 
   document.getElementById('form-login').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -58,18 +69,20 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!email || !password) return showToast('Llena los campos', true);
 
     btnLogin.innerText = "Verificando...";
+    btnLogin.disabled = true;
+    try {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
       showToast('Credenciales Inválidas', true);
       btnLogin.innerText = "Desbloquear";
     } else {
-      if (data.user.email.includes('admin')) {
+      if (await isAdminUser(data.user)) {
         btnLogin.innerText = '¡Entrando!';
         setTimeout(() => {
           loginView.style.display = 'none';
           dashboardView.style.display = 'block';
-          cargarRevisiones();
+          panel.start(data.session);
           cargarEquiposParaSelect();
         }, 800);
       } else {
@@ -78,6 +91,8 @@ document.addEventListener('DOMContentLoaded', () => {
         btnLogin.innerText = "Desbloquear";
       }
     }
+    } catch(error) { showToast('No se pudo verificar el acceso. Intenta nuevamente.', true); }
+    finally { btnLogin.disabled=false; if(dashboardView.style.display!=='block')btnLogin.innerText='Entrar al panel'; }
   });
 
   // --- LOGOUT ---
@@ -85,121 +100,6 @@ document.addEventListener('DOMContentLoaded', () => {
     await supabase.auth.signOut();
     location.reload();
   });
-
-  // --- TAB: REVISIÓN ---
-  async function cargarRevisiones() {
-    listaRevision.innerHTML = '<p>Buscando partidos por aprobar...</p>';
-    
-    const { data, error } = await supabase
-      .from('partidos')
-      .select(`
-        id, goles_local, goles_visitante, categoria, cancha, fecha_hora, reclamo,
-        equipo_local:equipos!partidos_equipo_local_id_fkey(nombre),
-        equipo_visitante:equipos!partidos_equipo_visitante_id_fkey(nombre)
-      `)
-      .eq('estado', 'EN_REVISION')
-      .order('fecha_hora', { ascending: false });
-
-    if (error) {
-      console.error(error);
-      return showToast('Error al cargar', true);
-    }
-
-    if ((data || []).length === 0) {
-      listaRevision.innerHTML = '<p style="color:#64748b; text-align:center;">Todo al día. No hay partidos pendientes.</p>';
-      return;
-    }
-
-    listaRevision.innerHTML = '';
-    data.forEach(p => {
-      const card = document.createElement('div');
-      card.className = 'partido-card';
-      card.dataset.id = p.id;
-      card.innerHTML = `
-        <div class="partido-header">
-          <span>CAT: ${safe(p.categoria)}</span>
-          <span>${safe(p.cancha || 'Cancha Libre')}</span>
-        </div>
-        <div class="score-row" style="display:flex; align-items:center; justify-content:center; margin:15px 0;">
-          <div class="team-name" style="text-align:right; flex:1;">${safe(p.equipo_local?.nombre)}</div>
-          <div style="display:flex; gap:10px; margin: 0 20px; align-items:center;">
-            <input type="number" id="admin-gl-${p.id}" value="${p.goles_local || 0}" readonly style="width:50px; padding:8px; font-size:1.2rem; text-align:center; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.05); color:#fff; border-radius:6px; font-family:'Bebas Neue',sans-serif; opacity:0.6; pointer-events:none;">
-            <span style="font-size:1.2rem; font-weight:bold; color:var(--gold);">-</span>
-            <input type="number" id="admin-gv-${p.id}" value="${p.goles_visitante || 0}" readonly style="width:50px; padding:8px; font-size:1.2rem; text-align:center; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.05); color:#fff; border-radius:6px; font-family:'Bebas Neue',sans-serif; opacity:0.6; pointer-events:none;">
-          </div>
-          <div class="team-name" style="text-align:left; flex:1;">${safe(p.equipo_visitante?.nombre)}</div>
-        </div>
-        ${p.reclamo ? `<div style="background:rgba(214,13,13,0.15); border:1px solid rgba(214,13,13,0.4); padding:12px; border-radius:8px; margin-bottom:15px; color:#ffba00; font-size:0.95rem; font-family:'Barlow',sans-serif;"><strong>⚠️ OBSERVACIÓN / RECLAMO:</strong><br>${safe(p.reclamo)}</div>` : ''}
-        <div style="display:flex; gap:10px;">
-          <button class="btn-editar-admin" data-action="habilitar-edicion" style="flex:1; background:transparent; border:1px solid var(--gold); color:var(--gold); padding:14px; border-radius:10px; font-family:'Barlow Condensed',sans-serif; font-size:1.1rem; font-weight:800; text-transform:uppercase; cursor:pointer; transition:0.2s;">✏️ Editar</button>
-          <button class="btn-aprobar" data-action="aprobar" style="flex:2;">Hacer Oficial</button>
-        </div>
-      `;
-      listaRevision.appendChild(card);
-    });
-
-    // Delegación de eventos — sin window.*
-    listaRevision.querySelectorAll('[data-action="aprobar"]').forEach(btn => {
-      btn.addEventListener('click', () => aprobarPartido(btn.closest('.partido-card').dataset.id));
-    });
-
-    listaRevision.querySelectorAll('[data-action="habilitar-edicion"]').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const card = e.target.closest('.partido-card');
-        const inputs = card.querySelectorAll('input[type="number"]');
-        
-        if (e.target.dataset.editing === 'true') {
-          // Cancelar edición
-          inputs.forEach(inp => {
-            inp.setAttribute('readonly', 'true');
-            inp.style.pointerEvents = 'none';
-            inp.style.opacity = '0.6';
-            inp.style.border = '1px solid rgba(255,255,255,0.05)';
-            inp.style.background = 'rgba(0,0,0,0.4)';
-            inp.value = inp.dataset.original; // Restaurar valor
-          });
-          e.target.dataset.editing = 'false';
-          e.target.innerHTML = '✏️ Editar';
-          e.target.style.color = 'var(--gold)';
-          e.target.style.borderColor = 'var(--gold)';
-        } else {
-          // Habilitar edición
-          inputs.forEach(inp => {
-            inp.dataset.original = inp.value; // Guardar valor original
-            inp.removeAttribute('readonly');
-            inp.style.pointerEvents = 'auto';
-            inp.style.opacity = '1';
-            inp.style.border = '1px solid var(--gold)';
-            inp.style.background = 'rgba(255,186,0,0.1)';
-          });
-          e.target.dataset.editing = 'true';
-          e.target.innerHTML = '❌ Cancelar';
-          e.target.style.color = '#ef4444';
-          e.target.style.borderColor = '#ef4444';
-        }
-      });
-    });
-  }
-
-  // Fuera del window — dentro del closure
-  async function aprobarPartido(id) {
-    if (!confirm('¿Confirma que el resultado es correcto? Se publicará en la tabla general.')) return;
-    
-    const gl = parseInt(document.getElementById(`admin-gl-${id}`).value) || 0;
-    const gv = parseInt(document.getElementById(`admin-gv-${id}`).value) || 0;
-
-    const { error } = await supabase
-      .from('partidos')
-      .update({ estado: 'OFICIAL', goles_local: gl, goles_visitante: gv })
-      .eq('id', id);
-
-    if (error) {
-      showToast('Error al aprobar', true);
-    } else {
-      showToast('Partido OFICIALIZADO');
-      cargarRevisiones();
-    }
-  };
 
   // --- TAB: PROGRAMAR JORNADA ---
   const inputJornada = document.getElementById('input-jornada');

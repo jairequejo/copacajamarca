@@ -392,3 +392,6 @@ body {
   margin-right: 8px;
 }
 .team-name-pos { display: flex; align-items: center; }
+
+.knockout-link { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:14px 0 22px; padding:14px 16px; border:1px solid rgba(255,255,255,.16); border-radius:10px; color:var(--gold,#ffc400); background:var(--navy,#001a4d); text-decoration:none; font-size:.84rem; font-weight:600; }
+.knockout-link:focus-visible { outline:3px solid #ffc400; outline-offset:3px; }
