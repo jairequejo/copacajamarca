@@ -1,0 +1,16 @@
+import { PGlite } from '../.local-work/tmp/knockout-sql-test/node_modules/@electric-sql/pglite/dist/index.js';
+import { readFile } from 'node:fs/promises';
+import assert from 'node:assert/strict';
+const db=new PGlite();
+await db.exec(`create table partidos(id integer primary key,torneo_id uuid,categoria text,goles_local integer,goles_visitante integer,estado text,fecha_hora timestamptz);insert into partidos values(1,'a0b08312-9546-4d93-b0bc-bd178297236a','2014',2,1,'OFICIAL','2026-09-30T15:00:00Z'),(2,null,'2016',null,null,'PROGRAMADO',null);`);
+const before=(await db.query('select * from partidos order by id')).rows;
+const sql=(await readFile('supabase/migrations/20261001000100_clausura_2026.sql','utf8')).replace(/^\uFEFF/,'');
+await db.exec(sql);
+await db.exec(sql);
+const after=(await db.query('select * from partidos order by id')).rows;
+assert.deepEqual(after.map(({etapa,temporada,...row})=>row),before);
+assert.ok(after.every(row=>row.etapa==='Clausura'&&row.temporada===2026));
+await db.exec("insert into partidos(id,categoria,estado) values(3,'2018','PROGRAMADO')");
+assert.deepEqual((await db.query('select etapa,temporada from partidos where id=3')).rows[0],{etapa:'Clausura',temporada:2026});
+await db.close();
+console.log('SQL OK: todos los partidos, incluido torneo_id nulo; conserva resultados/fechas, permite repetir ejecución y asigna defaults a nuevos partidos.');

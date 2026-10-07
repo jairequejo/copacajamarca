@@ -1,0 +1,111 @@
+/* Phase navigation stays inside the fixture's existing responsive gutters. */
+.phase-row { display:flex; gap:24px; padding:0 14px; border-top:1px solid #edf1f7; overflow-x:auto; scrollbar-width:none; }
+.phase-row::-webkit-scrollbar { display:none; }
+.phase-row button { flex-shrink:0; min-height:44px; white-space:nowrap; color:#66748a; font-size:.85rem; font-weight:600; border-bottom:3px solid transparent; }
+.phase-row button.active { color:#001a4d; border-bottom-color:#e8ae00; }
+.phase-row button span { margin-left:5px; color:#b18600; }
+.phase-row button:focus-visible,.ko-section button:focus-visible,.ko-dialog :focus-visible { outline:3px solid #2275d7; outline-offset:3px; }
+.ko-section { padding:8px 0 24px; }
+.ko-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; }
+.ko-eyebrow { display:block; color:#68758b; font-size:.66rem; font-weight:600; text-transform:uppercase; letter-spacing:.1em; margin-bottom:7px; }
+.ko-heading h2 { font-family:'Barlow Condensed',sans-serif; font-size:clamp(1.8rem,4vw,2.7rem); line-height:1.05; font-weight:800; }
+.ko-share { flex-shrink:0; display:flex; align-items:center; gap:6px; min-height:44px; padding:0 10px; color:#28496f; font-size:.8rem; border:1px solid #cfdae9; border-radius:9px; background:#fff; }
+.ko-share:disabled { opacity:.45; cursor:default; }
+.ko-status { font-size:.82rem; line-height:1.6; color:#647188; max-width:650px; margin-bottom:27px; }
+.ko-status::before { content:''; display:inline-block; width:6px; height:6px; background:#d0a13e; border-radius:50%; margin-right:8px; vertical-align:middle; }
+.ko-ready::before { background:#249978; }
+.ko-rule { margin-top:25px; padding-top:18px; border-top:1px solid #dce4ee; font-size:.76rem; color:#536784; line-height:1.6; }
+.ko-footnote { font-size:.72rem; color:#7a889b; line-height:1.6; margin-top:4px; }
+.ko-dialog { margin:auto; padding:18px; width:min(520px,calc(100% - 24px)); max-height:92dvh; overflow:auto; border:0; border-radius:16px; color:#001a4d; box-shadow:0 20px 80px #0007; }
+.ko-dialog::backdrop { background:#00132dc9; backdrop-filter:blur(4px); }
+.ko-dialog-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; }
+.ko-dialog h2 { font-size:1rem; }
+.ko-close { font-size:1.7rem; width:56px; height:56px; color:#001a4d; }
+.ko-preview { width:100%; max-height:62dvh; object-fit:contain; border-radius:8px; }
+.ko-actions { display:flex; justify-content:center; flex-wrap:wrap; gap:10px; margin-top:16px; }
+.ko-actions a,.ko-actions button { display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:0 18px; border-radius:8px; background:#001a4d; color:white; text-decoration:none; font-size:.85rem; }
+.ko-actions button { background:#ffc400; color:#001a4d; }
+.ko-feedback { font-size:.8rem; margin-top:8px; }
+@media(min-width:992px) {
+  .page-fixture .phase-row { max-width:var(--desktop-max); margin:auto; padding:0 var(--desktop-gutter); }
+  .ko-section { padding-top:15px; }
+  .ko-heading { margin-bottom:20px; }
+}
+@media(max-width:360px) { .ko-heading { align-items:flex-start; } .ko-share { padding:0 8px; font-size:.73rem; } .ko-eyebrow { font-size:.6rem; } }
+
+/* Match the current desktop sections: same gutters, typography and quiet borders. */
+@media (min-width:992px) {
+  .page-fixture .phase-row { max-width:none; margin:0; padding:0; }
+  .page-fixture .ko-section { padding-top:0; }
+  .page-fixture .ko-heading h2 { font-family:var(--font-display); font-weight:400; letter-spacing:.015em; }
+  .page-fixture .ko-share { border-radius:4px; }
+}
+
+.ko-graphic { overflow:hidden; border-radius:12px; background:#050b24; border:1px solid #194886; }
+.ko-graphic canvas { display:block; width:100%; height:auto; }
+.ko-loading { padding:24px; color:#fff; }
+.ko-accessible { position:absolute; width:1px; height:1px; padding:0; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+.ko-export-size { color:#65758c; font-size:.76rem; text-align:center; margin-top:12px; }
+@media(min-width:992px){.ko-graphic{border-radius:6px;}}
+/* Mirror both knockout paths around the central trophy, on every screen. */
+.ko-toolbar { display:flex; gap:18px; align-items:flex-start; justify-content:space-between; margin-bottom:30px; }
+.ko-toolbar .ko-status { margin:0; }
+.ko-bracket { position:relative; display:grid; grid-template-columns:1fr .85fr 1.15fr .85fr 1fr; gap:40px 28px; max-width:1180px; margin:0 auto; padding:12px 0; color:#102744; align-items:center; }
+.ko-match { min-width:0; position:relative; }
+.ko-match h3 { margin:0 0 12px; text-align:center; font-size:.8rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#536985; }
+.ko-pair { display:grid; grid-template-columns:minmax(0,1fr); gap:66px; }
+.ko-team { position:relative; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:14px; min-height:178px; padding:12px 0; border:0; background:transparent; color:#102744; box-shadow:none; min-width:0; text-align:center; z-index:1; }
+.ko-team img,.ko-team-placeholder { flex-shrink:0; width:110px; height:110px; max-width:100%; object-fit:contain; filter:drop-shadow(0 1px 1px #10274455); }
+.ko-team-placeholder { display:grid; place-items:center; background:transparent; color:#9aabc0; font-size:1.8rem; width:1em; }
+.ko-team-name { width:100%; font-family:'Barlow Condensed',sans-serif; font-size:1.2rem; font-weight:700; line-height:1.15; overflow-wrap:break-word; }
+.ko-team-name small { display:block; color:#936b06; font-size:.63rem; font-weight:600; margin-top:4px; }
+.ko-score { position:absolute; top:6px; right:calc(50% - 68px); font-size:.85rem; color:#102744; }
+.ko-team.is-winner .ko-team-name { color:#936b06; }
+.ko-team.is-pending { color:#77869a; background:transparent; }
+.ko-match-info { font-size:.7rem; color:#77869a; line-height:1.4; margin:0 0 16px; text-align:center; }
+.ko-sf-one,.ko-sf-two { grid-row:1; }
+.ko-sf-one { grid-column:1; }
+.ko-sf-two { grid-column:5; }
+.ko-final { grid-column:2 / 5; grid-row:1; margin-top:36px; }
+.ko-final h3 { color:#a47b10; font-size:1.15rem; margin-bottom:26px; }
+.ko-final-contest { display:grid; grid-template-columns:.85fr 1.15fr .85fr; gap:28px; align-items:center; }
+.ko-final .ko-match-info { margin:24px 0 0; }
+.ko-champion { position:relative; z-index:1; text-align:center; color:#a98213; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; min-width:0; }
+.ko-cup { display:block; width:100%; max-width:132px; height:auto; object-fit:contain; }
+.ko-champion small { text-transform:uppercase; font-size:.68rem; letter-spacing:.04em; line-height:1.3; }
+.ko-champion strong { font-family:'Barlow Condensed',sans-serif; font-size:1rem; color:#183452; overflow-wrap:break-word; }
+.ko-third { grid-column:1 / -1; grid-row:2; width:min(100%,420px); margin:18px auto 0; padding-top:22px; border-top:1px solid #dce4ee; }
+.ko-third .ko-pair { grid-template-columns:repeat(2,minmax(0,1fr)); gap:22px; }
+.ko-third .ko-team { min-height:126px; }
+.ko-third .ko-team img,.ko-third .ko-team-placeholder { width:56px; height:56px; }
+.ko-connectors { position:absolute; inset:0; width:100%; height:100%; overflow:visible; pointer-events:none; }
+.ko-connectors path { fill:none; stroke:#869eb7; stroke-width:1.7; stroke-linejoin:round; }
+.ko-connectors path.is-decided { stroke:#bb922e; }
+@media(max-width:699px) {
+ .ko-toolbar { gap:10px; margin-bottom:22px; }
+ .ko-toolbar .ko-status { font-size:.73rem; }
+ .ko-bracket { grid-template-columns:1fr .8fr 1.1fr .8fr 1fr; column-gap:8px; row-gap:24px; }
+ .ko-match h3 { font-size:.58rem; letter-spacing:0; margin-bottom:8px; }
+ .ko-match-info { font-size:.52rem; margin-bottom:12px; }
+ .ko-pair { gap:64px; }
+ .ko-team { min-height:132px; gap:10px; padding:12px 0; }
+ .ko-team img,.ko-team-placeholder { width:68px; height:68px; }
+ .ko-team-placeholder { width:1em; }
+ .ko-team-name { font-size:.78rem; }
+ .ko-team-name small { font-size:.5rem; }
+ .ko-score { top:4px; right:calc(50% - 35px); font-size:.63rem; }
+ .ko-final { margin-top:24px; }
+ .ko-final h3 { font-size:.82rem; margin-bottom:18px; }
+ .ko-final-contest { grid-template-columns:.8fr 1.1fr .8fr; gap:8px; }
+ .ko-final .ko-team { min-height:108px; }
+ .ko-final .ko-team img,.ko-final .ko-team-placeholder { width:52px; height:52px; }
+ .ko-final .ko-team-placeholder { width:1em; }
+ .ko-final .ko-team-name { font-size:.72rem; }
+ .ko-final .ko-match-info { margin-top:18px; }
+ .ko-champion { gap:8px; }
+ .ko-champion small { font-size:.5rem; letter-spacing:0; }
+ .ko-champion strong { font-size:.65rem; }
+ .ko-third { width:75%; margin-top:0; }
+ .ko-third .ko-team { min-height:112px; }
+ .ko-third .ko-team-name { font-size:.82rem; }
+}

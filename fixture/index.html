@@ -15,10 +15,11 @@
   <link rel="apple-touch-icon" sizes="180x180" href="../assets/img/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700;1,900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700;1,900&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../assets/css/fixture.css" />
   <link rel="stylesheet" href="../assets/css/desktop.css?v=3" />
   <link rel="stylesheet" href="../assets/css/sections-desktop.css?v=6" media="(min-width: 992px)" />
+  <link rel="stylesheet" href="../assets/css/eliminatorias.css?v=20" />
 </head>
 <body class="page-fixture page-internal">
 
@@ -56,6 +57,10 @@
         <div class="cat-tabs" id="catTabs"></div>
       </div>
     </div>
+    <div class="phase-row" id="phaseRow" hidden role="group" aria-label="Fase del campeonato">
+      <button type="button" data-phase="grupos" aria-pressed="true" class="active">Fase de grupos</button>
+      <button type="button" data-phase="eliminatorias" aria-pressed="false">Eliminatorias <span aria-hidden="true">↗</span></button>
+    </div>
     <!-- PILLS DE JORNADA -->
     <div class="filter-row jornada-row" id="jornadaRow" hidden>
       <span class="filter-label">Jor.</span>
@@ -92,6 +97,7 @@
     </div>
 
     <div id="fixtureContent" hidden></div>
+    <div id="knockoutContent" hidden></div>
 
     <div class="empty-state" id="emptyState" hidden>
       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -147,7 +153,7 @@
   </nav>
 
   <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
-  <script type="module" src="../assets/js/fixture.js?v=5"></script>
+  <script type="module" src="../assets/js/fixture.js?v=32"></script>
   <script type="module" src="../assets/js/sections-desktop.js?v=1"></script>
 </body>
 </html>
