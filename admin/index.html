@@ -880,6 +880,26 @@
       .carnets-selection-row { grid-template-columns: 1fr; }
       .carnets-selection-row .input-dark { grid-column: auto; }
     }
+    .pending-section { margin-bottom: 24px; overflow: hidden; }
+    .pending-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    .pending-header h2 { margin: 0; color: var(--gold); font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; }
+    .pending-count { min-width: 34px; padding: 5px 10px; border-radius: 999px; background: var(--red); color: #fff; font-weight: 900; text-align: center; }
+    .pending-message { color: rgba(255,255,255,.8); padding: 12px 0; }
+    .pending-table-wrap { overflow-x: auto; }
+    .pending-table { width: 100%; border-collapse: collapse; color: #fff; }
+    .pending-table th, .pending-table td { padding: 10px 12px; text-align: left; }
+    .pending-table th { color: var(--gold); font-size: .9rem; text-transform: uppercase; background: rgba(0,0,0,.2); }
+    .pending-table td { border-top: 1px solid rgba(255,255,255,.1); }
+    .pending-category { font-weight: 800; }
+    .pending-row-critical { background: rgba(239,68,68,.12); }
+    .pending-row-warning { background: rgba(245,158,11,.08); }
+    .pending-row-eliminated { opacity: .72; }
+    .risk-badge { display: inline-block; padding: 5px 9px; border-radius: 6px; font-weight: 900; white-space: nowrap; }
+    .risk-critical { background: #dc2626; color: #fff; }
+    .risk-warning { background: #f59e0b; color: #241500; }
+    .risk-eliminated { background: rgba(100,116,139,.25); color: #cbd5e1; }
+    .position-detail { display: block; color: rgba(255,255,255,.65); font-size: .8rem; white-space: nowrap; }
+    .pending-rule { padding: 0 0 12px; color: rgba(255,255,255,.7); font-size: .82rem; }
   </style>
   <link rel="stylesheet" href="../assets/css/eliminatorias.css?v=19">
   <link rel="stylesheet" href="eliminatorias-admin.css?v=1">
@@ -1186,6 +1206,13 @@
       </div>
       <!-- Pestaña Fichas -->
       <div id="tab-fichas" class="tab-content">
+        <section class="card pending-section" aria-labelledby="pending-title">
+          <div class="pending-header">
+            <h2 id="pending-title">FICHAS PDF PENDIENTES</h2>
+            <span class="pending-count" id="pending-count">—</span>
+          </div>
+          <div id="pending-content" class="pending-message" role="status">Verificando fichas publicadas...</div>
+        </section>
         <div class="card" style="border-left: 4px solid var(--gold);">
           <h2 class="card-header-title" style="color: var(--gold); border-bottom-color: rgba(255, 186, 0, 0.2);">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
@@ -1213,6 +1240,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="../assets/js/qrcode.min.js"></script>
-  <script type="module" src="admin.js?v=59"></script>
+  <script type="module" src="admin.js?v=60"></script>
 </body>
 </html>
