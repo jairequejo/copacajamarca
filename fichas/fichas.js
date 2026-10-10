@@ -48,19 +48,38 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  async function performLogin(dni, isAuto = false) {
+  async function buscarResponsable(dni, priorizarQrImpreso) {
+    const columnas = priorizarQrImpreso
+      ? ['dni_qr_impreso', 'dni']
+      : ['dni', 'dni_qr_impreso'];
+
+    for (const columna of columnas) {
+      const resultado = await supabase
+        .from('personas')
+        .select('dni, nombres, apellidos, rol, equipo_id, equipos(nombre, logo_url)')
+        .eq(columna, dni)
+        .in('rol', ['DELEGADO', 'ENTRENADOR'])
+        .maybeSingle();
+      if (resultado.error || resultado.data) return resultado;
+    }
+
+    return { data: null, error: null };
+  }
+
+  async function performLogin(dni, isAuto = false, priorizarQrImpreso = false) {
   try {
+    if (!/^\d{8}$/.test(dni)) {
+      localStorage.removeItem('fichas_dni');
+      localStorage.removeItem('fichas_dni_resuelto');
+      showToast('Ingrese un DNI válido de 8 dígitos');
+      return;
+    }
     if (!isAuto) {
       btnLogin.innerText = "VALIDANDO...";
       btnLogin.disabled = true;
     }
     
-    const { data, error } = await supabase
-      .from('personas')
-      .select('nombre_completo, rol, equipo_id, equipos(nombre, logo_url)')
-      .or(`dni.eq.${dni},dni_qr_impreso.eq.${dni}`)
-      .in('rol', ['DELEGADO', 'ENTRENADOR'])
-      .maybeSingle();
+    const { data, error } = await buscarResponsable(dni, priorizarQrImpreso);
 
     if (error) {
       btnLogin.innerText = "AUTENTICAR";
@@ -73,12 +92,15 @@ document.addEventListener('DOMContentLoaded', () => {
       btnLogin.innerText = "AUTENTICAR";
       btnLogin.disabled = false;
       localStorage.removeItem('fichas_dni'); // Clear invalid saved DNI
-      if (!isAuto) showToast('DNI no registrado como Delegado');
+      localStorage.removeItem('fichas_dni_resuelto');
+      if (!isAuto) showToast('DNI no registrado como delegado o entrenador');
       return;
     }
 
     btnLogin.innerText = "¡VALIDADO!";
-    localStorage.setItem('fichas_dni', dni);
+    // Guardar el DNI actual resuelto, no el código histórico del QR.
+    localStorage.setItem('fichas_dni', data.dni);
+    localStorage.setItem('fichas_dni_resuelto', '1');
     loggedUser = data;
     
     setTimeout(() => {
@@ -90,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (bNav) bNav.style.display = 'flex';
       
       const rolLabel = data.rol === 'ENTRENADOR' ? 'Entrenador' : 'Delegado';
-      delNombre.innerText = `HOLA, ${data.nombre_completo.split(' ')[0].toUpperCase()}`;
+      delNombre.innerText = `HOLA, ${(data.nombres || '').split(' ')[0].toUpperCase()}`;
       delEquipo.innerText = `${rolLabel}: ${data.equipos?.nombre || 'SIN EQUIPO'}`;
       
       if (data.equipos?.logo_url) {
@@ -114,16 +136,18 @@ document.addEventListener('DOMContentLoaded', () => {
           hiddenDni.value = urlDni;
         }
         
-        localStorage.setItem('fichas_dni', urlDni);
         window.history.replaceState({}, document.title, window.location.pathname);
-        performLogin(urlDni, true).catch(err => alert("Login err: " + err.message));
+        performLogin(urlDni, true, true).catch(err => alert("Login err: " + err.message));
     } catch(e) {
         alert("Auto login error: " + e.message);
     }
   } else {
     const savedDni = localStorage.getItem('fichas_dni');
-    if (savedDni) {
+    if (savedDni && localStorage.getItem('fichas_dni_resuelto') === '1') {
       performLogin(savedDni, true);
+    } else if (savedDni) {
+      // La sesión anterior no indica a cuál persona correspondía un DNI duplicado.
+      localStorage.removeItem('fichas_dni');
     }
   }
 
@@ -142,6 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   btnLogout.addEventListener('click', () => {
     localStorage.removeItem('fichas_dni');
+    localStorage.removeItem('fichas_dni_resuelto');
     location.reload();
   });
 
