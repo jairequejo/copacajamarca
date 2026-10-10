@@ -1,6 +1,7 @@
 import { supabase } from '../assets/js/supabase.js';
 import { initAdminPanel } from './admin-panel.js?v=1';
 import { initKnockoutAdmin } from './eliminatorias-admin.js?v=25';
+import { initFichasPendientes } from './fichas-pendientes.js?v=1';
 
 document.addEventListener('DOMContentLoaded', () => {
   initKnockoutAdmin();
@@ -37,6 +38,11 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   const panel = initAdminPanel(supabase, showToast);
+  const fichasPendientes = initFichasPendientes(supabase);
+  document.querySelector('[data-target="tab-fichas"]')?.addEventListener('click', () => fichasPendientes.refresh());
+  document.getElementById('panel-refresh')?.addEventListener('click', () => {
+    if (document.getElementById('tab-fichas').classList.contains('active')) fichasPendientes.refresh();
+  });
   async function isAdminUser(user) {
     const {data,error}=await supabase.rpc('es_admin_panel');
     if(!error)return data===true;
@@ -51,7 +57,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (await isAdminUser(session.user)) {
         loginView.style.display = 'none';
         dashboardView.style.display = 'block';
-        panel.start(session);
+        panel.start(session).then(() => {
+          if (document.getElementById('tab-fichas').classList.contains('active')) fichasPendientes.refresh();
+        });
         cargarEquiposParaSelect(); // solo aquí — no duplicar en submit
       } else {
         showToast('Acceso denegado. No eres Administrador.', true);
@@ -82,7 +90,9 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
           loginView.style.display = 'none';
           dashboardView.style.display = 'block';
-          panel.start(data.session);
+          panel.start(data.session).then(() => {
+            if (document.getElementById('tab-fichas').classList.contains('active')) fichasPendientes.refresh();
+          });
           cargarEquiposParaSelect();
         }, 800);
       } else {
@@ -1180,6 +1190,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             if (upErr) throw upErr;
             showToast('Ficha subida con éxito');
+            fichasPendientes.refresh();
             fichaEquipoSelect.dispatchEvent(new Event('change')); // Refrescar UI
           } catch (err) {
             statusEl.style.color = '#ef4444';
@@ -1202,6 +1213,7 @@ document.addEventListener('DOMContentLoaded', () => {
               const { error: delErr } = await supabase.storage.from('fichas').remove([expectedFilename]);
               if (delErr) throw delErr;
               showToast('Ficha eliminada');
+              fichasPendientes.refresh();
               fichaEquipoSelect.dispatchEvent(new Event('change')); // Refrescar UI
             } catch (err) {
               alert('Error al borrar: ' + err.message);
