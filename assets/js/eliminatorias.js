@@ -1,4 +1,4 @@
-import { bracketAssets, drawBracket } from './eliminatorias-graphic.js?v=24';
+import { bracketAssets, drawBracket } from './eliminatorias-graphic.js?v=25';
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const observers = new WeakMap();
 function teamBlock(match, index) {
@@ -10,6 +10,7 @@ function matchInfo(match) {
   if (match.penalties?.every(n => n !== null && n !== undefined)) return `Penales ${match.penalties.join(' – ')}`;
   if (match.estado === 'OFICIAL') return 'Resultado oficial';
   if (match.estado === 'EN_VIVO') return 'En vivo';
+  if (match.estado === 'EN_REVISION') return 'Pendiente de confirmación';
   if (match.date) return new Intl.DateTimeFormat('es-PE', {timeZone:'America/Lima',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}).format(new Date(match.date)) + (match.cancha ? ` · ${match.cancha}` : '');
   return 'Por programar';
 }

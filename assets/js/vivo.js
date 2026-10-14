@@ -90,6 +90,55 @@ function setupListeners() {
 let countdownInterval = null;
 const REFRESH_SECS = 30;
 
+const KNOCKOUT_PHASES = {
+    SF1: 'Semifinal 1',
+    SF2: 'Semifinal 2',
+    F: 'Final',
+    TP: 'Tercer puesto'
+};
+
+function splitKnockoutVenue(value) {
+    const text = String(value || '').trim();
+    const parts = text.split(/\s+-\s+/);
+    if (parts.length < 2) return { lugar: '', cancha: text };
+    return { lugar: parts.shift(), cancha: parts.join(' - ') };
+}
+
+function normalizeMatch(m, isKnockout = false) {
+    let standardEstado = 'Pendiente';
+    if (m.estado === 'EN_VIVO') standardEstado = 'En Vivo';
+    else if (['FINALIZADO', 'OFICIAL', 'EN_REVISION'].includes(m.estado)) standardEstado = 'Finalizado';
+
+    let fechaStr = '', horaStr = '';
+    if (m.fecha_hora) {
+        const d = new Date(m.fecha_hora);
+        const rawFecha = d.toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long' });
+        fechaStr = rawFecha.charAt(0).toUpperCase() + rawFecha.slice(1);
+        horaStr = d.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: true });
+    }
+
+    const venue = isKnockout
+        ? splitKnockoutVenue(m.cancha)
+        : { lugar: m.lugar || '', cancha: m.cancha || '' };
+    const phase = isKnockout ? (KNOCKOUT_PHASES[m.fase] || m.fase) : `Jor. ${m.jornada || ''}`;
+
+    return {
+        fecha: fechaStr,
+        hora: horaStr,
+        lugar: venue.lugar,
+        cancha: venue.cancha,
+        local: m.equipo_local?.nombre || 'Por definir',
+        visitante: m.equipo_visitante?.nombre || 'Por definir',
+        categoria: m.categoria?.toString() || '',
+        jornada: m.jornada || '',
+        phase,
+        isKnockout,
+        golesLocal: standardEstado === 'Pendiente' ? '' : (m.goles_local?.toString() ?? ''),
+        golesVisitante: standardEstado === 'Pendiente' ? '' : (m.goles_visitante?.toString() ?? ''),
+        estadoStandard: standardEstado
+    };
+}
+
 function startAutoRefresh() {
     if (countdownInterval) clearInterval(countdownInterval);
 
@@ -132,53 +181,39 @@ async function fetchAndRender(isSilent = false) {
     }
 
     try {
-        const { data, error } = await supabase
-            .from('partidos')
-            .select('id, fecha_hora, lugar, cancha, categoria, jornada, goles_local, goles_visitante, estado, equipo_local:equipos!partidos_equipo_local_id_fkey(nombre), equipo_visitante:equipos!partidos_equipo_visitante_id_fkey(nombre)')
-            .order('fecha_hora', { ascending: true });
+        const [regular, knockout] = await Promise.all([
+            supabase
+                .from('partidos')
+                .select('id, fecha_hora, lugar, cancha, categoria, jornada, goles_local, goles_visitante, estado, equipo_local:equipos!partidos_equipo_local_id_fkey(nombre), equipo_visitante:equipos!partidos_equipo_visitante_id_fkey(nombre)')
+                .order('fecha_hora', { ascending: true }),
+            supabase
+                .from('eliminatorias_partidos')
+                .select('id, fecha_hora, cancha, categoria, fase, goles_local, goles_visitante, estado, equipo_local:equipos!eliminatorias_partidos_equipo_local_id_fkey(nombre), equipo_visitante:equipos!eliminatorias_partidos_equipo_visitante_id_fkey(nombre)')
+                .order('fecha_hora', { ascending: true })
+        ]);
 
-        if (error) throw error;
+        if (regular.error) throw regular.error;
+        const knockoutUnavailable = ['PGRST205', '42P01'].includes(knockout.error?.code);
+        if (knockout.error && !knockoutUnavailable) throw knockout.error;
 
         const now = new Date();
         const cutoff = new Date(now.getTime() - (2 * 24 * 60 * 60 * 1000)); // Hace 2 días (48 horas)
 
-        const parsed = (data || [])
+        const rows = [
+            ...(regular.data || []).map(match => ({ match, isKnockout: false })),
+            ...(!knockout.error ? (knockout.data || []).map(match => ({ match, isKnockout: true })) : [])
+        ];
+
+        const parsed = rows
+            .sort((a, b) => new Date(a.match.fecha_hora || 0) - new Date(b.match.fecha_hora || 0))
             .filter(m => {
-                if (m.estado === 'EN_VIVO') return true;
-                if (!m.fecha_hora) return false;
+                if (m.match.estado === 'EN_VIVO') return true;
+                if (!m.match.fecha_hora) return false;
                 
-                const matchDate = new Date(m.fecha_hora);
+                const matchDate = new Date(m.match.fecha_hora);
                 return matchDate >= cutoff;
             })
-            .map(m => {
-            let standardEstado = 'Pendiente';
-            if (m.estado === 'EN_VIVO') standardEstado = 'En Vivo';
-            else if (m.estado === 'FINALIZADO' || m.estado === 'OFICIAL' || m.estado === 'EN_REVISION') standardEstado = 'Finalizado';
-            
-            let fechaStr = '', horaStr = '';
-            if (m.fecha_hora) {
-                const d = new Date(m.fecha_hora);
-                // Format date as 'Sábado 15 de agosto'
-                const rawFecha = d.toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long' });
-                // Capitalize first letter
-                fechaStr = rawFecha.charAt(0).toUpperCase() + rawFecha.slice(1);
-                horaStr = d.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: true });
-            }
-
-            return {
-                fecha: fechaStr,
-                hora: horaStr,
-                lugar: m.lugar || '',
-                cancha: m.cancha || '',
-                local: m.equipo_local?.nombre || 'Por definir',
-                visitante: m.equipo_visitante?.nombre || 'Por definir',
-                categoria: m.categoria?.toString() || '',
-                jornada: m.jornada || '',
-                golesLocal: standardEstado === 'Pendiente' ? '' : (m.goles_local?.toString() ?? ''),
-                golesVisitante: standardEstado === 'Pendiente' ? '' : (m.goles_visitante?.toString() ?? ''),
-                estadoStandard: standardEstado
-            };
-        });
+            .map(({ match, isKnockout }) => normalizeMatch(match, isKnockout));
 
         const newJson = JSON.stringify(parsed);
         const dataChanged = newJson !== lastMatchesJson;
@@ -299,7 +334,7 @@ function renderMatches() {
         html += `
             <div class="match-card" data-estado="${estadoLC}">
                 <div class="card-top">
-                    <span class="card-cat">Cat. ${match.categoria} — Jor. ${match.jornada}</span>
+                    <span class="card-cat">Cat. ${match.categoria} — ${match.phase}</span>
                     <span class="status-chip ${stateClass}">
                         ${stateClass === 'en-curso' ? '<span class="pulse-dot"></span>' : ''}
                         ${match.estadoStandard}

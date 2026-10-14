@@ -72,7 +72,7 @@ function mark(ctx,t,assets,cx,y,size){
 function caption(ctx,m,cx,y,width){
  const pens=m.penalties?.every(n=>n!==null&&n!==undefined)?`Penales ${m.penalties.join(' – ')}`:'';
  const date=m.date?new Intl.DateTimeFormat('es-PE',{timeZone:'America/Lima',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}).format(new Date(m.date)):'';
- const label=pens||[date,m.cancha].filter(Boolean).join(' · ')||(m.estado==='OFICIAL'?'Resultado oficial':m.estado==='EN_VIVO'?'En vivo':'Por programar');
+ const label=pens||[date,m.cancha].filter(Boolean).join(' · ')||(m.estado==='OFICIAL'?'Resultado oficial':m.estado==='EN_VIVO'?'En vivo':m.estado==='EN_REVISION'?'Por confirmar':'Por programar');
  text(ctx,label,cx,y,fit(ctx,label,22,width,'Copa Sans'),C.muted,'center','Copa Sans');
 }
 export function bannerStage(bracket){if(bracket.champion)return 'champion';if(bracket.matches.slice(0,2).every(m=>m.decision)&&bracket.matches[2].teams.every(t=>t.id&&!t.pending))return 'final';return 'semifinals';}

@@ -84,6 +84,7 @@ export function advanceKnockout(bracket, records = [], tournamentId = null) {
   result.third = result.matches[3].decision?.winner || null;
   if (result.champion) result.message = `Campeón: ${result.champion.name}.`;
   else if (result.matches.some(m => m.estado === 'EN_VIVO')) result.message = 'Eliminatorias en vivo. El ganador avanza al oficializar el resultado.';
+  else if (result.matches.some(m => m.estado === 'EN_REVISION')) result.message = 'Resultado enviado por mesa. Pendiente de confirmación administrativa.';
   else if (result.matches.slice(0, 2).every(m => m.decision)) result.message = 'Finalistas definidos. La final y el tercer puesto ya tienen sus equipos.';
   else if (result.matches.some(m => m.decision)) result.message = 'El cuadro se actualiza con los resultados oficiales de las semifinales.';
   else if (result.matches.some(m => m.date)) result.message = 'Eliminatorias programadas. Horarios en hora de Perú.';

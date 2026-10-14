@@ -74,6 +74,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- CARGAR PARTIDOS ---
   let allPartidosData = [];
+  const fasesEliminatorias = { SF1:'Semifinal 1', SF2:'Semifinal 2', F:'Final', TP:'Tercer puesto' };
+
+  function separarSedeEliminatoria(value) {
+    const parts = String(value || '').trim().split(/\s+-\s+/);
+    if (parts.length < 2) return { lugar:'', cancha:parts[0] || '' };
+    return { lugar:parts.shift(), cancha:parts.join(' - ') };
+  }
+
+  async function guardarEliminatoriaMesa(partido, cambios) {
+    const payload = {
+      p_id: partido.id,
+      p_version: partido.updated_at,
+      p_estado: cambios.estado ?? partido.estado,
+      p_goles_local: cambios.goles_local !== undefined ? cambios.goles_local : partido.goles_local,
+      p_goles_visitante: cambios.goles_visitante !== undefined ? cambios.goles_visitante : partido.goles_visitante,
+      p_penales_local: cambios.penales_local !== undefined ? cambios.penales_local : partido.penales_local,
+      p_penales_visitante: cambios.penales_visitante !== undefined ? cambios.penales_visitante : partido.penales_visitante,
+      p_reclamo: cambios.reclamo !== undefined ? cambios.reclamo : partido.reclamo
+    };
+    const { data, error } = await supabase.rpc('guardar_eliminatoria_mesa', payload);
+    if (error) throw error;
+    const saved = Array.isArray(data) ? data[0] : data;
+    if (saved) Object.assign(partido, saved);
+    return saved;
+  }
 
   async function cargarPartidos() {
     if (allPartidosData.length === 0) {
@@ -82,31 +107,36 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const cutoffISO = new Date(Date.now() - (4 * 24 * 60 * 60 * 1000)).toISOString();
 
-    const { data, error } = await supabase
-      .from('partidos')
-      .select(`
-        id,
-        goles_local,
-        goles_visitante,
-        estado,
-        fecha_hora,
-        cancha,
-        lugar,
-        categoria,
-        reclamo,
-        equipo_local:equipos!partidos_equipo_local_id_fkey(nombre),
-        equipo_visitante:equipos!partidos_equipo_visitante_id_fkey(nombre)
-      `)
-      .not('fecha_hora', 'is', null)
-      .gte('fecha_hora', cutoffISO)
-      .order('fecha_hora', { ascending: true })
-      .order('cancha', { ascending: true, nullsFirst: true });
+    const [regular, knockout] = await Promise.all([
+      supabase
+        .from('partidos')
+        .select(`id,goles_local,goles_visitante,estado,fecha_hora,cancha,lugar,categoria,reclamo,equipo_local:equipos!partidos_equipo_local_id_fkey(nombre),equipo_visitante:equipos!partidos_equipo_visitante_id_fkey(nombre)`)
+        .not('fecha_hora', 'is', null)
+        .gte('fecha_hora', cutoffISO)
+        .order('fecha_hora', { ascending: true })
+        .order('cancha', { ascending: true, nullsFirst: true }),
+      supabase
+        .from('eliminatorias_partidos')
+        .select(`id,goles_local,goles_visitante,penales_local,penales_visitante,estado,fecha_hora,cancha,categoria,fase,reclamo,updated_at,equipo_local:equipos!eliminatorias_partidos_equipo_local_id_fkey(nombre),equipo_visitante:equipos!eliminatorias_partidos_equipo_visitante_id_fkey(nombre)`)
+        .not('fecha_hora', 'is', null)
+        .gte('fecha_hora', cutoffISO)
+        .order('fecha_hora', { ascending: true })
+    ]);
 
-    if (error) {
-      console.error(error);
+    const knockoutUnavailable = ['PGRST205', '42P01'].includes(knockout.error?.code);
+    if (regular.error || (knockout.error && !knockoutUnavailable)) {
+      console.error(regular.error || knockout.error);
       showToast('Error al cargar partidos', true);
       return;
     }
+
+    const data = [
+      ...(regular.data || []).map(p => ({...p, tipo_partido:'REGULAR'})),
+      ...(!knockout.error ? (knockout.data || []).map(p => {
+        const sede = separarSedeEliminatoria(p.cancha);
+        return {...p,tipo_partido:'ELIMINATORIA',lugar:sede.lugar,cancha:sede.cancha,fase_label:fasesEliminatorias[p.fase]||p.fase};
+      }) : [])
+    ].sort((a,b)=>new Date(a.fecha_hora)-new Date(b.fecha_hora));
 
     if (data.length === 0) {
       partidosList.innerHTML = '<p style="text-align:center; color:#94a3b8;">No hay partidos pendientes para hoy.</p>';
@@ -243,7 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div style="display:flex; flex-wrap:wrap; gap:6px;">
               <span style="background:rgba(255,255,255,0.12); padding:4px 8px; border-radius:6px; color:#fff; font-weight:800; font-size:0.95rem; display:flex; align-items:center; gap:4px;">🕒 ${safe(horaTexto)}</span>
               <span style="background:rgba(255,255,255,0.12); padding:4px 8px; border-radius:6px; color:#fff; font-weight:800; font-size:0.95rem; display:flex; align-items:center; gap:4px;">📍 ${safe(p.cancha || 'Cancha')}</span>
-              <span style="background:rgba(255,255,255,0.12); padding:4px 8px; border-radius:6px; color:#fff; font-weight:800; font-size:0.95rem; display:flex; align-items:center; gap:4px;">🏆 ${safe(p.categoria || 'N/A')}</span>
+              <span style="background:rgba(255,255,255,0.12); padding:4px 8px; border-radius:6px; color:#fff; font-weight:800; font-size:0.95rem; display:flex; align-items:center; gap:4px;">🏆 ${safe(p.categoria || 'N/A')}${p.fase_label?' · '+safe(p.fase_label):''}</span>
             </div>
             ${p.estado !== 'PROGRAMADO' ? `<strong style="font-size:0.85rem; padding:4px 10px; border-radius:999px; background:rgba(255,186,0,0.15); border:1px solid rgba(255,186,0,0.3); color:var(--gold);">[${p.estado}]</strong>` : ''}
           </div>
@@ -263,6 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
               ${safe(p.equipo_visitante?.nombre)}
             </div>
           </div>
+          ${p.tipo_partido==='ELIMINATORIA'&&p.penales_local!==null?`<p style="text-align:center;color:var(--gold);font-weight:800;margin:-2px 0 14px;">Penales: ${safe(p.penales_local)} - ${safe(p.penales_visitante)}</p>`:''}
           ${p.reclamo ? `<div style="margin-bottom:15px; width:100%; padding:12px; background:rgba(214,13,13,0.15); border:1px solid rgba(214,13,13,0.3); border-radius:8px; color:#ffba00; font-size:1rem; font-family:'Barlow',sans-serif; line-height:1.4;"><strong>⚠️ RECLAMO:</strong><br>${safe(p.reclamo)}</div>` : ''}
 
           ${isFinalizado ? `<button class="btn-envivo" data-action="editar" style="background:var(--navy); border:1px solid var(--gold); color:var(--gold); padding:16px; margin-top:16px; border-radius:10px; width:100%;">✏️ EDITAR RESULTADO / RECLAMO</button>` : ''}
@@ -279,7 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div style="display:flex; flex-wrap:wrap; gap:6px;">
               <span style="background:rgba(255,255,255,0.12); padding:4px 8px; border-radius:6px; color:#fff; font-weight:800; font-size:0.95rem; display:flex; align-items:center; gap:4px;">🕒 ${safe(horaTexto)}</span>
               <span style="background:rgba(255,255,255,0.12); padding:4px 8px; border-radius:6px; color:#fff; font-weight:800; font-size:0.95rem; display:flex; align-items:center; gap:4px;">📍 ${safe(p.cancha || 'Cancha')}</span>
-              <span style="background:rgba(255,255,255,0.12); padding:4px 8px; border-radius:6px; color:#fff; font-weight:800; font-size:0.95rem; display:flex; align-items:center; gap:4px;">🏆 ${safe(p.categoria || 'N/A')}</span>
+              <span style="background:rgba(255,255,255,0.12); padding:4px 8px; border-radius:6px; color:#fff; font-weight:800; font-size:0.95rem; display:flex; align-items:center; gap:4px;">🏆 ${safe(p.categoria || 'N/A')}${p.fase_label?' · '+safe(p.fase_label):''}</span>
             </div>
             ${p.estado !== 'PROGRAMADO' ? `<strong style="font-size:0.85rem; padding:4px 10px; border-radius:999px; background:rgba(255,186,0,0.15); border:1px solid rgba(255,186,0,0.3); color:var(--gold);">[${p.estado}]</strong>` : ''}
           </div>
@@ -342,6 +373,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 <button class="btn-score plus" data-team="visitante" data-delta="1">+</button>
               </div>
             </div>
+
+            ${p.tipo_partido==='ELIMINATORIA'?`
+              <div style="margin:14px 0;padding:14px;background:rgba(255,186,0,.08);border:1px solid rgba(255,186,0,.25);border-radius:10px;">
+                <strong style="display:block;color:var(--gold);margin-bottom:10px;">PENALES · SOLO SI TERMINAN EMPATADOS</strong>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                  <label style="color:#fff;">${safe(p.equipo_local?.nombre)}<input id="pen-local-${p.id}" type="number" min="0" max="99" value="${p.penales_local??''}" style="width:100%;padding:12px;border-radius:8px;"></label>
+                  <label style="color:#fff;">${safe(p.equipo_visitante?.nombre)}<input id="pen-visita-${p.id}" type="number" min="0" max="99" value="${p.penales_visitante??''}" style="width:100%;padding:12px;border-radius:8px;"></label>
+                </div>
+              </div>`:''}
           `}
 
           ${!isProgramado ? `<button class="btn-finalizar" data-action="finalizar">Finalizar Partido</button>` : ''}
@@ -390,7 +430,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         tr.innerHTML = `
           <td style="padding:12px; font-weight:600;">${safe(horaTexto)}<br><span style="font-size:0.85rem; color:rgba(255,255,255,0.5);">${safe(p.cancha || 'Cancha')}</span></td>
-          <td style="padding:12px;">${safe(p.categoria || 'N/A')}</td>
+          <td style="padding:12px;">${safe(p.categoria || 'N/A')}${p.fase_label?'<br><small>'+safe(p.fase_label)+'</small>':''}</td>
           <td style="padding:12px; text-align:right; font-family:'Barlow Condensed',sans-serif; font-weight:700;">${safe(p.equipo_local?.nombre)}</td>
           <td style="padding:12px; text-align:center; font-family:'Bebas Neue',sans-serif; font-size:1.5rem; color:var(--gold);">${gl} - ${gv}</td>
           <td style="padding:12px; text-align:left; font-family:'Barlow Condensed',sans-serif; font-weight:700;">${safe(p.equipo_visitante?.nombre)}</td>
@@ -436,11 +476,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!confirm('¿Seguro que deseas volver a abrir este partido para edición?')) return;
     btn.disabled = true;
     btn.innerText = 'Actualizando...';
-    
-    const { error } = await supabase
-      .from('partidos')
-      .update({ estado: 'EN_VIVO' })
-      .eq('id', id);
+
+    const partido = allPartidosData.find(p => p.id === id);
+    let error = null;
+    try {
+      if (partido?.tipo_partido === 'ELIMINATORIA') {
+        await guardarEliminatoriaMesa(partido, { estado:'EN_VIVO' });
+      } else {
+        ({ error } = await supabase.from('partidos').update({ estado:'EN_VIVO' }).eq('id', id));
+      }
+    } catch (caught) { error = caught; }
 
     if (error) {
       console.error(error);
@@ -471,10 +516,15 @@ document.addEventListener('DOMContentLoaded', () => {
       payload.goles_visitante = null;
     }
 
-    const { error } = await supabase
-      .from('partidos')
-      .update(payload)
-      .eq('id', id);
+    const partido = allPartidosData.find(p => p.id === id);
+    let error = null;
+    try {
+      if (partido?.tipo_partido === 'ELIMINATORIA') {
+        await guardarEliminatoriaMesa(partido, payload);
+      } else {
+        ({ error } = await supabase.from('partidos').update(payload).eq('id', id));
+      }
+    } catch (caught) { error = caught; }
 
     if (error) {
       console.error(error);
@@ -526,10 +576,21 @@ document.addEventListener('DOMContentLoaded', () => {
     else payload.goles_visitante = nuevoValor;
     payload.estado = 'EN_VIVO';
 
-    const { error } = await supabase
-      .from('partidos')
-      .update(payload)
-      .eq('id', id);
+    const partido = allPartidosData.find(p => p.id === id);
+    let error = null;
+    try {
+      if (partido?.tipo_partido === 'ELIMINATORIA') {
+        const local = Number(document.getElementById(`local-${id}`).innerText);
+        const visitante = Number(document.getElementById(`visita-${id}`).innerText);
+        await guardarEliminatoriaMesa(partido, {
+          estado:'EN_VIVO',
+          goles_local:local,
+          goles_visitante:visitante
+        });
+      } else {
+        ({ error } = await supabase.from('partidos').update(payload).eq('id', id));
+      }
+    } catch (caught) { error = caught; }
 
     if (error) {
       console.error(error);
@@ -560,10 +621,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     reclamoFinal = reclamoFinal.trim();
 
-    const { error } = await supabase
-      .from('partidos')
-      .update({ estado: 'EN_REVISION', reclamo: reclamoFinal })
-      .eq('id', id);
+    const partido = allPartidosData.find(p => p.id === id);
+    let error = null;
+    try {
+      if (partido?.tipo_partido === 'ELIMINATORIA') {
+        const penaltyValue = side => {
+          const value = document.getElementById(`pen-${side}-${id}`)?.value.trim() ?? '';
+          return value === '' ? null : Number(value);
+        };
+        await guardarEliminatoriaMesa(partido, {
+          estado:'EN_REVISION',
+          goles_local:Number(document.getElementById(`local-${id}`).innerText),
+          goles_visitante:Number(document.getElementById(`visita-${id}`).innerText),
+          penales_local:penaltyValue('local'),
+          penales_visitante:penaltyValue('visita'),
+          reclamo:reclamoFinal
+        });
+      } else {
+        ({ error } = await supabase.from('partidos').update({ estado:'EN_REVISION', reclamo:reclamoFinal }).eq('id', id));
+      }
+    } catch (caught) { error = caught; }
 
     if (error) {
       console.error(error);
