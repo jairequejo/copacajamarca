@@ -1,6 +1,6 @@
 import { supabase } from '../assets/js/supabase.js';
 import { initAdminPanel } from './admin-panel.js?v=1';
-import { initKnockoutAdmin } from './eliminatorias-admin.js?v=26';
+import { initKnockoutAdmin } from './eliminatorias-admin.js?v=27';
 import { initFichasPendientes } from './fichas-pendientes.js?v=1';
 
 document.addEventListener('DOMContentLoaded', () => {
