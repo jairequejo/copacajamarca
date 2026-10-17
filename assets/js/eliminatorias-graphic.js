@@ -91,34 +91,35 @@ function backdrop(ctx,bg){
 }
 function header(ctx,bracket,assets,stage){
  polygon(ctx,[[0,0],[1080,0],[1080,10],[0,10]],C.gold);contain(ctx,assets.logo,54,51,166,166);
- display(ctx,'COPA',257,69,78,C.white,760);display(ctx,'CAJAMARCA',245,159,140,C.white,780);
- const edition=bracket.edition,label=edition?`ETAPA ${edition.stage.toUpperCase()} ${edition.year}`:'ETAPA POR CONFIRMAR';text(ctx,label,250,243,29,C.gold,'left','Copa Sans',770);
+ display(ctx,'COPA CAJAMARCA',245,139,118,C.white,790);
+ const edition=bracket.edition,label=edition?`ETAPA ${edition.stage.toUpperCase()} ${edition.year}`:'ETAPA POR CONFIRMAR';text(ctx,label,250,216,29,C.gold,'left','Copa Sans',770);
  polygon(ctx,[[0,276],[1080,251],[1080,340],[0,365]],'#071a36');path(ctx,[[0,276],[1080,251]],C.gold,3);
  const phase=stage==='semifinals'?'SEMIFINAL':stage==='final'?'FINAL':'CAMPEÓN';display(ctx,`${phase} · CATEGORÍA ${bracket.category}`,540,309,73,C.gold,954,'center');
 }
 function node(ctx,m,i,assets,cx,y,size,width,muted=false){
  const team=m.teams[i];ctx.save();ctx.globalAlpha=muted?.42:1;mark(ctx,team,assets,cx,y,size);
- teamName(ctx,team.name,cx,y+size+36,width,size>=160?37:28,team.pending?C.muted:m.decision?.winnerIndex===i?C.gold:C.white);
+ const pendingFinal=team.pending&&size<80;
+ teamName(ctx,team.name,cx,y+size+(pendingFinal?30:36),pendingFinal?116:width,pendingFinal?20:size>=160?37:28,team.pending?C.muted:m.decision?.winnerIndex===i?C.gold:C.white);
  if(m.goals?.[i]!==null&&m.goals?.[i]!==undefined){const bx=cx+size/2+5,by=y+size/2;ctx.fillStyle=C.navy;ctx.fillRect(bx-17,by-23,34,46);text(ctx,m.goals[i],bx,by,33,C.gold,'center');}ctx.restore();
 }
 function thirdPlace(ctx,m,assets){
- path(ctx,[[54,1095],[1026,1095]],'rgba(255,208,41,.45)',1);text(ctx,'TERCER PUESTO',540,1117,26,C.gold,'center');
- m.teams.forEach((team,i)=>{const cx=i===0?300:780;if(!team.pending)mark(ctx,team,assets,cx-130,1128,42);teamName(ctx,team.pending?`Perdedor semifinal ${i+1}`:team.name,cx+(team.pending?0:20),1151,320,25);});
- text(ctx,m.goals?.every(g=>g!==null&&g!==undefined)?m.goals.join(' – '):'VS',540,1151,29,C.gold,'center');
+ path(ctx,[[72,1100],[1008,1100]],'rgba(255,208,41,.38)',1);text(ctx,'TERCER PUESTO',540,1122,24,C.gold,'center');
+ m.teams.forEach((team,i)=>{const cx=i===0?300:780;if(!team.pending)mark(ctx,team,assets,cx-122,1132,38);teamName(ctx,team.pending?`Perdedor semifinal ${i+1}`:team.name,cx+(team.pending?0:18),1156,team.pending?250:300,team.pending?20:23,team.pending?C.muted:C.white);});
+ text(ctx,m.goals?.every(g=>g!==null&&g!==undefined)?m.goals.join(' – '):'VS',540,1156,27,C.gold,'center');
 }
 function bracketPoster(ctx,bracket,assets,stage){
- const isFinal=stage==='final',final=bracket.matches[2],outerSize=isFinal?106:175,outerCx=isFinal?[110,970]:[159,921],innerSize=isFinal?190:70,innerCx=isFinal?[333,747]:[322,758];
- const top=isFinal?445:425,bottom=isFinal?872:795,innerY=isFinal?616:654,upper=top+outerSize/2,lower=bottom+outerSize/2,mid=(upper+lower)/2;
+ const isFinal=stage==='final',final=bracket.matches[2],outerSize=isFinal?106:175,outerCx=isFinal?[110,970]:[159,921],innerSize=isFinal?190:62,innerCx=isFinal?[333,747]:[342,738];
+ const top=isFinal?445:425,bottom=isFinal?850:775,innerY=isFinal?616:654,upper=top+outerSize/2,lower=bottom+outerSize/2,mid=(upper+lower)/2;
  text(ctx,'FINAL',540,isFinal?531:582,40,C.gold,'center');
  bracket.matches.slice(0,2).forEach((m,i)=>{
   const dir=i===0?1:-1,cx=outerCx[i],end=innerCx[i]-dir*(innerSize/2+12),edge=cx+dir*(outerSize/2+10),join=isFinal?(i===0?212:868):(i===0?276:804),ink=m.decision?C.gold:C.line;
   text(ctx,`SEMIFINAL ${i+1}`,cx,385,isFinal?27:32,isFinal?C.muted:C.gold,'center');
   path(ctx,[[edge,upper],[join,upper],[join,lower],[edge,lower]],ink);path(ctx,[[join,mid],[join,innerY+innerSize/2],[end,innerY+innerSize/2]],ink);
   node(ctx,m,0,assets,cx,top,outerSize,isFinal?180:222,isFinal&&m.decision?.winnerIndex!==0);node(ctx,m,1,assets,cx,bottom,outerSize,isFinal?180:222,isFinal&&m.decision?.winnerIndex!==1);
-  node(ctx,final,i,assets,innerCx[i],innerY,innerSize,isFinal?205:142);caption(ctx,m,cx,isFinal?1060:1055,isFinal?220:250);
+  node(ctx,final,i,assets,innerCx[i],innerY,innerSize,isFinal?205:116);caption(ctx,m,cx,isFinal?1058:1050,isFinal?220:250);
  });
- const cupW=isFinal?220:256,cupX=540-cupW/2,cupY=isFinal?608:608;
- const glow=ctx.createRadialGradient(540,745,20,540,745,225);glow.addColorStop(0,'rgba(255,208,41,.14)');glow.addColorStop(1,'rgba(255,208,41,0)');ctx.fillStyle=glow;ctx.fillRect(315,520,450,450);contain(ctx,assets.cup,cupX,cupY,cupW,isFinal?275:300);
+ const cupW=isFinal?220:230,cupX=540-cupW/2,cupY=isFinal?608:620;
+ ctx.save();ctx.shadowColor='rgba(0,0,0,.42)';ctx.shadowBlur=18;ctx.shadowOffsetY=10;contain(ctx,assets.cup,cupX,cupY,cupW,isFinal?275:282);ctx.restore();
  innerCx.forEach((cx,i)=>{const dir=i===0?1:-1,start=cx+dir*(innerSize/2+9),end=540-dir*(cupW/2+8);if(dir*(end-start)>0)path(ctx,[[start,innerY+innerSize/2],[end,innerY+innerSize/2]],C.gold,2);});
  if(isFinal&&final.goals?.every(g=>g!==null&&g!==undefined))text(ctx,final.goals.join(' – '),540,943,57,C.gold,'center');else display(ctx,isFinal?'LA GLORIA LOS ESPERA':'RUMBO A LA FINAL',540,955,isFinal?42:49,C.gold,isFinal?640:560,'center');
  caption(ctx,final,540,1008,570);thirdPlace(ctx,bracket.matches[3],assets);
@@ -129,8 +130,9 @@ function championPoster(ctx,bracket,assets){
  const m=bracket.matches[2];text(ctx,'RESULTADO DE LA FINAL',540,1120,27,C.gold,'center');teamName(ctx,m.teams[0].name,285,1166,350,32);text(ctx,m.goals.join(' – '),540,1166,49,C.gold,'center');teamName(ctx,m.teams[1].name,795,1166,350,32);
 }
 function signature(ctx){
- // A full-width printed signature gives the address its own visual weight.
- polygon(ctx,[[0,1224],[1080,1207],[1080,1350],[0,1350]],C.gold);text(ctx,'FIXTURE Y RESULTADOS EN',54,1244,18,C.navy,'left','Copa Sans');
- ctx.save();ctx.translate(52,1302);ctx.transform(1,0,-.09,1,0,0);text(ctx,'COPACAJAMARCA.COM',0,0,fit(ctx,'COPACAJAMARCA.COM',84,976),C.navy);ctx.restore();
+ // Keep the web call-to-action separate from the sporting information above it.
+ polygon(ctx,[[0,1228],[1080,1228],[1080,1350],[0,1350]],C.gold);
+ text(ctx,'FIXTURE Y RESULTADOS',540,1252,17,C.navy,'center','Copa Sans');
+ ctx.save();ctx.translate(540,1306);ctx.transform(1,0,-.06,1,0,0);text(ctx,'COPACAJAMARCA.COM',0,0,fit(ctx,'COPACAJAMARCA.COM',70,900),C.navy,'center');ctx.restore();
 }
 export function drawBracket(canvas,bracket,assets){canvas.width=1080;canvas.height=1350;const ctx=canvas.getContext('2d'),stage=bannerStage(bracket);backdrop(ctx,assets.bg);header(ctx,bracket,assets,stage);if(stage==='champion')championPoster(ctx,bracket,assets);else bracketPoster(ctx,bracket,assets,stage);signature(ctx);}
