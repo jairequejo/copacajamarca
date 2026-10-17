@@ -39,7 +39,7 @@ export async function bracketAssets(bracket) {
   await document.fonts.ready;
   const teams = [...bracket.matches.flatMap(m => m.teams), bracket.champion].filter(Boolean);
   const [cup, bg, logo, images] = await Promise.all([
-    loadImage('/assets/img/copa-eliminatorias-poster.svg?v=2'),
+    loadImage('/assets/img/copa-eliminatorias-poster.svg?v=3'),
     loadImage('/assets/img/fondo-eliminatorias-tunel.png'),
     loadImage('/assets/img/logo.png'),
     Promise.all(teams.map(t => loadImage(t.logo)))
