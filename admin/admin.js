@@ -1,14 +1,16 @@
 import { supabase } from '../assets/js/supabase.js';
-import { initAdminPanel } from './admin-panel.js?v=1';
-import { initKnockoutAdmin } from './eliminatorias-admin.js?v=30';
+import { initAdminPanel } from './admin-panel.js?v=4';
+import { initKnockoutAdmin } from './eliminatorias-admin.js?v=31';
 import { initFichasPendientes } from './fichas-pendientes.js?v=1';
+import { initAppSettings } from './app-update.js?v=1';
+import { loadCarnetPeople, carnetPersonName, carnetFileName } from './carnets-data.js?v=1';
 
 document.addEventListener('DOMContentLoaded', () => {
   initKnockoutAdmin();
+  initAppSettings();
   const loginView = document.getElementById('login-view');
   const dashboardView = document.getElementById('dashboard');
   const btnLogin = document.getElementById('btn-login');
-  const listaRevision = document.getElementById('lista-revision');
   const toast = document.getElementById('toast');
   
   // Tabs
@@ -57,9 +59,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (await isAdminUser(session.user)) {
         loginView.style.display = 'none';
         dashboardView.style.display = 'block';
-        panel.start(session).then(() => {
-          if (document.getElementById('tab-fichas').classList.contains('active')) fichasPendientes.refresh();
-        });
+        await panel.start(session);
+        if (document.getElementById('tab-fichas').classList.contains('active')) fichasPendientes.refresh();
         cargarEquiposParaSelect(); // solo aquí — no duplicar en submit
       } else {
         showToast('Acceso denegado. No eres Administrador.', true);
@@ -71,6 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('form-login').addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (btnLogin.disabled) return;
     const email = document.getElementById('email-input').value.trim();
     const password = document.getElementById('pass-input').value;
 
@@ -87,14 +89,11 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       if (await isAdminUser(data.user)) {
         btnLogin.innerText = '¡Entrando!';
-        setTimeout(() => {
-          loginView.style.display = 'none';
-          dashboardView.style.display = 'block';
-          panel.start(data.session).then(() => {
-            if (document.getElementById('tab-fichas').classList.contains('active')) fichasPendientes.refresh();
-          });
-          cargarEquiposParaSelect();
-        }, 800);
+        loginView.style.display = 'none';
+        dashboardView.style.display = 'block';
+        await panel.start(data.session);
+        if (document.getElementById('tab-fichas').classList.contains('active')) fichasPendientes.refresh();
+        cargarEquiposParaSelect();
       } else {
         showToast('Acceso denegado. No eres Administrador.', true);
         await supabase.auth.signOut();
@@ -680,7 +679,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const carnetsSelectionSummary = document.getElementById('carnets-selection-summary');
   const btnSeleccionarCarnetsVisibles = document.getElementById('btn-seleccionar-carnets-visibles');
   const btnLimpiarSeleccionCarnets = document.getElementById('btn-limpiar-seleccion-carnets');
+  const carnetsDownloadReady = document.getElementById('carnets-download-ready');
   let generandoZipCarnets = false;
+  let preparandoCarnets = false;
 
   const normalizarTextoCarnet = value => String(value ?? '')
     .normalize('NFD')
@@ -765,7 +766,9 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   btnDescargarZipCarnets?.addEventListener('click', async () => {
+    if (generandoZipCarnets || preparandoCarnets) return;
     generandoZipCarnets = true;
+    btnGenerarCarnets.disabled = true;
     btnDescargarZipCarnets.disabled = true;
     actualizarSeleccionCarnets();
     btnDescargarZipCarnets.innerText = 'PREPARANDO PDF...';
@@ -777,39 +780,43 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      const zip = new JSZip();
+      if (!window.JSZip || !window.jspdf?.jsPDF || !window.html2canvas) {
+        throw new Error('No se cargaron las herramientas PDF. Revisa tu conexión y recarga la aplicación.');
+      }
+      await document.fonts.ready;
+      const zip = new window.JSZip();
       const { jsPDF } = window.jspdf;
       
       for (let i = 0; i < carnets.length; i++) {
         const carnet = carnets[i];
-        const item = carnet.closest('.carnet-select-item');
-        const estabaOculto = item.hidden;
         btnDescargarZipCarnets.innerText = `GENERANDO PDF ${i + 1} DE ${carnets.length}...`;
-
-        // Los carnets seleccionados conservan su selección aunque otra búsqueda los oculte.
-        // Para exportarlos sin mostrarlos en pantalla, se renderizan temporalmente fuera del viewport.
-        if (estabaOculto) {
-          item.hidden = false;
-          item.classList.add('carnet-export-staging');
-        }
+        // Export an independent copy so filtering or navigating away cannot hide a PDF.
+        const stage = document.createElement('div');
+        stage.className = 'carnet-export-staging';
+        stage.setAttribute('aria-hidden', 'true');
+        const printable = carnet.cloneNode(true);
+        const originalCanvases = carnet.querySelectorAll('canvas');
+        printable.querySelectorAll('canvas').forEach((canvas, index) => {
+          canvas.getContext('2d').drawImage(originalCanvases[index], 0, 0);
+        });
+        stage.appendChild(printable);
+        document.body.appendChild(stage);
         
         let canvas;
         try {
+          await Promise.all(Array.from(printable.querySelectorAll('img')).map(img => img.decode().catch(() => {})));
           // Renderizar usando html2canvas desde cero
-          canvas = await window.html2canvas(carnet, {
+          canvas = await window.html2canvas(printable, {
             scale: 3, // Alta calidad
             useCORS: true,
             logging: false,
             allowTaint: false,
             backgroundColor: '#ffffff', // Forzar blanco en las esquinas para evitar bugs negros de jsPDF
-            width: carnet.offsetWidth,
-            height: carnet.offsetHeight
+            width: printable.offsetWidth,
+            height: printable.offsetHeight
           });
         } finally {
-          if (estabaOculto) {
-            item.classList.remove('carnet-export-staging');
-            item.hidden = true;
-          }
+          stage.remove();
         }
         
         // Exportar a JPEG (más ligero, y el blanco ya tapó las esquinas)
@@ -830,21 +837,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const rolEl = carnet.querySelector('.carnet-rol');
         const equipoEl = carnet.querySelector('.carnet-equipo');
         
-        let nombre = nombreEl ? nombreEl.textContent.trim().replace(/[^a-zA-Z0-9]/g, '_') : `carnet_${i+1}`;
-        let rol = rolEl ? rolEl.textContent.trim().replace(/[^a-zA-Z0-9]/g, '') : '';
-        let equipo = equipoEl ? equipoEl.textContent.trim().replace(/[^a-zA-Z0-9]/g, '_') : '';
-        
-        zip.file(`${equipo}/${rol}_${nombre}.pdf`, pdfBlob);
+        zip.file(carnetFileName({
+          name: nombreEl?.textContent.trim(), role: rolEl?.textContent.trim(),
+          team: equipoEl?.textContent.trim(), dni: carnet.dataset.qr
+        }, i + 1), pdfBlob);
       }
       
       btnDescargarZipCarnets.innerText = 'COMPRIMIENDO ARCHIVO ZIP...';
       const content = await zip.generateAsync({ type: 'blob' });
-      const a = document.createElement('a');
+      if (carnetsDownloadReady.hasAttribute('href')) URL.revokeObjectURL(carnetsDownloadReady.href);
       const downloadUrl = URL.createObjectURL(content);
-      a.href = downloadUrl;
-      a.download = `Carnets_CopaCajamarca.zip`;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+      carnetsDownloadReady.href = downloadUrl;
+      carnetsDownloadReady.download = 'Carnets_CopaCajamarca.zip';
+      carnetsDownloadReady.textContent = `Descargar archivo preparado (${carnets.length} carnets)`;
+      carnetsDownloadReady.hidden = false;
+      carnetsDownloadReady.click();
       
       showToast(`Descarga iniciada: ${carnets.length} carnet${carnets.length === 1 ? '' : 's'}`);
       
@@ -853,121 +860,138 @@ document.addEventListener('DOMContentLoaded', () => {
       showToast('Error al generar ZIP: ' + err.message, true);
     } finally {
       generandoZipCarnets = false;
+      btnGenerarCarnets.disabled = false;
       actualizarSeleccionCarnets();
     }
   });
 
   btnGenerarCarnets?.addEventListener('click', async () => {
-    carnetsStatus.style.display = 'block';
-    carnetsStatus.textContent = 'Descargando base de datos y renderizando...';
-    carnetsPreviewContainer.style.display = 'none';
-    carnetsRenderArea.innerHTML = '';
-    carnetsSearchInput.value = '';
-
-    const { data, error } = await supabase
-      .from('personas')
-      .select('*, equipos(nombre, logo_url)')
-      .in('rol', ['ENTRENADOR', 'DELEGADO', 'JUGADOR'])
-      .order('equipo_id')
-      .order('apellidos').order('nombres');
-
-    if (error) {
-      carnetsStatus.textContent = `Error: ${error.message}`;
-      showToast('Error al cargar datos para carnets', true);
-      return;
+    if (preparandoCarnets || generandoZipCarnets) return;
+    preparandoCarnets = true;
+    btnGenerarCarnets.disabled = true;
+    btnDescargarZipCarnets.disabled = true;
+    carnetsDownloadReady.hidden = true;
+    if (carnetsDownloadReady.hasAttribute('href')) {
+      URL.revokeObjectURL(carnetsDownloadReady.href);
+      carnetsDownloadReady.removeAttribute('href');
     }
+    try {
+      if (!window.QRCode) throw new Error('No se cargó la herramienta QR. Revisa tu conexión y recarga la aplicación.');
+      carnetsStatus.style.display = 'block';
+      carnetsStatus.textContent = 'Descargando base de datos y renderizando...';
+      carnetsPreviewContainer.style.display = 'none';
+      carnetsRenderArea.innerHTML = '';
+      carnetsSearchInput.value = '';
 
-    if (!data || data.length === 0) {
-      carnetsStatus.textContent = 'No hay personas registradas (Entrenadores, Delegados o Jugadores).';
-      return;
-    }
+      const data = await loadCarnetPeople(supabase);
 
-    const docFrag = document.createDocumentFragment();
+      if (!data || data.length === 0) {
+        carnetsStatus.textContent = 'No hay personas disponibles para carnets. Revisa los registros y roles en Directorio.';
+        return;
+      }
+
+      const docFrag = document.createDocumentFragment();
     
-    data.forEach(p => {
-      const isRed = p.rol === 'ENTRENADOR';
-      const className = isRed ? 'carnet-rojo' : 'carnet-azul';
+      data.forEach(p => {
+        const isRed = p.rol === 'ENTRENADOR';
+        const className = isRed ? 'carnet-rojo' : 'carnet-azul';
       
-      const item = document.createElement('div');
-      item.className = 'carnet-select-item is-selected';
-      item.dataset.name = p.nombre_completo || 'persona';
-      item.dataset.search = normalizarTextoCarnet([
-        p.nombre_completo,
-        p.dni,
-        p.rol,
-        p.equipos?.nombre
-      ].join(' '));
+        const item = document.createElement('div');
+        item.className = 'carnet-select-item is-selected';
+        item.dataset.name = carnetPersonName(p);
+        item.dataset.search = normalizarTextoCarnet([
+          carnetPersonName(p),
+          p.dni,
+          p.rol,
+          p.equipos?.nombre
+        ].join(' '));
 
-      const toggle = document.createElement('button');
-      toggle.type = 'button';
-      toggle.className = 'carnet-select-toggle';
-      toggle.setAttribute('aria-pressed', 'true');
-      toggle.setAttribute('aria-label', `Quitar carnet de ${p.nombre_completo || 'persona'}`);
-      toggle.innerHTML = '<span class="carnet-select-icon" aria-hidden="true">✓</span><span class="carnet-select-toggle-text">Seleccionado</span>';
+        const toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.className = 'carnet-select-toggle';
+        toggle.setAttribute('aria-pressed', 'true');
+        toggle.setAttribute('aria-label', `Quitar carnet de ${carnetPersonName(p)}`);
+        toggle.innerHTML = '<span class="carnet-select-icon" aria-hidden="true">✓</span><span class="carnet-select-toggle-text">Seleccionado</span>';
 
-      const carnet = document.createElement('div');
-      carnet.className = `carnet-box ${className}`;
+        const carnet = document.createElement('div');
+        carnet.className = `carnet-box ${className}`;
 
-      const fotoUrl = `https://uzyqpruqiqubwnqttnwf.supabase.co/storage/v1/object/public/dnis/${p.dni}.jpg`;
+        // Preview records use local artwork; production retains the DNI photo source.
+        const fotoUrl = p.foto_url || `https://uzyqpruqiqubwnqttnwf.supabase.co/storage/v1/object/public/dnis/${encodeURIComponent(p.dni)}.jpg`;
       
-      carnet.innerHTML = `
-        <div class="carnet-header-band">
-          <span class="carnet-header-band-text">CREDENCIAL OFICIAL · COPA CAJAMARCA</span>
-        </div>
-        <div class="carnet-top">
-          <img class="carnet-foto" src="${safe(fotoUrl)}" crossorigin="anonymous" alt="Foto" onerror="this.outerHTML='<img class=\\\'carnet-logo\\\' src=\\\'../assets/img/logo-sin-anio.png\\\' crossorigin=\\\'anonymous\\\'>'">
-        </div>
-        <div class="carnet-bottom">
-          <div class="carnet-rol">${safe(p.rol)}</div>
-          <div class="carnet-nombre">${safe((p.apellidos ? p.apellidos + ", " : "") + (p.nombres || ""))}</div>
-          
-          <div style="flex: 1; min-height: 2px;"></div> <!-- Spacer superior -->
-          
-          <div class="carnet-equipo">${safe(p.equipos?.nombre || 'Independiente')}</div>
-          <div class="carnet-logos-footer">
-            ${p.equipos?.logo_url ? `<img class="team-logo" src="${safe(p.equipos.logo_url)}" crossorigin="anonymous" onerror="this.style.display='none'">` : ''}
-            <div class="carnet-qr"></div>
+        carnet.innerHTML = `
+          <div class="carnet-header-band">
+            <span class="carnet-header-band-text">CREDENCIAL OFICIAL · COPA CAJAMARCA</span>
           </div>
+          <div class="carnet-top">
+            <img class="carnet-foto" src="${safe(fotoUrl)}" crossorigin="anonymous" alt="Foto de ${safe(carnetPersonName(p))}">
+          </div>
+          <div class="carnet-bottom">
+            <div class="carnet-rol">${safe(p.rol)}</div>
+            <div class="carnet-nombre">${safe(carnetPersonName(p))}</div>
           
-          <div style="flex: 1; min-height: 2px;"></div> <!-- Spacer inferior -->
-        </div>
-        <div class="carnet-footer">DNI: ${safe(p.dni)} &middot; PERSONAL E INTRANSFERIBLE</div>
-      `;
-      item.append(toggle, carnet);
-      docFrag.appendChild(item);
+            <div style="flex: 1; min-height: 2px;"></div> <!-- Spacer superior -->
+          
+            <div class="carnet-equipo">${safe(p.equipos?.nombre || 'Independiente')}</div>
+            <div class="carnet-logos-footer">
+              ${p.equipos?.logo_url ? `<img class="team-logo" src="${safe(p.equipos.logo_url)}" crossorigin="anonymous" onerror="this.style.display='none'">` : ''}
+              <div class="carnet-qr"></div>
+            </div>
+          
+            <div style="flex: 1; min-height: 2px;"></div> <!-- Spacer inferior -->
+          </div>
+          <div class="carnet-footer">DNI: ${safe(p.dni)} &middot; PERSONAL E INTRANSFERIBLE</div>
+        `;
+        carnet.querySelector('.carnet-foto').addEventListener('error', event => {
+          const image = event.currentTarget;
+          image.className = 'carnet-logo';
+          image.alt = 'Copa Cajamarca';
+          image.src = '../assets/img/logo-sin-anio.png';
+        }, { once: true });
+        item.append(toggle, carnet);
+        docFrag.appendChild(item);
       
-      // Store the DOM node and data for later generation
-      carnet.dataset.qr = p.dni;
-    });
-
-    carnetsRenderArea.appendChild(docFrag);
-    asegurarMensajeBusquedaCarnets();
-    carnetsStatus.style.display = 'none';
-    carnetsPreviewContainer.style.display = 'block';
-    actualizarSeleccionCarnets();
-
-    // Generar los QRs después de que el DOM sea visible (para evitar fallos de offsetWidth = 0)
-    setTimeout(() => {
-      const qrElements = carnetsRenderArea.querySelectorAll('.carnet-box');
-      
-      qrElements.forEach(box => {
-        const dni = box.dataset.qr;
-        if (!dni) return;
-        const qrContainer = box.querySelector('.carnet-qr');
-        qrContainer.innerHTML = ''; // Limpiar por si acaso
-        // El usuario requiere que el QR apunte rígidamente a producción con el dominio .com
-        const qrData = `https://copacajamarca.com/fichas/index.html?dni=${dni}`;
-        new QRCode(qrContainer, {
-          text: qrData,
-          width: 128,
-          height: 128,
-          colorDark : "#000000",
-          colorLight : "#ffffff",
-          correctLevel : QRCode.CorrectLevel.L
-        });
+        // Store the DOM node and data for later generation
+        carnet.dataset.qr = p.dni;
       });
-      showToast(`Se prepararon ${data.length} carnets para impresión`);
-    }, 50);
+
+      carnetsRenderArea.appendChild(docFrag);
+      asegurarMensajeBusquedaCarnets();
+      carnetsStatus.style.display = 'none';
+      carnetsPreviewContainer.style.display = 'block';
+      actualizarSeleccionCarnets();
+
+      // Generar los QRs después de que el DOM sea visible (para evitar fallos de offsetWidth = 0)
+      {
+        const qrElements = carnetsRenderArea.querySelectorAll('.carnet-box');
+      
+        qrElements.forEach(box => {
+          const dni = box.dataset.qr;
+          if (!dni) return;
+          const qrContainer = box.querySelector('.carnet-qr');
+          qrContainer.innerHTML = ''; // Limpiar por si acaso
+          // El usuario requiere que el QR apunte rígidamente a producción con el dominio .com
+          const qrData = `https://copacajamarca.com/fichas/index.html?dni=${encodeURIComponent(dni)}`;
+          new QRCode(qrContainer, {
+            text: qrData,
+            width: 128,
+            height: 128,
+            colorDark : "#000000",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.L
+          });
+        });
+        showToast(`Se prepararon ${data.length} carnets para impresión`);
+      }
+    } catch (error) {
+      carnetsPreviewContainer.style.display = 'none';
+      carnetsStatus.style.display = 'block';
+      carnetsStatus.textContent = `No se pudieron preparar los carnets: ${error.message || 'revisa la conexión e inténtalo de nuevo.'}`;
+      showToast('No se pudieron preparar los carnets', true);
+    } finally {
+      preparandoCarnets = false;
+      btnGenerarCarnets.disabled = false;
+    }
   });
 
 

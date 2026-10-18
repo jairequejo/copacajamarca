@@ -1,7 +1,7 @@
 import { supabase } from '../assets/js/supabase.js';
-import { buildKnockout, advanceKnockout } from '../assets/js/eliminatorias-model.js?v=4';
+import { buildKnockout, advanceKnockout } from '../assets/js/eliminatorias-model.js?v=5';
 import { loadKnockoutResults, tournamentFor, loadMatchesWithMetadata } from '../assets/js/eliminatorias-data.js?v=2';
-import { renderKnockout } from '../assets/js/eliminatorias.js?v=33';
+import { renderKnockout } from '../assets/js/eliminatorias.js?v=34';
 const safe = s => String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function localDate(value) {
   if(!value)return '';
@@ -14,15 +14,15 @@ export function initKnockoutAdmin() {
   const say=message=>{status.textContent=message;};
   function render() {
     const cat=select.value;
-    bracket=advanceKnockout(buildKnockout(cat,standings,games),results,tournamentFor(cat,games));
+    bracket=advanceKnockout(buildKnockout(cat,standings,games),results,tournamentFor(cat,games),{includeReview:false});
     const writable=available&&bracket.ready&&bracket.tournamentId;
     forms.innerHTML=bracket.matches.map((m,i)=>{
       const canEdit=writable&&m.teams.every(t=>t.id);
       const raw=results.find(r=>r.categoria===cat&&r.fase===m.round&&r.torneo_id===bracket.tournamentId);
       const stale=raw&&!m.recordId;
-      const stateLabel=s=>s==='OFICIAL'?'Oficial · avanzar ganador':s==='EN_REVISION'?'Por confirmar':s==='EN_VIVO'?'En vivo':'Programado';
+      const stateLabel=s=>s==='OFICIAL'?'Oficial · confirmar resultado':s==='EN_REVISION'?'Por confirmar':s==='EN_VIVO'?'En vivo':'Programado';
       const review=raw?.estado==='EN_REVISION';
-      return `<form class="ka-match" data-index="${i}"><h3>${safe(m.title)}</h3><p>${m.teams.map(t=>safe(t.name)).join(' vs. ')}</p>${review?'<p class="ka-warning">Mesa envió este resultado. Revísalo y confirma para avanzar al ganador.</p>':''}${raw?.reclamo?`<p class="ka-warning"><strong>Observación de mesa:</strong> ${safe(raw.reclamo)}</p>`:''}${stale?'<p class="ka-warning">El resultado guardado corresponde a otro cruce. Retíralo antes de continuar.</p>':''}<fieldset ${canEdit&&!stale?'':'disabled'}><div class="ka-inputs"><label>Goles local<input name="goles_local" type="number" min="0" max="99" step="1" value="${m.goals[0]??''}"></label><label>Goles visitante<input name="goles_visitante" type="number" min="0" max="99" step="1" value="${m.goals[1]??''}"></label><label>Penales local<input name="penales_local" type="number" min="0" max="99" step="1" value="${m.penalties[0]??''}"></label><label>Penales visitante<input name="penales_visitante" type="number" min="0" max="99" step="1" value="${m.penalties[1]??''}"></label></div><small>Penales solo si el marcador está empatado.</small><label>Estado<select name="estado">${['PROGRAMADO','EN_VIVO','EN_REVISION','OFICIAL'].map(s=>`<option ${s===m.estado?'selected':''} value="${s}">${stateLabel(s)}</option>`).join('')}</select></label><label>Fecha y hora (Perú)<input type="datetime-local" name="fecha_hora" value="${localDate(m.date)}"></label><label>Cancha<input name="cancha" maxlength="100" value="${safe(m.cancha)}"></label><button type="submit" class="btn-primary">${review?'Confirmar resultado':'Guardar '+safe(m.title.toLowerCase())}</button></fieldset>${raw?`<button type="button" class="ka-remove" data-remove="${safe(raw.id)}">Retirar programación y resultado</button>`:''}</form>`;
+      return `<form class="ka-match" data-index="${i}"><h3>${safe(m.title)}</h3><p>${m.teams.map(t=>safe(t.name)).join(' vs. ')}</p>${review?'<p class="ka-warning">Mesa envió este resultado. Revísalo y confirma para guardar los siguientes cruces. El fixture ya muestra el avance de Mesa.</p>':''}${raw?.reclamo?`<p class="ka-warning"><strong>Observación de mesa:</strong> ${safe(raw.reclamo)}</p>`:''}${stale?'<p class="ka-warning">El resultado guardado corresponde a otro cruce. Retíralo antes de continuar.</p>':''}<fieldset ${canEdit&&!stale?'':'disabled'}><div class="ka-inputs"><label>Goles local<input name="goles_local" type="number" min="0" max="99" step="1" value="${m.goals[0]??''}"></label><label>Goles visitante<input name="goles_visitante" type="number" min="0" max="99" step="1" value="${m.goals[1]??''}"></label><label>Penales local<input name="penales_local" type="number" min="0" max="99" step="1" value="${m.penalties[0]??''}"></label><label>Penales visitante<input name="penales_visitante" type="number" min="0" max="99" step="1" value="${m.penalties[1]??''}"></label></div><small>Penales solo si el marcador está empatado.</small><label>Estado<select name="estado">${['PROGRAMADO','EN_VIVO','EN_REVISION','OFICIAL'].map(s=>`<option ${s===m.estado?'selected':''} value="${s}">${stateLabel(s)}</option>`).join('')}</select></label><label>Fecha y hora (Perú)<input type="datetime-local" name="fecha_hora" value="${localDate(m.date)}"></label><label>Cancha<input name="cancha" maxlength="100" value="${safe(m.cancha)}"></label><button type="submit" class="btn-primary">${review?'Confirmar resultado':'Guardar '+safe(m.title.toLowerCase())}</button></fieldset>${raw?`<button type="button" class="ka-remove" data-remove="${safe(raw.id)}">Retirar programación y resultado</button>`:''}</form>`;
     }).join('');
     renderKnockout(root.querySelector('.ka-preview'),bracket);
     if(!available)say('Para guardar resultados falta aplicar la migración de eliminatorias en Supabase. El gráfico y su descarga ya están disponibles.');
@@ -35,9 +35,9 @@ export function initKnockoutAdmin() {
       const [s,g,k]=await Promise.all([supabase.from('view_posiciones').select('*'),loadMatchesWithMetadata('id,torneo_id,categoria,equipo_local_id,equipo_visitante_id,estado,goles_local,goles_visitante'),loadKnockoutResults()]);
       if(s.error||g.error)throw s.error||g.error;
       standings=s.data;games=g.data;results=k.records;available=k.available;
-      const old=select.value;select.innerHTML=[...new Set(games.map(m=>m.categoria))].sort().map(c=>`<option value="${safe(c)}">Categoría ${safe(c)}</option>`).join('');
+      const old=root.dataset.requestedCategory||select.value;delete root.dataset.requestedCategory;select.innerHTML=[...new Set(games.map(m=>m.categoria))].sort().map(c=>`<option value="${safe(c)}">Categoría ${safe(c)}</option>`).join('');
       if([...select.options].some(o=>o.value===old))select.value=old;
-      say('Al oficializar, el ganador avanza a la final y el perdedor al tercer puesto.');render();
+      say('El fixture avanza al finalizar en Mesa. Confirma ambas semifinales para guardar la final y el tercer puesto.');render();
     } catch(error){say('No se pudo cargar: '+error.message);}finally{busy=false;}
   }
   select.addEventListener('change',()=>{say('');render();});

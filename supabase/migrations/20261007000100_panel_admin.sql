@@ -43,6 +43,15 @@ create table if not exists public.partidos_aprobaciones (
   reclamo text,cancha text
 );
 create index if not exists partidos_aprobaciones_actor_fecha on public.partidos_aprobaciones(actor_id,aprobado_at desc,id desc);
+alter table public.partidos_aprobaciones add column if not exists eliminatoria_id uuid;
+alter table public.partidos_aprobaciones add column if not exists fase text;
+alter table public.partidos_aprobaciones add column if not exists penales_local integer;
+alter table public.partidos_aprobaciones add column if not exists penales_visitante integer;
+do $$ begin
+  if to_regclass('public.eliminatorias_partidos') is not null and not exists(select 1 from pg_constraint where conrelid='public.partidos_aprobaciones'::regclass and conname='aprobaciones_eliminatoria_fk') then
+    alter table public.partidos_aprobaciones add constraint aprobaciones_eliminatoria_fk foreign key(eliminatoria_id) references public.eliminatorias_partidos(id) on delete set null;
+  end if;
+end $$;
 alter table public.partidos_aprobaciones enable row level security;
 revoke all on public.partidos_aprobaciones from anon,authenticated;
 grant select on public.partidos_aprobaciones to authenticated;
@@ -53,29 +62,45 @@ create policy aprobaciones_propias on public.partidos_aprobaciones for select to
 create or replace function public.registrar_aprobacion_admin() returns trigger
 language plpgsql security definer set search_path='' as $$
 declare previous_official boolean:=false; actor uuid:=auth.uid(); kind text;
+  knockout boolean:=TG_TABLE_NAME='eliminatorias_partidos'; group_name text; match_day integer; claim text; phase text; pl integer; pv integer; opl integer; opv integer;
 begin
-  if new.estado <> 'OFICIAL' then return new; end if;
+  if new.estado is distinct from 'OFICIAL' then return new; end if;
+  if knockout then
+    phase:=new.fase;pl:=new.penales_local;pv:=new.penales_visitante;
+    if TG_OP='UPDATE' then opl:=old.penales_local;opv:=old.penales_visitante;end if;
+  else group_name:=new.grupo;match_day:=new.jornada;end if;
+  claim:=to_jsonb(new)->>'reclamo';
   if TG_OP='UPDATE' then
     previous_official:=old.estado='OFICIAL';
     if previous_official and (new.goles_local,new.goles_visitante,new.equipo_local_id,new.equipo_visitante_id)
-      is not distinct from (old.goles_local,old.goles_visitante,old.equipo_local_id,old.equipo_visitante_id) then return new; end if;
+      is not distinct from (old.goles_local,old.goles_visitante,old.equipo_local_id,old.equipo_visitante_id)
+      and (pl,pv) is not distinct from (opl,opv) then return new; end if;
   end if;
   if actor is not null and not public.es_admin_panel() then raise exception 'Tu cuenta no está autorizada para aprobar partidos.' using errcode='42501'; end if;
+  if actor is null and current_setting('role',true) in ('anon','authenticated') then
+    raise exception 'Inicia sesión como administrador para aprobar partidos.' using errcode='42501';
+  end if;
   if new.goles_local is null or new.goles_visitante is null or new.goles_local<0 or new.goles_visitante<0 then
     raise exception 'Un resultado oficial necesita un marcador válido.';
   end if;
   -- Descansos sin dos equipos no generan actas de partido en el historial.
   if new.equipo_local_id is null or new.equipo_visitante_id is null then return new; end if;
   kind:=case when previous_official then 'CORRECCION' else 'APROBACION' end;
-  insert into public.partidos_aprobaciones(partido_id,actor_id,tipo,categoria,grupo,jornada,local_nombre,visitante_nombre,goles_local,goles_visitante,reclamo,cancha)
-  values(new.id,actor,kind,new.categoria,new.grupo,new.jornada,
+  insert into public.partidos_aprobaciones(partido_id,eliminatoria_id,actor_id,tipo,categoria,grupo,jornada,local_nombre,visitante_nombre,goles_local,goles_visitante,reclamo,cancha,fase,penales_local,penales_visitante)
+  values(case when knockout then null else new.id end,case when knockout then new.id else null end,actor,kind,new.categoria,group_name,match_day,
     coalesce((select nombre from public.equipos where id=new.equipo_local_id),'Equipo no disponible'),
     coalesce((select nombre from public.equipos where id=new.equipo_visitante_id),'Equipo no disponible'),
-    new.goles_local,new.goles_visitante,new.reclamo,new.cancha);
+    new.goles_local,new.goles_visitante,claim,new.cancha,phase,pl,pv);
   return new;
 end $$;
 drop trigger if exists registrar_aprobacion_admin on public.partidos;
 create trigger registrar_aprobacion_admin after insert or update on public.partidos for each row execute function public.registrar_aprobacion_admin();
+do $$ begin
+  if to_regclass('public.eliminatorias_partidos') is not null then
+    execute 'drop trigger if exists registrar_aprobacion_admin on public.eliminatorias_partidos';
+    execute 'create trigger registrar_aprobacion_admin after insert or update on public.eliminatorias_partidos for each row execute function public.registrar_aprobacion_admin()';
+  end if;
+end $$;
 
 create or replace function public.aprobar_partido_admin(p_id uuid,p_local integer,p_visitante integer,p_original_local integer,p_original_visitante integer,p_reclamo text,p_local_id uuid,p_visitante_id uuid)
 returns uuid language plpgsql security invoker set search_path='' as $$
@@ -84,7 +109,7 @@ begin
   if not public.es_admin_panel() then raise exception 'Cuenta no autorizada.' using errcode='42501'; end if;
   if p_local is null or p_visitante is null or p_local not between 0 and 99 or p_visitante not between 0 and 99 then raise exception 'Marcador inválido.'; end if;
   select * into m from public.partidos where id=p_id for update;
-  if not found or m.estado<>'EN_REVISION' then raise exception 'El partido ya no está pendiente de revisión. Actualiza la lista.'; end if;
+  if not found or m.estado is distinct from 'EN_REVISION' then raise exception 'El partido ya no está pendiente de revisión. Actualiza la lista.'; end if;
   if (m.goles_local,m.goles_visitante,m.reclamo,m.equipo_local_id,m.equipo_visitante_id)
     is distinct from (p_original_local,p_original_visitante,p_reclamo,p_local_id,p_visitante_id) then
     raise exception 'El acta cambió. Actualiza y revisa el resultado nuevamente.';
