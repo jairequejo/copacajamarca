@@ -1,4 +1,6 @@
 import { supabase } from './supabase.js';
+import { normalizeLiveMatch, liveResultText, liveScoreSummary, isRecentLiveMatch } from './vivo-model.js?v=1';
+const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 const matchesList = document.getElementById('matchesList');
 const refreshBar = document.getElementById('refreshBar');
@@ -90,55 +92,6 @@ function setupListeners() {
 let countdownInterval = null;
 const REFRESH_SECS = 30;
 
-const KNOCKOUT_PHASES = {
-    SF1: 'Semifinal 1',
-    SF2: 'Semifinal 2',
-    F: 'Final',
-    TP: 'Tercer puesto'
-};
-
-function splitKnockoutVenue(value) {
-    const text = String(value || '').trim();
-    const parts = text.split(/\s+-\s+/);
-    if (parts.length < 2) return { lugar: '', cancha: text };
-    return { lugar: parts.shift(), cancha: parts.join(' - ') };
-}
-
-function normalizeMatch(m, isKnockout = false) {
-    let standardEstado = 'Pendiente';
-    if (m.estado === 'EN_VIVO') standardEstado = 'En Vivo';
-    else if (['FINALIZADO', 'OFICIAL', 'EN_REVISION'].includes(m.estado)) standardEstado = 'Finalizado';
-
-    let fechaStr = '', horaStr = '';
-    if (m.fecha_hora) {
-        const d = new Date(m.fecha_hora);
-        const rawFecha = d.toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long' });
-        fechaStr = rawFecha.charAt(0).toUpperCase() + rawFecha.slice(1);
-        horaStr = d.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: true });
-    }
-
-    const venue = isKnockout
-        ? splitKnockoutVenue(m.cancha)
-        : { lugar: m.lugar || '', cancha: m.cancha || '' };
-    const phase = isKnockout ? (KNOCKOUT_PHASES[m.fase] || m.fase) : `Jor. ${m.jornada || ''}`;
-
-    return {
-        fecha: fechaStr,
-        hora: horaStr,
-        lugar: venue.lugar,
-        cancha: venue.cancha,
-        local: m.equipo_local?.nombre || 'Por definir',
-        visitante: m.equipo_visitante?.nombre || 'Por definir',
-        categoria: m.categoria?.toString() || '',
-        jornada: m.jornada || '',
-        phase,
-        isKnockout,
-        golesLocal: standardEstado === 'Pendiente' ? '' : (m.goles_local?.toString() ?? ''),
-        golesVisitante: standardEstado === 'Pendiente' ? '' : (m.goles_visitante?.toString() ?? ''),
-        estadoStandard: standardEstado
-    };
-}
-
 function startAutoRefresh() {
     if (countdownInterval) clearInterval(countdownInterval);
 
@@ -188,16 +141,13 @@ async function fetchAndRender(isSilent = false) {
                 .order('fecha_hora', { ascending: true }),
             supabase
                 .from('eliminatorias_partidos')
-                .select('id, fecha_hora, cancha, categoria, fase, goles_local, goles_visitante, estado, equipo_local:equipos!eliminatorias_partidos_equipo_local_id_fkey(nombre), equipo_visitante:equipos!eliminatorias_partidos_equipo_visitante_id_fkey(nombre)')
+                .select('id, fecha_hora, cancha, categoria, fase, goles_local, goles_visitante, penales_local, penales_visitante, estado, updated_at, equipo_local:equipos!eliminatorias_partidos_equipo_local_id_fkey(nombre), equipo_visitante:equipos!eliminatorias_partidos_equipo_visitante_id_fkey(nombre)')
                 .order('fecha_hora', { ascending: true })
         ]);
 
         if (regular.error) throw regular.error;
         const knockoutUnavailable = ['PGRST205', '42P01'].includes(knockout.error?.code);
         if (knockout.error && !knockoutUnavailable) throw knockout.error;
-
-        const now = new Date();
-        const cutoff = new Date(now.getTime() - (2 * 24 * 60 * 60 * 1000)); // Hace 2 días (48 horas)
 
         const rows = [
             ...(regular.data || []).map(match => ({ match, isKnockout: false })),
@@ -206,14 +156,8 @@ async function fetchAndRender(isSilent = false) {
 
         const parsed = rows
             .sort((a, b) => new Date(a.match.fecha_hora || 0) - new Date(b.match.fecha_hora || 0))
-            .filter(m => {
-                if (m.match.estado === 'EN_VIVO') return true;
-                if (!m.match.fecha_hora) return false;
-                
-                const matchDate = new Date(m.match.fecha_hora);
-                return matchDate >= cutoff;
-            })
-            .map(({ match, isKnockout }) => normalizeMatch(match, isKnockout));
+            .filter(({ match, isKnockout }) => isRecentLiveMatch(match, isKnockout))
+            .map(({ match, isKnockout }) => normalizeLiveMatch(match, isKnockout));
 
         const newJson = JSON.stringify(parsed);
         const dataChanged = newJson !== lastMatchesJson;
@@ -253,7 +197,7 @@ function updateFilters() {
 
         let html = `<button class="filter-btn ${finalValue === 'todos' ? 'active' : ''}" data-filter="todos">Todos</button>`;
         arr.forEach(item => {
-            html += `<button class="filter-btn ${finalValue === item ? 'active' : ''}" data-filter="${item}">${prefix}${item}</button>`;
+            html += `<button class="filter-btn ${finalValue === item ? 'active' : ''}" data-filter="${escapeHTML(item)}">${prefix}${escapeHTML(item)}</button>`;
         });
         return { html, activeVal: finalValue };
     };
@@ -318,37 +262,32 @@ function renderMatches() {
 
         let localClass = 'local';
         let visitClass = 'visitante';
-        const gl = parseInt(match.golesLocal);
-        const gv = parseInt(match.golesVisitante);
 
-        if (estadoLC === 'finalizado' && !isNaN(gl) && !isNaN(gv)) {
-            if (gl > gv) {
-                localClass += ' winner';
-                visitClass += ' loser';
-            } else if (gv > gl) {
-                visitClass += ' winner';
-                localClass += ' loser';
-            }
+        if (match.decision) {
+            localClass += match.decision.winnerIndex === 0 ? ' winner' : ' loser';
+            visitClass += match.decision.winnerIndex === 1 ? ' winner' : ' loser';
         }
+        const resultText = liveResultText(match);
 
         html += `
             <div class="match-card" data-estado="${estadoLC}">
                 <div class="card-top">
-                    <span class="card-cat">Cat. ${match.categoria} — ${match.phase}</span>
+                    <span class="card-cat">Cat. ${escapeHTML(match.categoria)} — ${escapeHTML(match.phase)}</span>
                     <span class="status-chip ${stateClass}">
                         ${stateClass === 'en-curso' ? '<span class="pulse-dot"></span>' : ''}
                         ${match.estadoStandard}
                     </span>
                 </div>
                 <div class="card-score">
-                    <div class="team ${localClass}">${match.local}</div>
-                    <div class="score-center">
+                    <div class="team ${localClass}">${escapeHTML(match.local)}</div>
+                    <div class="score-stack"><div class="score-center">
                         <span class="score-num">${match.golesLocal !== '' ? match.golesLocal : '-'}</span>
                         <span class="score-sep">-</span>
                         <span class="score-num">${match.golesVisitante !== '' ? match.golesVisitante : '-'}</span>
-                    </div>
-                    <div class="team ${visitClass}">${match.visitante}</div>
+                    </div>${match.penaltyScore ? `<small class="score-penalties">Penales ${match.penaltyScore.join(' – ')}</small>` : ''}</div>
+                    <div class="team ${visitClass}">${escapeHTML(match.visitante)}</div>
                 </div>
+                ${resultText ? `<p class="match-result-line">${escapeHTML(resultText)}</p>` : ''}
                 <button class="btn-details" aria-expanded="false">
                     Ver detalles
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
@@ -357,19 +296,19 @@ function renderMatches() {
                     <div class="details-inner">
                         <div class="detail-cell">
                             <span class="detail-label">Fecha</span>
-                            <span class="detail-value">${match.fecha}</span>
+                            <span class="detail-value">${escapeHTML(match.fecha)}</span>
                         </div>
                         <div class="detail-cell">
                             <span class="detail-label">Hora</span>
-                            <span class="detail-value">${match.hora}</span>
+                            <span class="detail-value">${escapeHTML(match.hora)}</span>
                         </div>
                         <div class="detail-cell">
                             <span class="detail-label">Lugar</span>
-                            <span class="detail-value">${match.lugar}</span>
+                            <span class="detail-value">${escapeHTML(match.lugar)}</span>
                         </div>
                         <div class="detail-cell">
                             <span class="detail-label">Cancha</span>
-                            <span class="detail-value">${match.cancha}</span>
+                            <span class="detail-value">${escapeHTML(match.cancha)}</span>
                         </div>
                     </div>
                 </div>
@@ -505,11 +444,11 @@ async function downloadScreenshot(futbolFormat) {
         }
 
         const rows = filtered.map(m => {
-            const scoreStr = (m.golesLocal !== '' && m.golesVisitante !== '') ? `${m.golesLocal} - ${m.golesVisitante}` : 'VS';
+            const summary = liveScoreSummary(m);
             return {
                 jornada: m.categoria || '',
                 teamA: m.local || '',
-                score: scoreStr,
+                ...summary,
                 teamB: m.visitante || ''
             };
         });
@@ -670,19 +609,23 @@ async function downloadScreenshot(futbolFormat) {
             ctx.textAlign = 'center';
             ctx.fillText(r.jornada, CC.x + CC.w / 2, my);
 
-            const as = fit(ctx, r.teamA.toUpperCase(), CA.w - 14, fs, '500');
-            ctx.font = `500 ${as}px "Barlow",sans-serif`;
-            ctx.fillStyle = '#0a1830'; ctx.textAlign = 'center';
+            const as = fit(ctx, r.teamA.toUpperCase(), CA.w - 14, fs, r.winnerIndex === 0 ? '700' : '500');
+            ctx.font = `${r.winnerIndex === 0 ? '700' : '500'} ${as}px "Barlow",sans-serif`;
+            ctx.fillStyle = r.winnerIndex === 0 ? '#087444' : '#0a1830'; ctx.textAlign = 'center';
             ctx.fillText(r.teamA.toUpperCase(), CA.x + CA.w / 2, my);
 
             const scoreFs = Math.max(20, Math.min(28, ROW_H * 0.5));
             ctx.font = `600 ${scoreFs}px "Barlow",sans-serif`;
             ctx.fillStyle = '#0a1830'; ctx.textAlign = 'center';
-            ctx.fillText(r.score, CS.x + CS.w / 2, my);
+            ctx.fillText(r.score, CS.x + CS.w / 2, my - (r.penalties ? 8 : 0));
+            if (r.penalties) {
+                ctx.font = `600 ${fit(ctx, r.penalties, CS.w - 10, 16, '600')}px "Barlow",sans-serif`;
+                ctx.fillText(r.penalties, CS.x + CS.w / 2, my + 12);
+            }
 
-            const bs = fit(ctx, r.teamB.toUpperCase(), CB.w - 14, fs, '500');
-            ctx.font = `500 ${bs}px "Barlow",sans-serif`;
-            ctx.fillStyle = '#0a1830'; ctx.textAlign = 'center';
+            const bs = fit(ctx, r.teamB.toUpperCase(), CB.w - 14, fs, r.winnerIndex === 1 ? '700' : '500');
+            ctx.font = `${r.winnerIndex === 1 ? '700' : '500'} ${bs}px "Barlow",sans-serif`;
+            ctx.fillStyle = r.winnerIndex === 1 ? '#087444' : '#0a1830'; ctx.textAlign = 'center';
             ctx.fillText(r.teamB.toUpperCase(), CB.x + CB.w / 2, my);
 
             // Borde inferior de la fila
@@ -724,4 +667,5 @@ async function downloadScreenshot(futbolFormat) {
     }
 }
 
+document.addEventListener('visibilitychange', () => { if (!document.hidden) fetchAndRender(true); });
 document.addEventListener('DOMContentLoaded', init);

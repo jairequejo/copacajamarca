@@ -1,3 +1,4 @@
+import { resultDecision } from './result-model.js?v=1';
 export const isFinished = match => ['OFICIAL', 'FINALIZADO', 'TERMINADO', 'COMPLETADO'].includes(String(match.estado).trim().toUpperCase()) && match.goles_local != null && match.goles_visitante != null;
 const rank = (a, b) => Number(b.pts) - Number(a.pts) || Number(b.dg) - Number(a.dg) || Number(b.gf) - Number(a.gf);
 const team = (row, seed) => row ? { id: row.equipo_id, name: row.equipo, logo: row.logo_url, seed } : { name: seed, seed, pending: true };
@@ -49,19 +50,14 @@ export function buildKnockout(category, standings, matches) {
 
 // Results live in a separate table so knockout scores never affect group standings.
 export const ROUND_IDS = ['SF1', 'SF2', 'F', 'TP'];
-export function matchDecision(match) {
-  if (match.estado !== 'OFICIAL' || match.teams.some(t => !t.id)) return null;
-  const scores = match.goals;
-  if (!scores?.every(n => Number.isInteger(n) && n >= 0)) return null;
-  let winner = scores[0] > scores[1] ? 0 : scores[1] > scores[0] ? 1 : null;
-  if (winner === null) {
-    if (!match.penalties?.every(n => Number.isInteger(n) && n >= 0) || match.penalties[0] === match.penalties[1]) return null;
-    winner = match.penalties[0] > match.penalties[1] ? 0 : 1;
-  }
-  return { winner: match.teams[winner], loser: match.teams[1 - winner], winnerIndex: winner };
+export function matchDecision(match, options) {
+  if (match.teams?.length !== 2 || match.teams.some(t => !t.id)) return null;
+  const decision = resultDecision(match, options);
+  if (!decision) return null;
+  return { ...decision, winner:match.teams[decision.winnerIndex], loser:match.teams[1-decision.winnerIndex] };
 }
-export function advanceKnockout(bracket, records = [], tournamentId = null) {
-  const result = { ...bracket, matches: bracket.matches.map((m, i) => ({ ...m, round: ROUND_IDS[i], teams: m.teams.map(t => ({ ...t })), goals: [null, null], penalties: [null, null], estado: 'PROGRAMADO' })), tournamentId };
+export function advanceKnockout(bracket, records = [], tournamentId = null, { includeReview = true } = {}) {
+  const result = { ...bracket, includeReview, matches: bracket.matches.map((m, i) => ({ ...m, round: ROUND_IDS[i], teams: m.teams.map(t => ({ ...t })), goals: [null, null], penalties: [null, null], estado: 'PROGRAMADO' })), tournamentId };
   const apply = index => {
     const match = result.matches[index];
     const record = records.find(r => String(r.categoria) === String(bracket.category) && r.fase === match.round && String(r.torneo_id) === String(tournamentId));
@@ -69,7 +65,7 @@ export function advanceKnockout(bracket, records = [], tournamentId = null) {
     // A correction upstream must never attach an old score to a different pairing.
     if (String(record.equipo_local_id) !== String(match.teams[0].id) || String(record.equipo_visitante_id) !== String(match.teams[1].id)) return;
     Object.assign(match, { recordId: record.id, updatedAt: record.updated_at, goals: [record.goles_local, record.goles_visitante], penalties: [record.penales_local, record.penales_visitante], estado: record.estado, date: record.fecha_hora, cancha: record.cancha });
-    match.decision = matchDecision(match);
+    match.decision = matchDecision(match, { includeReview });
   };
   apply(0); apply(1);
   for (let i = 0; i < 2; i++) {
@@ -82,11 +78,12 @@ export function advanceKnockout(bracket, records = [], tournamentId = null) {
   apply(2); apply(3);
   result.champion = result.matches[2].decision?.winner || null;
   result.third = result.matches[3].decision?.winner || null;
-  if (result.champion) result.message = `Campeón: ${result.champion.name}.`;
-  else if (result.matches.some(m => m.estado === 'EN_VIVO')) result.message = 'Eliminatorias en vivo. El ganador avanza al oficializar el resultado.';
-  else if (result.matches.some(m => m.estado === 'EN_REVISION')) result.message = 'Resultado enviado por mesa. Pendiente de confirmación administrativa.';
+  if (result.champion) result.message = `Campeón${result.matches[2].estado === 'EN_REVISION' ? ' según Mesa' : ''}: ${result.champion.name}.`;
+  else if (result.matches.some(m => m.estado === 'EN_VIVO')) result.message = 'Eliminatorias en vivo. El ganador avanza cuando Mesa finaliza el partido.';
+  else if (includeReview && result.matches.some(m => m.estado === 'EN_REVISION' && m.decision)) result.message = 'Cuadro actualizado con los resultados finalizados por Mesa.';
+  else if (result.matches.some(m => m.estado === 'EN_REVISION')) result.message = 'Resultado enviado por Mesa. Pendiente de confirmación administrativa.';
   else if (result.matches.slice(0, 2).every(m => m.decision)) result.message = 'Finalistas definidos. La final y el tercer puesto ya tienen sus equipos.';
-  else if (result.matches.some(m => m.decision)) result.message = 'El cuadro se actualiza con los resultados oficiales de las semifinales.';
+  else if (result.matches.some(m => m.decision)) result.message = 'El cuadro se actualiza al finalizar las semifinales.';
   else if (result.matches.some(m => m.date)) result.message = 'Eliminatorias programadas. Horarios en hora de Perú.';
   return result;
 }

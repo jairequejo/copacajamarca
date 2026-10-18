@@ -1,4 +1,5 @@
 import { supabase } from '../assets/js/supabase.js';
+import { loadMesaMatches, saveMesaMatch, mesaError } from './mesa-data.js?v=1';
 
 document.addEventListener('DOMContentLoaded', () => {
   const loginView = document.getElementById('login-view');
@@ -18,11 +19,18 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => toast.classList.remove('show'), 3000);
   }
 
+  async function isMesaUser(user) {
+    const { data, error } = await supabase.rpc('es_mesa_control');
+    if (!error) return data === true;
+    if (error.code === 'PGRST202') return /mesa/i.test(user.email || '');
+    throw error;
+  }
+
   // Verificamos si ya hay sesión activa
   const checkSession = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
-      if (session.user.email.includes('mesa')) {
+      if (await isMesaUser(session.user)) {
         loginView.style.display = 'none';
         dashboardView.style.display = 'block';
         cargarPartidos();
@@ -32,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   };
-  checkSession();
+  checkSession().catch(error => showToast(mesaError(error), true));
 
   // --- LOGIN CON SUPABASE AUTH REAL ---
   document.getElementById('form-login').addEventListener('submit', async (e) => {
@@ -52,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
       showToast('Credenciales incorrectas', true);
       btnLogin.innerText = "Ingresar al sistema";
     } else {
-      if (data.user.email.includes('mesa')) {
+      if (await isMesaUser(data.user)) {
         btnLogin.innerText = '¡Entrando!';
         setTimeout(() => {
           loginView.style.display = 'none';
@@ -74,79 +82,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- CARGAR PARTIDOS ---
   let allPartidosData = [];
-  const fasesEliminatorias = { SF1:'Semifinal 1', SF2:'Semifinal 2', F:'Final', TP:'Tercer puesto' };
-
-  function separarSedeEliminatoria(value) {
-    const parts = String(value || '').trim().split(/\s+-\s+/);
-    if (parts.length < 2) return { lugar:'', cancha:parts[0] || '' };
-    return { lugar:parts.shift(), cancha:parts.join(' - ') };
-  }
-
-  async function guardarEliminatoriaMesa(partido, cambios) {
-    const payload = {
-      p_id: partido.id,
-      p_version: partido.updated_at,
-      p_estado: cambios.estado ?? partido.estado,
-      p_goles_local: cambios.goles_local !== undefined ? cambios.goles_local : partido.goles_local,
-      p_goles_visitante: cambios.goles_visitante !== undefined ? cambios.goles_visitante : partido.goles_visitante,
-      p_penales_local: cambios.penales_local !== undefined ? cambios.penales_local : partido.penales_local,
-      p_penales_visitante: cambios.penales_visitante !== undefined ? cambios.penales_visitante : partido.penales_visitante,
-      p_reclamo: cambios.reclamo !== undefined ? cambios.reclamo : partido.reclamo
-    };
-    const { data, error } = await supabase.rpc('guardar_eliminatoria_mesa', payload);
-    if (error) throw error;
-    const saved = Array.isArray(data) ? data[0] : data;
-    if (saved) Object.assign(partido, saved);
-    return saved;
-  }
+  let loadingMatches = false;
+  const pendingMatches = new Set();
+  const findMatch = key => allPartidosData.find(match => match.key === key);
+  const notice = document.getElementById('mesa-status');
 
   async function cargarPartidos() {
-    if (allPartidosData.length === 0) {
-      partidosList.innerHTML = '<p style="text-align:center; color:#94a3b8;">Cargando partidos programados...</p>';
+    if (loadingMatches || pendingMatches.size) return;
+    loadingMatches = true;
+    document.getElementById('btn-refresh-mesa').disabled = true;
+    if (!allPartidosData.length) partidosList.textContent = 'Cargando partidos…';
+    try {
+      const { matches, warning } = await loadMesaMatches(supabase);
+      allPartidosData = matches;
+      notice.textContent = warning;
+      notice.hidden = !warning;
+      construirFiltros(matches);
+      aplicarFiltros();
+    } catch (error) {
+      notice.textContent = mesaError(error);
+      notice.hidden = false;
+      if (!allPartidosData.length) partidosList.textContent = 'No se pudieron cargar los partidos. Pulsa Actualizar para reintentar.';
+    } finally {
+      loadingMatches = false;
+      document.getElementById('btn-refresh-mesa').disabled = false;
     }
-    
-    const cutoffISO = new Date(Date.now() - (4 * 24 * 60 * 60 * 1000)).toISOString();
-
-    const [regular, knockout] = await Promise.all([
-      supabase
-        .from('partidos')
-        .select(`id,goles_local,goles_visitante,estado,fecha_hora,cancha,lugar,categoria,reclamo,equipo_local:equipos!partidos_equipo_local_id_fkey(nombre),equipo_visitante:equipos!partidos_equipo_visitante_id_fkey(nombre)`)
-        .not('fecha_hora', 'is', null)
-        .gte('fecha_hora', cutoffISO)
-        .order('fecha_hora', { ascending: true })
-        .order('cancha', { ascending: true, nullsFirst: true }),
-      supabase
-        .from('eliminatorias_partidos')
-        .select(`id,goles_local,goles_visitante,penales_local,penales_visitante,estado,fecha_hora,cancha,categoria,fase,reclamo,updated_at,equipo_local:equipos!eliminatorias_partidos_equipo_local_id_fkey(nombre),equipo_visitante:equipos!eliminatorias_partidos_equipo_visitante_id_fkey(nombre)`)
-        .not('fecha_hora', 'is', null)
-        .gte('fecha_hora', cutoffISO)
-        .order('fecha_hora', { ascending: true })
-    ]);
-
-    const knockoutUnavailable = ['PGRST205', '42P01'].includes(knockout.error?.code);
-    if (regular.error || (knockout.error && !knockoutUnavailable)) {
-      console.error(regular.error || knockout.error);
-      showToast('Error al cargar partidos', true);
-      return;
-    }
-
-    const data = [
-      ...(regular.data || []).map(p => ({...p, tipo_partido:'REGULAR'})),
-      ...(!knockout.error ? (knockout.data || []).map(p => {
-        const sede = separarSedeEliminatoria(p.cancha);
-        return {...p,tipo_partido:'ELIMINATORIA',lugar:sede.lugar,cancha:sede.cancha,fase_label:fasesEliminatorias[p.fase]||p.fase};
-      }) : [])
-    ].sort((a,b)=>new Date(a.fecha_hora)-new Date(b.fecha_hora));
-
-    if (data.length === 0) {
-      partidosList.innerHTML = '<p style="text-align:center; color:#94a3b8;">No hay partidos pendientes para hoy.</p>';
-      return;
-    }
-
-    allPartidosData = data;
-    construirFiltros(data);
-    aplicarFiltros();
   }
+  document.getElementById('btn-refresh-mesa').addEventListener('click', cargarPartidos);
 
   function construirFiltros(data) {
     const filterContainer = document.getElementById('filters-container');
@@ -164,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
     data.forEach(p => {
       if(p.fecha_hora) {
         const d = new Date(p.fecha_hora);
-        const dayStr = d.toLocaleDateString('es-PE', { weekday:'long', day:'numeric', month:'long' });
+        const dayStr = d.toLocaleDateString('es-PE', { weekday:'long', day:'numeric', month:'long', timeZone:'America/Lima' });
         dias.add(dayStr);
       }
       if(p.lugar) lugares.add(p.lugar);
@@ -180,8 +142,8 @@ document.addEventListener('DOMContentLoaded', () => {
     selCat.innerHTML = '<option value="todos">🏆 Todas las categorías</option>';
 
     [...dias].forEach(d => selDia.insertAdjacentHTML('beforeend', `<option value="${d}">${d.charAt(0).toUpperCase() + d.slice(1)}</option>`));
-    [...lugares].forEach(l => selLugar.insertAdjacentHTML('beforeend', `<option value="${l}">${l}</option>`));
-    [...cats].forEach(c => selCat.insertAdjacentHTML('beforeend', `<option value="${c}">${c}</option>`));
+    [...lugares].forEach(l => selLugar.insertAdjacentHTML('beforeend', `<option value="${safe(l)}">${safe(l)}</option>`));
+    [...cats].forEach(c => selCat.insertAdjacentHTML('beforeend', `<option value="${safe(c)}">${safe(c)}</option>`));
 
     if (prevDia && [...dias].includes(prevDia)) selDia.value = prevDia;
     if (prevLugar && [...lugares].includes(prevLugar)) selLugar.value = prevLugar;
@@ -204,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
       let matchDia = true;
       if(diaVal !== 'todos' && p.fecha_hora) {
         const d = new Date(p.fecha_hora);
-        const pDia = d.toLocaleDateString('es-PE', { weekday:'long', day:'numeric', month:'long' });
+        const pDia = d.toLocaleDateString('es-PE', { weekday:'long', day:'numeric', month:'long', timeZone:'America/Lima' });
         if(pDia !== diaVal) matchDia = false;
       } else if (diaVal !== 'todos' && !p.fecha_hora) {
         matchDia = false;
@@ -247,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
       let horaTexto = "Sin Hora";
       if (p.fecha_hora) {
         const d = new Date(p.fecha_hora);
-        horaTexto = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        horaTexto = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', timeZone:'America/Lima'});
       }
 
       const estadoUpper = (p.estado || '').toUpperCase();
@@ -262,7 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const card = document.createElement('div');
       card.className = 'partido-card';
-      card.dataset.id = p.id;
+      card.dataset.id = p.key;
       card.dataset.golesLocal = gl;
       card.dataset.golesVisita = gv;
       if (isOficial) card.style.opacity = '0.6';
@@ -296,6 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
           ${p.tipo_partido==='ELIMINATORIA'&&p.penales_local!==null?`<p style="text-align:center;color:var(--gold);font-weight:800;margin:-2px 0 14px;">Penales: ${safe(p.penales_local)} - ${safe(p.penales_visitante)}</p>`:''}
           ${p.reclamo ? `<div style="margin-bottom:15px; width:100%; padding:12px; background:rgba(214,13,13,0.15); border:1px solid rgba(214,13,13,0.3); border-radius:8px; color:#ffba00; font-size:1rem; font-family:'Barlow',sans-serif; line-height:1.4;"><strong>⚠️ RECLAMO:</strong><br>${safe(p.reclamo)}</div>` : ''}
 
+          ${isOficial ? '<p class="mesa-official-note">Resultado oficial. Las correcciones se solicitan al administrador.</p>' : ''}
           ${isFinalizado ? `<button class="btn-envivo" data-action="editar" style="background:var(--navy); border:1px solid var(--gold); color:var(--gold); padding:16px; margin-top:16px; border-radius:10px; width:100%;">✏️ EDITAR RESULTADO / RECLAMO</button>` : ''}
         `;
       } else {
@@ -329,8 +292,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${safe(p.equipo_visitante?.nombre)}
               </div>
             </div>
-            <div style="display:none;" id="local-${p.id}">${gl}</div>
-            <div style="display:none;" id="visita-${p.id}">${gv}</div>
+            <div style="display:none;" id="local-${p.key}">${gl}</div>
+            <div style="display:none;" id="visita-${p.key}">${gv}</div>
             
             <div style="margin-bottom: 0px; margin-top: 14px;">
               ${btnEnVivoHTML}
@@ -341,26 +304,26 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             
             <div style="margin-bottom: 14px;">
-              <button class="btn-toggle-reclamo" data-id="${p.id}" style="display: ${p.reclamo ? 'none' : 'block'}; width:100%; padding:14px; border-radius:10px; border:1px solid rgba(220,38,38,0.5); background:rgba(220,38,38,0.1); color:#fca5a5; font-family:'Barlow Condensed',sans-serif; font-size:1.15rem; font-weight:800; text-transform:uppercase; cursor:pointer; transition:background 0.2s;">⚠️ AÑADIR RECLAMO</button>
+              <button class="btn-toggle-reclamo" data-id="${p.key}" style="display: ${p.reclamo ? 'none' : 'block'}; width:100%; padding:14px; border-radius:10px; border:1px solid rgba(220,38,38,0.5); background:rgba(220,38,38,0.1); color:#fca5a5; font-family:'Barlow Condensed',sans-serif; font-size:1.15rem; font-weight:800; text-transform:uppercase; cursor:pointer; transition:background 0.2s;">⚠️ AÑADIR RECLAMO</button>
             </div>
 
-            <div id="caja-reclamo-${p.id}" style="display: ${p.reclamo ? 'block' : 'none'}; margin-bottom: 14px; background:rgba(220,38,38,0.15); border:1px solid rgba(220,38,38,0.4); padding:15px; border-radius:10px;">
+            <div id="caja-reclamo-${p.key}" style="display: ${p.reclamo ? 'block' : 'none'}; margin-bottom: 14px; background:rgba(220,38,38,0.15); border:1px solid rgba(220,38,38,0.4); padding:15px; border-radius:10px;">
               <label style="color:#fca5a5; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:1.1rem; text-transform:uppercase; margin-bottom:10px; display:block;">⚠️ Observaciones o Reclamos:</label>
-              <select id="tipo-reclamo-${p.id}" style="width:100%; padding:12px; margin-bottom:10px; background:rgba(0,0,0,0.6); border:1px solid rgba(220,38,38,0.4); color:#fff; border-radius:8px; font-family:'Barlow',sans-serif; font-size:1.05rem;">
+              <select id="tipo-reclamo-${p.key}" style="width:100%; padding:12px; margin-bottom:10px; background:rgba(0,0,0,0.6); border:1px solid rgba(220,38,38,0.4); color:#fff; border-radius:8px; font-family:'Barlow',sans-serif; font-size:1.05rem;">
                 <option value="">-- Selecciona el Motivo --</option>
                 <option value="DNI Vencido" ${p.reclamo?.includes('DNI Vencido') ? 'selected' : ''}>DNI Vencido</option>
                 <option value="Niño sin DNI jugando" ${p.reclamo?.includes('Niño sin DNI jugando') ? 'selected' : ''}>Niño sin DNI jugando</option>
                 <option value="Niño de otra categoría" ${p.reclamo?.includes('Niño de otra categoría') ? 'selected' : ''}>Niño de otra categoría</option>
                 <option value="Otros" ${p.reclamo?.includes('Otros') ? 'selected' : ''}>Otros (Especificar)</option>
               </select>
-              <input type="text" id="reclamo-${p.id}" placeholder="Explica el reclamo al Admin..." style="width:100%; padding:12px; background:rgba(0,0,0,0.6); border:1px solid rgba(220,38,38,0.4); color:#fff; border-radius:8px; font-family:'Barlow',sans-serif;" value="${safe(p.reclamo ? p.reclamo.replace(/\[.*?\]\s*/, '') : '')}">
+              <input type="text" id="reclamo-${p.key}" placeholder="Explica el reclamo al Admin..." style="width:100%; padding:12px; background:rgba(0,0,0,0.6); border:1px solid rgba(220,38,38,0.4); color:#fff; border-radius:8px; font-family:'Barlow',sans-serif;" maxlength="1000" value="${safe(p.reclamo ? p.reclamo.replace(/\[.*?\]\s*/, '') : '')}">
             </div>
 
             <div class="equipo-row">
               <div class="equipo-name">${safe(p.equipo_local?.nombre || 'Local')}</div>
               <div class="score-controls">
                 <button class="btn-score minus" data-team="local" data-delta="-1">-</button>
-                <div class="score-display" id="local-${p.id}">${gl}</div>
+                <div class="score-display" id="local-${p.key}">${gl}</div>
                 <button class="btn-score plus" data-team="local" data-delta="1">+</button>
               </div>
             </div>
@@ -369,43 +332,47 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="equipo-name">${safe(p.equipo_visitante?.nombre || 'Visita')}</div>
               <div class="score-controls">
                 <button class="btn-score minus" data-team="visitante" data-delta="-1">-</button>
-                <div class="score-display" id="visita-${p.id}">${gv}</div>
+                <div class="score-display" id="visita-${p.key}">${gv}</div>
                 <button class="btn-score plus" data-team="visitante" data-delta="1">+</button>
               </div>
             </div>
 
-            ${p.tipo_partido==='ELIMINATORIA'?`
-              <div style="margin:14px 0;padding:14px;background:rgba(255,186,0,.08);border:1px solid rgba(255,186,0,.25);border-radius:10px;">
-                <strong style="display:block;color:var(--gold);margin-bottom:10px;">PENALES · SOLO SI TERMINAN EMPATADOS</strong>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                  <label style="color:#fff;">${safe(p.equipo_local?.nombre)}<input id="pen-local-${p.id}" type="number" min="0" max="99" value="${p.penales_local??''}" style="width:100%;padding:12px;border-radius:8px;"></label>
-                  <label style="color:#fff;">${safe(p.equipo_visitante?.nombre)}<input id="pen-visita-${p.id}" type="number" min="0" max="99" value="${p.penales_visitante??''}" style="width:100%;padding:12px;border-radius:8px;"></label>
-                </div>
-              </div>`:''}
+              ${p.tipo_partido==='ELIMINATORIA' ? `
+                <fieldset class="mesa-penalties">
+                  <legend>Tanda de penales</legend>
+                  <p>Solo si el marcador está empatado. Guarda la tanda antes de salir.</p>
+                  <label>${safe(p.equipo_local?.nombre)}<input id="pen-local-${p.key}" type="number" min="0" max="99" step="1" inputmode="numeric" value="${safe(p.penales_local??'')}" data-penalty-control aria-label="Penales local"></label>
+                  <label>${safe(p.equipo_visitante?.nombre)}<input id="pen-visita-${p.key}" type="number" min="0" max="99" step="1" inputmode="numeric" value="${safe(p.penales_visitante??'')}" data-penalty-control aria-label="Penales visitante"></label>
+                  <button type="button" class="btn-envivo" data-action="penales" data-penalty-control>Guardar penales</button>
+                </fieldset>
+              ` : ''}
           `}
 
           ${!isProgramado ? `<button class="btn-finalizar" data-action="finalizar">Finalizar Partido</button>` : ''}
         `;
       }
+      syncPenaltyControls(card, p);
+      const savePenalties = card.querySelector('[data-action="penales"]');
+      savePenalties?.addEventListener('click', () => guardarPenales(p.key));
       mainFragment.appendChild(card);
 
       // Delegación de eventos — sin window.*
       const btnEnVivo = card.querySelector('[data-action="envivo"]');
       if (btnEnVivo) {
         if (estadoUpper === 'EN_VIVO') btnEnVivo.style.background = '#f97316';
-        btnEnVivo.addEventListener('click', () => marcarEnVivo(p.id, btnEnVivo, p.goles_local, p.goles_visitante));
+        btnEnVivo.addEventListener('click', () => marcarEnVivo(p.key, btnEnVivo, p.goles_local, p.goles_visitante));
       }
       
       const btnEditar = card.querySelector('[data-action="editar"]');
-      if (btnEditar) btnEditar.addEventListener('click', () => editarPartido(p.id, btnEditar));
+      if (btnEditar) btnEditar.addEventListener('click', () => editarPartido(p.key, btnEditar));
       
       const btnFinalizar = card.querySelector('[data-action="finalizar"]');
-      if (btnFinalizar) btnFinalizar.addEventListener('click', () => finalizarPartido(p.id));
+      if (btnFinalizar) btnFinalizar.addEventListener('click', () => finalizarPartido(p.key));
 
       const btnToggleReclamo = card.querySelector('.btn-toggle-reclamo');
       if (btnToggleReclamo) {
         btnToggleReclamo.addEventListener('click', () => {
-          document.getElementById(`caja-reclamo-${p.id}`).style.display = 'block';
+          document.getElementById(`caja-reclamo-${p.key}`).style.display = 'block';
           btnToggleReclamo.style.display = 'none';
         });
       }
@@ -415,10 +382,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const btnAumentarVisita = card.querySelector('.btn-score.plus[data-team="visitante"]');
       const btnQuitarVisita = card.querySelector('.btn-score.minus[data-team="visitante"]');
 
-      if (btnAumentarLocal) btnAumentarLocal.addEventListener('click', () => actualizarGol(p.id, 'local', 1));
-      if (btnQuitarLocal) btnQuitarLocal.addEventListener('click', () => actualizarGol(p.id, 'local', -1));
-      if (btnAumentarVisita) btnAumentarVisita.addEventListener('click', () => actualizarGol(p.id, 'visita', 1));
-      if (btnQuitarVisita) btnQuitarVisita.addEventListener('click', () => actualizarGol(p.id, 'visita', -1));
+      if (btnAumentarLocal) btnAumentarLocal.addEventListener('click', () => actualizarGol(p.key, 'local', 1));
+      if (btnQuitarLocal) btnQuitarLocal.addEventListener('click', () => actualizarGol(p.key, 'local', -1));
+      if (btnAumentarVisita) btnAumentarVisita.addEventListener('click', () => actualizarGol(p.key, 'visita', 1));
+      if (btnQuitarVisita) btnQuitarVisita.addEventListener('click', () => actualizarGol(p.key, 'visita', -1));
       
       if (resumenTbody) {
         const tr = document.createElement('tr');
@@ -432,7 +399,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <td style="padding:12px; font-weight:600;">${safe(horaTexto)}<br><span style="font-size:0.85rem; color:rgba(255,255,255,0.5);">${safe(p.cancha || 'Cancha')}</span></td>
           <td style="padding:12px;">${safe(p.categoria || 'N/A')}${p.fase_label?'<br><small>'+safe(p.fase_label)+'</small>':''}</td>
           <td style="padding:12px; text-align:right; font-family:'Barlow Condensed',sans-serif; font-weight:700;">${safe(p.equipo_local?.nombre)}</td>
-          <td style="padding:12px; text-align:center; font-family:'Bebas Neue',sans-serif; font-size:1.5rem; color:var(--gold);">${gl} - ${gv}</td>
+          <td style="padding:12px; text-align:center; font-family:'Bebas Neue',sans-serif; font-size:1.5rem; color:var(--gold);">${gl} - ${gv}${p.tipo_partido==='ELIMINATORIA' && p.penales_local!=null ? `<small class="mesa-penalty-summary">Penales ${safe(p.penales_local)} - ${safe(p.penales_visitante)}</small>` : ''}</td>
           <td style="padding:12px; text-align:left; font-family:'Barlow Condensed',sans-serif; font-weight:700;">${safe(p.equipo_visitante?.nombre)}</td>
           <td style="padding:12px; text-align:center; font-family:'Barlow Condensed',sans-serif; font-weight:800; color:${colorEstado};">[${p.estado}]</td>
         `;
@@ -440,6 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
+    if (!partidos.length) partidosList.textContent = 'No hay partidos para estos filtros.';
     partidosList.appendChild(mainFragment);
     if (resumenTbody) resumenTbody.appendChild(resumenFragment);
 
@@ -472,182 +440,102 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  async function editarPartido(id, btn) {
-    if (!confirm('¿Seguro que deseas volver a abrir este partido para edición?')) return;
-    btn.disabled = true;
-    btn.innerText = 'Actualizando...';
+  function syncPenaltyControls(card, match) {
+    const enabled = match.estado === 'EN_VIVO' && match.goles_local === match.goles_visitante;
+    card.querySelectorAll('[data-penalty-control]').forEach(control => { control.disabled = !enabled; });
+  }
 
-    const partido = allPartidosData.find(p => p.id === id);
-    let error = null;
+  function penaltyValues(key) {
+    const value = side => {
+      const input = document.getElementById(`pen-${side}-${key}`)?.value.trim() ?? '';
+      return input === '' ? null : Number(input);
+    };
+    return { penales_local:value('local'), penales_visitante:value('visita') };
+  }
+
+  async function changeMatch(key, action, refresh = true) {
+    if (pendingMatches.has(key)) return;
+    const match = findMatch(key);
+    if (!match) return;
+    pendingMatches.add(key);
+    const card = document.querySelector(`.partido-card[data-id="${key}"]`);
+    const controls = Array.from(card.querySelectorAll('button,input,select'));
+    const previous = controls.map(control => control.disabled);
+    controls.forEach(control => { control.disabled = true; });
+    let saved = false;
     try {
-      if (partido?.tipo_partido === 'ELIMINATORIA') {
-        await guardarEliminatoriaMesa(partido, { estado:'EN_VIVO' });
-      } else {
-        ({ error } = await supabase.from('partidos').update({ estado:'EN_VIVO' }).eq('id', id));
-      }
-    } catch (caught) { error = caught; }
+      await action(match, card);
+      saved = true;
+    } catch (error) {
+      const message = mesaError(error);
+      showToast(message, true);
+      notice.textContent = message;
+      notice.hidden = false;
+    } finally {
+      controls.forEach((control,index) => { control.disabled = previous[index]; });
+      syncPenaltyControls(card, match);
+      pendingMatches.delete(key);
+    }
+    if (saved && refresh) await cargarPartidos();
+  }
 
-    if (error) {
-      console.error(error);
-      showToast('Error. Verifica permisos.', true);
-      btn.disabled = false;
-      btn.innerText = '✏️ EDITAR RESULTADO / RECLAMO';
-    } else {
+  async function editarPartido(key) {
+    if (!confirm('¿Volver a abrir este partido para editar el resultado o reclamo?')) return;
+    await changeMatch(key, async match => {
+      await saveMesaMatch(supabase, match, { estado:'EN_VIVO' });
       showToast('Partido abierto para edición.');
-      setTimeout(cargarPartidos, 300);
-    }
+    });
   }
 
-  // DENTRO del closure — no en window
-  async function marcarEnVivo(id, btn, gl, gv) {
-    const isEnVivo = btn.dataset.estado === 'EN_VIVO';
-    btn.disabled = true;
-    btn.innerText = 'Actualizando...';
-    
-    const newState = isEnVivo ? 'PROGRAMADO' : 'EN_VIVO';
-    
-    const payload = { estado: newState };
-    // Si estamos iniciando el partido y los goles son nulos, inicializarlos en 0
-    if (newState === 'EN_VIVO') {
-      if (gl === null) payload.goles_local = 0;
-      if (gv === null) payload.goles_visitante = 0;
-    } else if (newState === 'PROGRAMADO') {
-      payload.goles_local = null;
-      payload.goles_visitante = null;
-    }
-
-    const partido = allPartidosData.find(p => p.id === id);
-    let error = null;
-    try {
-      if (partido?.tipo_partido === 'ELIMINATORIA') {
-        await guardarEliminatoriaMesa(partido, payload);
-      } else {
-        ({ error } = await supabase.from('partidos').update(payload).eq('id', id));
-      }
-    } catch (caught) { error = caught; }
-
-    if (error) {
-      console.error(error);
-      showToast('Error. Verifica permisos.', true);
-      btn.disabled = false;
-      btn.innerText = isEnVivo ? '🔙 VOLVER A PENDIENTE' : '▶️ INICIAR PARTIDO (EN VIVO)';
-    } else {
-      btn.disabled = false;
-      if (newState === 'EN_VIVO') {
-        btn.innerText = '🔙 VOLVER A PENDIENTE';
-        btn.style.background = '#f97316';
-        btn.dataset.estado = 'EN_VIVO';
-        showToast('Partido marcado como EN VIVO');
-      } else {
-        btn.innerText = '▶️ INICIAR PARTIDO (EN VIVO)';
-        btn.style.background = 'var(--navy)';
-        btn.dataset.estado = 'PROGRAMADO';
-        showToast('En Vivo desactivado');
-      }
-      setTimeout(cargarPartidos, 300);
-    }
+  async function marcarEnVivo(key) {
+    const match = findMatch(key);
+    if (match?.estado === 'EN_VIVO' && !confirm('¿Volver a pendiente y borrar el marcador de este partido?')) return;
+    await changeMatch(key, async match => {
+      const estado = match.estado === 'EN_VIVO' ? 'PROGRAMADO' : 'EN_VIVO';
+      await saveMesaMatch(supabase, match, {
+        estado, goles_local:match.goles_local ?? 0, goles_visitante:match.goles_visitante ?? 0,
+      });
+      showToast(estado === 'EN_VIVO' ? 'Partido marcado como EN VIVO' : 'Partido pendiente');
+    });
   }
 
-  async function actualizarGol(id, tipo, cantidad) {
-    const card = document.querySelector(`.partido-card[data-id="${id}"]`);
-    if (!card) return;
-    
-    const displayElement = document.getElementById(tipo === 'local' ? `local-${id}` : `visita-${id}`);
-    
-    // Leer el valor actual DIRECTAMENTE DEL DOM para evitar cierres léxicos obsoletos
-    let valStr = displayElement.innerText.trim();
-    let currentVal = (valStr === '-' || valStr === '') ? 0 : parseInt(valStr);
-    if (isNaN(currentVal)) currentVal = 0;
-
-    let nuevoValor = currentVal + cantidad;
-    if (nuevoValor < 0) nuevoValor = 0;
-    
-    // Prevenir el rapid-fire tapping (debounce / bloqueo temporal)
-    const btns = card.querySelectorAll(`.btn-score[data-team="${tipo}"]`);
-    btns.forEach(b => b.style.pointerEvents = 'none');
-
-    // Actualización optimista (UI primero)
-    const valorPrevio = currentVal;
-    displayElement.innerText = nuevoValor;
-    card.dataset[tipo === 'local' ? 'golesLocal' : 'golesVisita'] = nuevoValor;
-
-    const payload = {};
-    if (tipo === 'local') payload.goles_local = nuevoValor;
-    else payload.goles_visitante = nuevoValor;
-    payload.estado = 'EN_VIVO';
-
-    const partido = allPartidosData.find(p => p.id === id);
-    let error = null;
-    try {
-      if (partido?.tipo_partido === 'ELIMINATORIA') {
-        const local = Number(document.getElementById(`local-${id}`).innerText);
-        const visitante = Number(document.getElementById(`visita-${id}`).innerText);
-        await guardarEliminatoriaMesa(partido, {
-          estado:'EN_VIVO',
-          goles_local:local,
-          goles_visitante:visitante
-        });
-      } else {
-        ({ error } = await supabase.from('partidos').update(payload).eq('id', id));
+  async function actualizarGol(key, tipo, cantidad) {
+    await changeMatch(key, async (match, card) => {
+      const field = tipo === 'local' ? 'goles_local' : 'goles_visitante';
+      const changes = { estado:'EN_VIVO', [field]:Math.max(0, (match[field] ?? 0) + cantidad) };
+      const next = { ...match, ...changes };
+      if (match.tipo_partido === 'ELIMINATORIA' && next.goles_local !== next.goles_visitante) {
+        Object.assign(changes, { penales_local:null, penales_visitante:null });
       }
-    } catch (caught) { error = caught; }
-
-    if (error) {
-      console.error(error);
-      showToast('Fallo al guardar gol. Conexión inestable o falta de permisos.', true);
-      // Rollback Antifrágil
-      displayElement.innerText = valorPrevio;
-      card.dataset[tipo === 'local' ? 'golesLocal' : 'golesVisita'] = valorPrevio;
-    }
-
-    // Rehabilitar botones tras el roundtrip
-    btns.forEach(b => b.style.pointerEvents = 'auto');
+      await saveMesaMatch(supabase, match, changes);
+      document.getElementById(`local-${key}`).textContent = match.goles_local;
+      document.getElementById(`visita-${key}`).textContent = match.goles_visitante;
+      if (match.tipo_partido === 'ELIMINATORIA' && match.goles_local !== match.goles_visitante) {
+        card.querySelectorAll('input[data-penalty-control]').forEach(input => { input.value = ''; });
+      }
+    }, false);
   }
 
-  async function finalizarPartido(id) {
-    if (!confirm('¿Seguro que deseas enviar este partido a revisión?')) return;
-    
-    const selectEl = document.getElementById(`tipo-reclamo-${id}`);
-    const tipo = selectEl ? selectEl.value : '';
-    const textoEl = document.getElementById(`reclamo-${id}`);
-    const texto = textoEl ? textoEl.value.trim() : '';
+  async function guardarPenales(key) {
+    const penalties = penaltyValues(key);
+    await changeMatch(key, async match => {
+      await saveMesaMatch(supabase, match, { estado:'EN_VIVO', ...penalties });
+      showToast('Penales guardados.');
+    }, false);
+  }
 
-    let reclamoFinal = '';
-    if (tipo && tipo !== 'Otros') {
-      reclamoFinal += `[${tipo}] `;
-    }
-    if (texto) {
-      reclamoFinal += texto;
-    }
-    reclamoFinal = reclamoFinal.trim();
-
-    const partido = allPartidosData.find(p => p.id === id);
-    let error = null;
-    try {
-      if (partido?.tipo_partido === 'ELIMINATORIA') {
-        const penaltyValue = side => {
-          const value = document.getElementById(`pen-${side}-${id}`)?.value.trim() ?? '';
-          return value === '' ? null : Number(value);
-        };
-        await guardarEliminatoriaMesa(partido, {
-          estado:'EN_REVISION',
-          goles_local:Number(document.getElementById(`local-${id}`).innerText),
-          goles_visitante:Number(document.getElementById(`visita-${id}`).innerText),
-          penales_local:penaltyValue('local'),
-          penales_visitante:penaltyValue('visita'),
-          reclamo:reclamoFinal
-        });
-      } else {
-        ({ error } = await supabase.from('partidos').update({ estado:'EN_REVISION', reclamo:reclamoFinal }).eq('id', id));
-      }
-    } catch (caught) { error = caught; }
-
-    if (error) {
-      console.error(error);
-      showToast('Error al finalizar. Verifica permisos.', true);
-    } else {
-      showToast('Partido enviado a revisión');
-      cargarPartidos(); // Recargar lista
-    }
-  };
+  async function finalizarPartido(key) {
+    if (!confirm('¿Enviar el resultado y el reclamo a revisión del administrador?')) return;
+    const tipo = document.getElementById(`tipo-reclamo-${key}`)?.value || '';
+    const texto = document.getElementById(`reclamo-${key}`)?.value.trim() || '';
+    const reclamo = `${tipo && tipo !== 'Otros' ? `[${tipo}] ` : ''}${texto}`.trim();
+    const penalties = penaltyValues(key);
+    await changeMatch(key, async match => {
+      await saveMesaMatch(supabase, match, {
+        estado:'EN_REVISION', reclamo,
+        ...(match.tipo_partido === 'ELIMINATORIA' ? penalties : {}),
+      });
+      showToast('Partido enviado a revisión.');
+    });
+  }
 });

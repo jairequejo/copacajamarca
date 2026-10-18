@@ -1,4 +1,4 @@
-import { isFinished } from './eliminatorias-model.js?v=4';
+import { isFinished } from './eliminatorias-model.js?v=5';
 
 const categoryOf = row => String(row.categoria ?? '').trim();
 const groupOf = row => String(row.grupo ?? '').trim();

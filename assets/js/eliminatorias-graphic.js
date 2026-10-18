@@ -78,7 +78,7 @@ function caption(ctx,m,cx,y,width){
   if(m.cancha)text(ctx,m.cancha,cx,y+12,fit(ctx,m.cancha,17,width,'Copa Sans'),C.muted,'center','Copa Sans');
   return;
  }
- const label=m.estado==='OFICIAL'?'Resultado oficial':m.estado==='EN_VIVO'?'En vivo':m.estado==='EN_REVISION'?'Por confirmar':'Por programar';
+ const label=m.estado==='OFICIAL'?'Resultado oficial':m.estado==='EN_VIVO'?'En vivo':m.estado==='EN_REVISION'?'Finalizado por Mesa':'Por programar';
  text(ctx,label,cx,y,fit(ctx,label,20,width,'Copa Sans'),C.muted,'center','Copa Sans');
 }
 export function bannerStage(bracket){if(bracket.champion)return 'champion';if(bracket.matches.slice(0,2).every(m=>m.decision)&&bracket.matches[2].teams.every(t=>t.id&&!t.pending))return 'final';return 'semifinals';}

@@ -537,6 +537,18 @@
       }
     }
 
+
+    .mesa-penalties { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:16px 0; padding:16px; border:1px solid #ffba0066; border-radius:12px; min-width:0; }
+    .mesa-penalties legend { color:var(--gold); font-weight:800; padding:0 8px; }
+    .mesa-penalties p,.mesa-penalties button { grid-column:1/-1; }
+    .mesa-penalties p { color:#cbd5e1; font-size:.9rem; margin:0; }
+    .mesa-penalties label { min-width:0; color:#fff; overflow-wrap:anywhere; }
+    .mesa-penalties input { display:block; width:100%; padding:12px; border-radius:8px; margin-top:8px; min-width:0; color:#001a4d; background:#fff; }
+    .mesa-penalties :disabled { opacity:.5; cursor:not-allowed; }
+    .mesa-official-note { color:#cbd5e1; text-align:center; font-size:.9rem; }
+    .mesa-penalty-summary { display:block; font-family:'Barlow',sans-serif; font-size:.85rem; }
+    #mesa-status:not([hidden]) { padding:16px; background:#ffba001a; border:1px solid #ffba0066; border-radius:12px; color:#ffdc80; overflow-wrap:anywhere; }
+    #toast { white-space:normal; max-width:calc(100vw - 24px); width:max-content; text-align:center; }
 </style>
 </head>
 <body>
@@ -640,6 +652,7 @@
       </div>
 
       <div class="view-toolbar">
+        <button type="button" id="btn-refresh-mesa" class="btn-envivo" style="width:auto;">Actualizar partidos</button>
         <div class="view-toolbar-left">
           <button id="btn-toggle-view" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:12px 24px; border-radius:30px; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:1.1rem; cursor:pointer; letter-spacing:0.05em; transition:background 0.2s; display:flex; align-items:center; gap:8px;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
@@ -666,12 +679,13 @@
         </table>
       </div>
 
+      <p id="mesa-status" role="status" aria-live="polite" hidden></p>
       <div id="partidos-list"></div>
     </div>
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script type="module" src="mesa.js?v=17"></script>
+  <script type="module" src="mesa.js?v=19"></script>
   
   <script>
     // Estado pills — conecta con el select existente sin tocar mesa.js

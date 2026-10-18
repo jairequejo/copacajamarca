@@ -1,9 +1,10 @@
 # Eliminatorias: instalación y uso
 
 El gráfico y la exportación PNG funcionan con los clasificados de `view_posiciones`.
-El avance persistente requiere aplicar `migrations/20260930000100_eliminatorias.sql`
-en el SQL Editor del proyecto Supabase. Esta migración todavía NO se ha aplicado
-al proyecto remoto desde este entorno: no hay conexión administrativa disponible.
+Una instalación nueva requiere `migrations/20260930000100_eliminatorias.sql`.
+En una base que ya tiene eliminatorias, aplicar la reparación incremental
+`migrations/20261018000100_reparar_mesa_eliminatorias.sql`, siguiendo `MESA.md`.
+No volver a ejecutar la creación inicial sobre una instalación existente.
 
 La tabla `eliminatorias_partidos` se mantiene separada de `partidos` para que los
 marcadores de semifinales, final y tercer puesto no sumen puntos a los grupos.
@@ -19,11 +20,14 @@ on conflict do nothing;
 ```
 
 No introduzcas claves privadas en JavaScript. El admin usa la sesión Supabase
-existente. Abrir Admin > Eliminatorias, elegir categoría, completar resultado y
-seleccionar «Oficial · avanzar ganador». Un empate requiere ambos marcadores de
-penales, diferentes. Los ganadores pasan a la final y los perdedores al tercer
-puesto; el ganador de la final aparece junto a la copa. El fixture consulta cambios
-cada 30 segundos y al volver a la pestaña. El banner usa los mismos resultados.
+existente. Al finalizar una eliminatoria en Mesa, el fixture y el banner muestran
+al ganador en la siguiente ronda y al perdedor en el tercer puesto. Un empate
+requiere ambos marcadores de penales, diferentes. En vivo muestra la tanda y el
+equipo ganador; una tanda todavía en curso no declara ganador.
+Admin conserva la confirmación de resultados y debe oficializar ambas semifinales
+antes de guardar los partidos de final y tercer puesto. El fixture consulta cambios
+cada 30 segundos y al volver a la pestaña. Reabrir o corregir una semifinal recalcula
+el cuadro y evita atribuir resultados a un cruce que ya no corresponde.
 
 Las categorías sin todos los enfrentamientos de grupos terminados conservan
 casillas por definir. Un empate en puntos/DG/GF pendiente de resolver bloquea los
