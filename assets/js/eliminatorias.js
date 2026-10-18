@@ -1,4 +1,4 @@
-import { bracketAssets, drawBracket } from './eliminatorias-graphic.js?v=28';
+import { bracketAssets, drawBracket } from './eliminatorias-graphic.js?v=29';
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const observers = new WeakMap();
 function teamBlock(match, index) {
