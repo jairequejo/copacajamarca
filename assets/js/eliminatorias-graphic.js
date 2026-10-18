@@ -103,9 +103,15 @@ function node(ctx,m,i,assets,cx,y,size,width,muted=false){
  if(m.goals?.[i]!==null&&m.goals?.[i]!==undefined){const bx=cx+size/2+5,by=y+size/2;ctx.fillStyle=C.navy;ctx.fillRect(bx-17,by-23,34,46);text(ctx,m.goals[i],bx,by,33,C.gold,'center');}ctx.restore();
 }
 function thirdPlace(ctx,m,assets){
- path(ctx,[[72,1100],[1008,1100]],'rgba(255,208,41,.38)',1);text(ctx,'TERCER PUESTO',540,1122,24,C.gold,'center');
- m.teams.forEach((team,i)=>{const cx=i===0?300:780;if(!team.pending)mark(ctx,team,assets,cx-122,1132,38);teamName(ctx,team.pending?`Perdedor semifinal ${i+1}`:team.name,cx+(team.pending?0:18),1156,team.pending?250:300,team.pending?20:23,team.pending?C.muted:C.white);});
- text(ctx,m.goals?.every(g=>g!==null&&g!==undefined)?m.goals.join(' – '):'VS',540,1156,27,C.gold,'center');
+ path(ctx,[[72,1080],[1008,1080]],'rgba(255,208,41,.38)',1);text(ctx,'TERCER PUESTO',540,1096,24,C.gold,'center');
+ // Give each crest its own column above the name, including two-line names.
+ m.teams.forEach((team,i)=>{
+  const cx=i===0?300:780;
+  mark(ctx,team,assets,cx,1114,60);
+  teamName(ctx,team.pending?`Perdedor semifinal ${i+1}`:team.name,cx,1201,320,21,team.pending?C.muted:C.white);
+ });
+ text(ctx,m.goals?.every(g=>g!==null&&g!==undefined)?m.goals.join(' – '):'VS',540,1144,29,C.gold,'center');
+ if(m.penalties?.every(n=>n!==null&&n!==undefined))text(ctx,`Penales ${m.penalties.join(' – ')}`,540,1176,17,C.muted,'center','Copa Sans');
 }
 function bracketPoster(ctx,bracket,assets,stage){
  const isFinal=stage==='final',final=bracket.matches[2],outerSize=isFinal?106:175,outerCx=isFinal?[110,970]:[159,921],innerSize=isFinal?190:62,innerCx=isFinal?[333,747]:[342,738];
@@ -116,7 +122,7 @@ function bracketPoster(ctx,bracket,assets,stage){
   text(ctx,`SEMIFINAL ${i+1}`,cx,385,isFinal?27:32,isFinal?C.muted:C.gold,'center');
   path(ctx,[[edge,upper],[join,upper],[join,lower],[edge,lower]],ink);path(ctx,[[join,mid],[join,innerY+innerSize/2],[end,innerY+innerSize/2]],ink);
   node(ctx,m,0,assets,cx,top,outerSize,isFinal?180:222,isFinal&&m.decision?.winnerIndex!==0);node(ctx,m,1,assets,cx,bottom,outerSize,isFinal?180:222,isFinal&&m.decision?.winnerIndex!==1);
-  node(ctx,final,i,assets,innerCx[i],innerY,innerSize,isFinal?205:116);caption(ctx,m,cx,isFinal?1058:1050,isFinal?220:250);
+  node(ctx,final,i,assets,innerCx[i],innerY,innerSize,isFinal?205:116);caption(ctx,m,cx,isFinal?1040:1050,isFinal?220:250);
  });
  const cupW=isFinal?220:230,cupX=540-cupW/2,cupY=isFinal?608:620;
  ctx.save();ctx.shadowColor='rgba(0,0,0,.42)';ctx.shadowBlur=18;ctx.shadowOffsetY=10;contain(ctx,assets.cup,cupX,cupY,cupW,isFinal?275:282);ctx.restore();
