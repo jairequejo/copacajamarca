@@ -93,8 +93,8 @@ function header(ctx,bracket,assets,stage){
  polygon(ctx,[[0,0],[1080,0],[1080,10],[0,10]],C.gold);contain(ctx,assets.logo,54,51,166,166);
  display(ctx,'COPA CAJAMARCA',245,139,118,C.white,790);
  const edition=bracket.edition,label=edition?`ETAPA ${edition.stage.toUpperCase()} ${edition.year}`:'ETAPA POR CONFIRMAR';text(ctx,label,250,216,29,C.gold,'left','Copa Sans',770);
- polygon(ctx,[[0,276],[1080,251],[1080,340],[0,365]],'#071a36');path(ctx,[[0,276],[1080,251]],C.gold,3);
- const phase=stage==='semifinals'?'SEMIFINAL':stage==='final'?'FINAL':'CAMPEÓN';display(ctx,`${phase} · CATEGORÍA ${bracket.category}`,540,309,73,C.gold,954,'center');
+ polygon(ctx,[[0,254],[1080,229],[1080,345],[0,370]],'#071a36');path(ctx,[[0,254],[1080,229]],C.gold,3);
+ const phase=stage==='semifinals'?'SEMIFINAL':stage==='final'?'FINAL':'CAMPEÓN';display(ctx,`${phase} · CATEGORÍA ${bracket.category}`,540,300,69,C.gold,954,'center');
 }
 function node(ctx,m,i,assets,cx,y,size,width,muted=false){
  const team=m.teams[i];ctx.save();ctx.globalAlpha=muted?.42:1;mark(ctx,team,assets,cx,y,size);
