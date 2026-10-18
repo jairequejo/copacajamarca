@@ -67,15 +67,43 @@ test('Correction invalidates a previously saved final pairing and champion',()=>
   assert.equal(k.matches[2].teams[0].id,'four');assert.equal(k.champion,null);assert.deepEqual(k.matches[2].goals,[null,null]);
 });
 
+test('Mesa-finished semifinals immediately advance winner logos and place losers in third, including penalties',()=>{
+  const records=[result('SF1','one','four',1,1,{estado:'EN_REVISION',penales_local:3,penales_visitante:4}),
+    result('SF2','two','three',2,0,{estado:'EN_REVISION'})];
+  const k=advanceKnockout(base(),records,tid);
+  assert.deepEqual(k.matches[2].teams.map(t=>t.id),['four','two']);
+  assert.deepEqual(k.matches[3].teams.map(t=>t.id),['one','three']);
+  assert.equal(k.matches[0].decision.byPenalties,true);
+  assert.equal(k.matches[0].estado,'EN_REVISION');
+  assert.equal(bannerStage(k),'final');
+  assert.match(k.message,/Mesa/);
+  const admin=advanceKnockout(base(),records,tid,{includeReview:false});
+  assert.ok(admin.matches[2].teams.every(t=>t.pending));
+});
+
+test('Reopening or correcting a Mesa semifinal removes a stale final result and champion',()=>{
+  const records=[result('SF1','one','four',1,1,{estado:'EN_REVISION',penales_local:4,penales_visitante:3}),
+    result('SF2','two','three',0,2,{estado:'EN_REVISION'}),
+    result('F','one','three',0,0,{estado:'EN_REVISION',penales_local:5,penales_visitante:4})];
+  assert.equal(advanceKnockout(base(),records,tid).champion.id,'one');
+  const reopened=advanceKnockout(base(),[{...records[0],estado:'EN_VIVO'},...records.slice(1)],tid);
+  assert.equal(reopened.champion,null);
+  assert.equal(reopened.matches[2].teams[0].pending,true);
+  const corrected=advanceKnockout(base(),[{...records[0],penales_local:3,penales_visitante:4},...records.slice(1)],tid);
+  assert.equal(corrected.matches[2].teams[0].id,'four');
+  assert.equal(corrected.champion,null);
+  assert.deepEqual(corrected.matches[2].goals,[null,null]);
+});
+
 import { bannerStage } from '../assets/js/eliminatorias-graphic.js';
-test('Banner keeps semifinal emphasis until both official finalists exist',()=>{
+test('Banner keeps semifinal emphasis until both completed semifinals define the finalists',()=>{
   const sf1=result('SF1','one','four',2,0),sf2=result('SF2','two','three',1,3);
   assert.equal(bannerStage(advanceKnockout(base(),[],tid)),'semifinals');
   assert.equal(bannerStage(advanceKnockout(base(),[sf1],tid)),'semifinals');
   assert.equal(bannerStage(advanceKnockout(base(),[sf1,{...sf2,estado:'EN_VIVO'}],tid)),'semifinals');
   assert.equal(bannerStage(advanceKnockout(base(),[sf1,sf2],tid)),'final');
 });
-test('Banner celebrates only an official final winner and handles result corrections',()=>{
+test('Banner celebrates a completed final winner and handles result corrections',()=>{
   const records=[result('SF1','one','four',2,0),result('SF2','two','three',1,3)];
   const f=result('F','one','three',1,1,{penales_local:4,penales_visitante:5});
   assert.equal(bannerStage(advanceKnockout(base(),[...records,{...f,estado:'EN_VIVO'}],tid)),'final');

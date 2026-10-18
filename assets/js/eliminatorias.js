@@ -1,4 +1,4 @@
-import { bracketAssets, drawBracket } from './eliminatorias-graphic.js?v=29';
+import { bracketAssets, drawBracket } from './eliminatorias-graphic.js?v=30';
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const observers = new WeakMap();
 function teamBlock(match, index) {
@@ -7,10 +7,10 @@ function teamBlock(match, index) {
   return `<div class="ko-team${winner ? ' is-winner' : ''}${team.pending ? ' is-pending' : ''}">${team.logo ? `<img src="${escape(team.logo)}" alt="" loading="lazy">` : '<span class="ko-team-placeholder" aria-hidden="true">?</span>'}<span class="ko-team-name" title="${escape(team.name)}">${escape(label)}${winner ? '<small>Ganador</small>' : ''}</span>${match.goals?.[index] !== null && match.goals?.[index] !== undefined ? `<strong class="ko-score">${escape(match.goals[index])}</strong>` : ''}</div>`;
 }
 function matchInfo(match) {
-  if (match.penalties?.every(n => n !== null && n !== undefined)) return `Penales ${match.penalties.join(' – ')}`;
+  if (match.penalties?.every(n => n !== null && n !== undefined)) return `Penales ${match.penalties.join(' – ')}${match.estado === 'EN_REVISION' ? ' · Finalizado por Mesa' : ''}`;
   if (match.estado === 'OFICIAL') return 'Resultado oficial';
   if (match.estado === 'EN_VIVO') return 'En vivo';
-  if (match.estado === 'EN_REVISION') return 'Pendiente de confirmación';
+  if (match.estado === 'EN_REVISION') return 'Finalizado por Mesa';
   if (match.date) return new Intl.DateTimeFormat('es-PE', {timeZone:'America/Lima',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}).format(new Date(match.date)) + (match.cancha ? ` · ${match.cancha}` : '');
   return 'Por programar';
 }
@@ -22,7 +22,7 @@ export async function renderKnockout(container, bracket) {
   const [sf1, sf2, final, third] = bracket.matches;
   const cup = `<div class="ko-champion"><img class="ko-cup" src="/assets/img/copa-eliminatorias.svg?v=4" alt="Trofeo Copa Cajamarca" width="240" height="320"><small>${bracket.champion ? 'Campeón' : 'La copa te espera'}</small>${bracket.champion ? `<strong>${escape(bracket.champion.name)}</strong>` : ''}</div>`;
   const finalMarkup = `<article class="ko-match ko-final"><h3>Final</h3><div class="ko-final-contest">${teamBlock(final,0)}${cup}${teamBlock(final,1)}</div><p class="ko-match-info">${escape(matchInfo(final))}</p></article>`;
-  container.innerHTML = `<section class="ko-section" aria-label="Eliminatorias categoría ${escape(bracket.category)}"><div class="ko-toolbar"><p class="ko-status${bracket.ready ? ' ko-ready' : ''}">${escape(bracket.message)}</p><button type="button" class="ko-share" ${bracket.ready ? '' : 'disabled'} aria-label="Generar banner de eliminatorias">↗ <span>Compartir</span></button></div><div class="ko-bracket"><svg class="ko-connectors" aria-hidden="true"></svg>${matchMarkup(sf1, 'ko-sf-one')}${matchMarkup(sf2, 'ko-sf-two')}${finalMarkup}${matchMarkup(third, 'ko-third')}</div><p class="ko-rule">${escape(bracket.rule)}</p><p class="ko-footnote">Los ganadores avanzan a la final; los perdedores disputan el tercer puesto. Avance al oficializar el resultado.</p></section>`;
+  container.innerHTML = `<section class="ko-section" aria-label="Eliminatorias categoría ${escape(bracket.category)}"><div class="ko-toolbar"><p class="ko-status${bracket.ready ? ' ko-ready' : ''}">${escape(bracket.message)}</p><button type="button" class="ko-share" ${bracket.ready ? '' : 'disabled'} aria-label="Generar banner de eliminatorias">↗ <span>Compartir</span></button></div><div class="ko-bracket"><svg class="ko-connectors" aria-hidden="true"></svg>${matchMarkup(sf1, 'ko-sf-one')}${matchMarkup(sf2, 'ko-sf-two')}${finalMarkup}${matchMarkup(third, 'ko-third')}</div><p class="ko-rule">${escape(bracket.rule)}</p><p class="ko-footnote">Los ganadores avanzan a la final; los perdedores disputan el tercer puesto. ${bracket.includeReview === false ? 'En administración, confirma las semifinales para guardar los siguientes cruces.' : 'El cuadro avanza al finalizar en Mesa y se actualiza si se corrige el resultado.'}</p></section>`;
   container.querySelector('.ko-share').addEventListener('click', e => previewBanner(bracket,e.currentTarget));
   const grid=container.querySelector('.ko-bracket'), svg=grid.querySelector('.ko-connectors');
   const measure=document.createElement('canvas').getContext('2d');
