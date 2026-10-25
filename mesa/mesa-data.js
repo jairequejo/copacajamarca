@@ -10,11 +10,11 @@ export function normalizeMesaMatch(match, knockout = false) {
     fase_label:PHASES[match.fase] || match.fase, reclamo:match.reclamo ?? null };
 }
 
-async function readMatches(client, table, fields, cutoff) {
+async function readMatches(client, table, fields) {
   const rows = [];
   for (let start = 0; ; start += 500) {
     const { data, error } = await client.from(table).select(fields)
-      .or(`fecha_hora.gte.${cutoff},estado.neq.OFICIAL`)
+      .neq('estado', 'OFICIAL')
       .order('fecha_hora', { ascending:true, nullsFirst:false }).order('id')
       .range(start, start + 499);
     if (error) throw error;
@@ -23,17 +23,16 @@ async function readMatches(client, table, fields, cutoff) {
   }
 }
 
-export async function loadMesaMatches(client, now = Date.now()) {
-  const cutoff = new Date(now - 4 * 86400000).toISOString();
+export async function loadMesaMatches(client) {
   let needsMigration = false;
   const [regular, knockout] = await Promise.allSettled([
-    readMatches(client, 'partidos', GROUP_FIELDS, cutoff),
+    readMatches(client, 'partidos', GROUP_FIELDS),
     (async () => {
-      try { return await readMatches(client, 'eliminatorias_partidos', KO_FIELDS, cutoff); }
+      try { return await readMatches(client, 'eliminatorias_partidos', KO_FIELDS); }
       catch (error) {
         if (error.code !== '42703' || !String(error.message).includes('reclamo')) throw error;
         needsMigration = true;
-        return readMatches(client, 'eliminatorias_partidos', KO_FIELDS.replace(',reclamo', ''), cutoff);
+        return readMatches(client, 'eliminatorias_partidos', KO_FIELDS.replace(',reclamo', ''));
       }
     })(),
   ]);

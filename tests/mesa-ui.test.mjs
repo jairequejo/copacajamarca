@@ -33,7 +33,7 @@ test('Mesa reopens groups, saves goals and penalties, submits and reopens knocko
     from(table){
       const rows=table==='partidos'?groups:knockout;
       let payload,conditions=[];
-      const q={select:()=>q,or:()=>q,order:()=>q,range:(start,end)=>Promise.resolve({data:rows.slice(start,end+1).map(r=>({...r})),error:null}),
+      const q={select:()=>q,neq:()=>q,order:()=>q,range:(start,end)=>Promise.resolve({data:rows.filter(r=>r.estado!=='OFICIAL').slice(start,end+1).map(r=>({...r})),error:null}),
         update(p){payload=p;return q;},eq(k,v){conditions.push([k,v]);return q;},is(k,v){conditions.push([k,v]);return q;},
         single:async()=>{
           await tick();
@@ -52,11 +52,13 @@ test('Mesa reopens groups, saves goals and penalties, submits and reopens knocko
   const {window}=dom, document=window.document;
   Object.assign(window,{supabase:client,loadMesaMatches,saveMesaMatch,mesaError});
   window.confirm=()=>true;window.scrollTo=()=>{};
+  let refresh;
+  window.setInterval=(callback,ms)=>{ assert.equal(ms,30000); refresh=callback; return 1; };
   const card=key=>document.querySelector(`.partido-card[data-id="${key}"]`);
   try {
     window.eval(source);
     await until(()=>card('grupo-shared')&&card('eliminatoria-shared'));
-    assert.equal(card('grupo-official').querySelector('[data-action="editar"]'),null);
+    assert.equal(card('grupo-official'),null);
     card('grupo-shared').querySelector('[data-action="editar"]').click();
     await until(()=>card('grupo-shared').querySelector('.btn-score.plus'));
     assert.equal(groups[0].estado,'EN_VIVO');
@@ -96,5 +98,18 @@ test('Mesa reopens groups, saves goals and penalties, submits and reopens knocko
     assert.equal(document.getElementById('pen-local-eliminatoria-shared').disabled,true);
     assert.equal(document.getElementById('pen-local-eliminatoria-shared').value,'');
     assert.match(card('eliminatoria-shared').textContent,/Cancha|C1/);
+    const claim=document.getElementById('reclamo-grupo-shared');
+    claim.value='Reclamo sin guardar';
+    claim.dispatchEvent(new window.Event('input',{bubbles:true}));
+    knockout[0].estado='OFICIAL';
+    refresh();
+    await until(()=>!card('eliminatoria-shared'));
+    assert.equal(document.getElementById('resumen-tbody').children.length,1);
+    assert.equal(document.getElementById('reclamo-grupo-shared').value,'Reclamo sin guardar');
+    groups[0].estado='OFICIAL';
+    window.dispatchEvent(new window.Event('focus'));
+    await until(()=>!card('grupo-shared'));
+    assert.equal(document.getElementById('resumen-tbody').children.length,0);
+    assert.match(document.getElementById('partidos-list').textContent,/No hay partidos/);
   } finally { window.close(); }
 });

@@ -104,6 +104,7 @@ body.page-admin {
   width: 238px;
   display: flex;
   flex-direction: column;
+  flex-wrap: nowrap;
   gap: 0;
   overflow: auto;
   padding: 28px 14px 20px;
@@ -112,6 +113,10 @@ body.page-admin {
   border: 0;
   border-radius: 0;
   z-index: 20;
+}
+#dashboard .tabs-container > * {
+  flex-shrink: 0;
+  min-width: 0;
 }
 .sidebar-brand {
   display: flex;

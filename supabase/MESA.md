@@ -50,3 +50,10 @@ node --liftoff-only --no-wasm-tier-up tests/mesa-sql.test.mjs
 
 El test SQL reproduce una instalación sin reclamos ni RPC de Mesa, aplica la
 reparación dos veces y valida permisos, penales, reapertura y resultados oficiales.
+
+## Listado de Mesa (25 de octubre de 2026)
+
+Los resultados oficiales se excluyen de Mesa en ambas tablas, sin importar su fecha.
+El listado se consulta cada 30 segundos y al regresar a la página o recuperar la
+conexión. Se conservan los reclamos y penales sin guardar de los partidos restantes.
+Este cambio no necesita una migración SQL.

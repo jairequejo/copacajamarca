@@ -10,7 +10,7 @@ test('A legacy missing claim column does not hide group games or the knockout li
   const filters = [], ranges = [];
   const client = { from(table) {
     let fields;
-    const q = { select(f) { fields=f; return q; }, or(f) { filters.push(f); return q; }, order() { return q; },
+    const q = { select(f) { fields=f; return q; }, neq(k,v) { filters.push([k,v]); return q; }, order() { return q; },
       range(start,end) {
         ranges.push([start,end]);
         if (table==='eliminatorias_partidos' && fields.includes(',reclamo')) return { error:{ code:'42703', message:'column eliminatorias_partidos.reclamo does not exist' } };
@@ -23,11 +23,11 @@ test('A legacy missing claim column does not hide group games or the knockout li
   assert.equal(result.matches.length,502);
   assert.match(result.warning, /actualización SQL/);
   assert.ok(ranges.some(([start])=>start===500));
-  assert.ok(filters.every(f=>f.includes('estado.neq.OFICIAL')));
+  assert.ok(filters.every(([k,v])=>k==='estado' && v==='OFICIAL'));
 });
 
 test('An unrelated knockout query failure still leaves groups editable', async () => {
-  const client = { from(table) { const q={ select:()=>q,or:()=>q,order:()=>q,
+  const client = { from(table) { const q={ select:()=>q,neq:()=>q,order:()=>q,
     range:()=>table==='partidos' ? {data:[match()],error:null} : {error:new Error('Temporary API failure')} }; return q; } };
   const result=await loadMesaMatches(client);
   assert.equal(result.matches.length,1);

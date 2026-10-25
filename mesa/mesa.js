@@ -1,5 +1,5 @@
 import { supabase } from '../assets/js/supabase.js';
-import { loadMesaMatches, saveMesaMatch, mesaError } from './mesa-data.js?v=1';
+import { loadMesaMatches, saveMesaMatch, mesaError } from './mesa-data.js?v=2';
 
 document.addEventListener('DOMContentLoaded', () => {
   const loginView = document.getElementById('login-view');
@@ -84,19 +84,28 @@ document.addEventListener('DOMContentLoaded', () => {
   let allPartidosData = [];
   let loadingMatches = false;
   const pendingMatches = new Set();
+  const drafts = new Map();
+  partidosList.addEventListener('input', event => {
+    const control = event.target;
+    const key = control.closest('.partido-card')?.dataset.id;
+    if (key && control.id) drafts.set(control.id, { key, value:control.value });
+  });
   const findMatch = key => allPartidosData.find(match => match.key === key);
   const notice = document.getElementById('mesa-status');
 
-  async function cargarPartidos() {
+  async function cargarPartidos(background = false) {
     if (loadingMatches || pendingMatches.size) return;
     loadingMatches = true;
     document.getElementById('btn-refresh-mesa').disabled = true;
-    if (!allPartidosData.length) partidosList.textContent = 'Cargando partidos…';
+    if (!allPartidosData.length && background !== true) partidosList.textContent = 'Cargando partidos…';
     try {
       const { matches, warning } = await loadMesaMatches(supabase);
+      if (pendingMatches.size) return;
+      const unchanged = JSON.stringify(matches) === JSON.stringify(allPartidosData);
       allPartidosData = matches;
       notice.textContent = warning;
       notice.hidden = !warning;
+      if (background === true && unchanged) return;
       construirFiltros(matches);
       aplicarFiltros();
     } catch (error) {
@@ -109,6 +118,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
   document.getElementById('btn-refresh-mesa').addEventListener('click', cargarPartidos);
+  function refreshVisibleMesa() {
+    if (document.visibilityState === 'hidden' || dashboardView.style.display !== 'block') return;
+    cargarPartidos(true);
+  }
+  setInterval(refreshVisibleMesa, 30000);
+  window.addEventListener('focus', refreshVisibleMesa);
+  window.addEventListener('online', refreshVisibleMesa);
+  document.addEventListener('visibilitychange', refreshVisibleMesa);
 
   function construirFiltros(data) {
     const filterContainer = document.getElementById('filters-container');
@@ -410,6 +427,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!partidos.length) partidosList.textContent = 'No hay partidos para estos filtros.';
     partidosList.appendChild(mainFragment);
     if (resumenTbody) resumenTbody.appendChild(resumenFragment);
+    for (const [id, draft] of drafts) {
+      if (!findMatch(draft.key)) { drafts.delete(id); continue; }
+      const input = document.getElementById(id);
+      if (input) {
+        input.value = draft.value;
+        const claimBox = input.closest('[id^="caja-reclamo-"]');
+        if (claimBox) claimBox.style.display = 'block';
+      }
+    }
 
     // Permitir que el DOM termine de dibujar antes de devolver el scroll (Safari iOS requiere mayor retraso)
     requestAnimationFrame(() => {
@@ -512,6 +538,8 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById(`visita-${key}`).textContent = match.goles_visitante;
       if (match.tipo_partido === 'ELIMINATORIA' && match.goles_local !== match.goles_visitante) {
         card.querySelectorAll('input[data-penalty-control]').forEach(input => { input.value = ''; });
+        drafts.delete(`pen-local-${key}`);
+        drafts.delete(`pen-visita-${key}`);
       }
     }, false);
   }
@@ -520,6 +548,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const penalties = penaltyValues(key);
     await changeMatch(key, async match => {
       await saveMesaMatch(supabase, match, { estado:'EN_VIVO', ...penalties });
+      drafts.delete(`pen-local-${key}`);
+      drafts.delete(`pen-visita-${key}`);
       showToast('Penales guardados.');
     }, false);
   }
@@ -536,6 +566,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ...(match.tipo_partido === 'ELIMINATORIA' ? penalties : {}),
       });
       showToast('Partido enviado a revisión.');
+      for (const [id, draft] of drafts) if (draft.key === key) drafts.delete(id);
     });
   }
 });
