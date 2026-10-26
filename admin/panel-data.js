@@ -4,7 +4,7 @@ const GROUP_FIELDS =
   "id,torneo_id,categoria,grupo,jornada,estado,goles_local,goles_visitante,fecha_hora,cancha,lugar,reclamo,equipo_local_id,equipo_visitante_id," +
   TEAMS;
 const KNOCKOUT_FIELDS =
-  "id,torneo_id,categoria,fase,estado,goles_local,goles_visitante,penales_local,penales_visitante,reclamo,fecha_hora,cancha,equipo_local_id,equipo_visitante_id," +
+  "id,torneo_id,categoria,fase,updated_at,estado,goles_local,goles_visitante,penales_local,penales_visitante,reclamo,fecha_hora,cancha,equipo_local_id,equipo_visitante_id," +
   TEAMS.replaceAll("partidos_equipo_", "eliminatorias_partidos_equipo_");
 async function readAll(client, table, fields) {
   const rows = [];

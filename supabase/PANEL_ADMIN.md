@@ -116,3 +116,12 @@ la recarga web. No borra cookies, almacenamiento de sesión ni cachés de otros 
 
 Referencias del mecanismo: [instalación PWA](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Making_PWAs_installable)
 y [activación de actualizaciones](https://developer.chrome.com/docs/workbox/handling-service-worker-updates).
+
+## Aprobación desde Partidos (26 de octubre de 2026)
+
+Los partidos de grupos y eliminatorias en revisión se aprueban desde la misma
+lista. Las eliminatorias usan guardar_eliminatoria con la versión del acta y
+validan el ganador por goles o penales. No requiere una migración nueva.
+El formulario muestra las validaciones y los errores junto al botón de aprobación.
+Se retiró la sección independiente Reclamos: al oficializar, la observación deja
+de mostrarse como pendiente, pero se conserva en los datos y en el historial.

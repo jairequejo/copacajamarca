@@ -42,7 +42,7 @@ export function filterMatches(
 export function matchCounts(matches) {
   return {
     review: matches.filter((m) => m.estado === "EN_REVISION").length,
-    claims: matches.filter((m) => String(m.reclamo || "").trim()).length,
+    claims: matches.filter((m) => m.estado !== "OFICIAL" && String(m.reclamo || "").trim()).length,
     official: matches.filter((m) => m.estado === "OFICIAL").length,
     live: matches.filter((m) => m.estado === "EN_VIVO").length,
   };

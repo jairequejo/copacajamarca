@@ -1,5 +1,5 @@
 // Bump this release whenever publishing changes to the administration application.
-const ADMIN_RELEASE = '2026-10-25.1';
+const ADMIN_RELEASE = '2026-10-26.1';
 
 // Updates wait until the administrator chooses to install them.
 self.addEventListener('message', event => {

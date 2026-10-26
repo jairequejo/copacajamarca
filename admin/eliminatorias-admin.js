@@ -9,9 +9,9 @@ function localDate(value) {
 }
 export function initKnockoutAdmin() {
   const root=document.getElementById('tab-eliminatorias');
-  let standings=[],games=[],results=[],bracket,available=false,busy=false;
+  let standings=[],games=[],results=[],bracket,available=false,busy=false,activeForm=null;
   const select=root.querySelector('select'),status=root.querySelector('[role=status]'),forms=root.querySelector('.ka-matches');
-  const say=message=>{status.textContent=message;};
+  const say=message=>{status.textContent=message; const inline=activeForm?.querySelector(".ka-form-status"); if(inline)inline.textContent=message;};
   function render() {
     const cat=select.value;
     bracket=advanceKnockout(buildKnockout(cat,standings,games),results,tournamentFor(cat,games),{includeReview:false});
@@ -22,7 +22,7 @@ export function initKnockoutAdmin() {
       const stale=raw&&!m.recordId;
       const stateLabel=s=>s==='OFICIAL'?'Oficial · confirmar resultado':s==='EN_REVISION'?'Por confirmar':s==='EN_VIVO'?'En vivo':'Programado';
       const review=raw?.estado==='EN_REVISION';
-      return `<form class="ka-match" data-index="${i}"><h3>${safe(m.title)}</h3><p>${m.teams.map(t=>safe(t.name)).join(' vs. ')}</p>${review?'<p class="ka-warning">Mesa envió este resultado. Revísalo y confirma para guardar los siguientes cruces. El fixture ya muestra el avance de Mesa.</p>':''}${raw?.reclamo?`<p class="ka-warning"><strong>Observación de mesa:</strong> ${safe(raw.reclamo)}</p>`:''}${stale?'<p class="ka-warning">El resultado guardado corresponde a otro cruce. Retíralo antes de continuar.</p>':''}<fieldset ${canEdit&&!stale?'':'disabled'}><div class="ka-inputs"><label>Goles local<input name="goles_local" type="number" min="0" max="99" step="1" value="${m.goals[0]??''}"></label><label>Goles visitante<input name="goles_visitante" type="number" min="0" max="99" step="1" value="${m.goals[1]??''}"></label><label>Penales local<input name="penales_local" type="number" min="0" max="99" step="1" value="${m.penalties[0]??''}"></label><label>Penales visitante<input name="penales_visitante" type="number" min="0" max="99" step="1" value="${m.penalties[1]??''}"></label></div><small>Penales solo si el marcador está empatado.</small><label>Estado<select name="estado">${['PROGRAMADO','EN_VIVO','EN_REVISION','OFICIAL'].map(s=>`<option ${s===m.estado?'selected':''} value="${s}">${stateLabel(s)}</option>`).join('')}</select></label><label>Fecha y hora (Perú)<input type="datetime-local" name="fecha_hora" value="${localDate(m.date)}"></label><label>Cancha<input name="cancha" maxlength="100" value="${safe(m.cancha)}"></label><button type="submit" class="btn-primary">${review?'Confirmar resultado':'Guardar '+safe(m.title.toLowerCase())}</button></fieldset>${raw?`<button type="button" class="ka-remove" data-remove="${safe(raw.id)}">Retirar programación y resultado</button>`:''}</form>`;
+      return `<form class="ka-match" data-index="${i}"><h3>${safe(m.title)}</h3><p>${m.teams.map(t=>safe(t.name)).join(' vs. ')}</p>${review?'<p class="ka-warning">Mesa envió este resultado. Revísalo y confirma para guardar los siguientes cruces. El fixture ya muestra el avance de Mesa.</p>':''}${raw?.reclamo&&raw.estado!=='OFICIAL'?`<p class="ka-warning"><strong>Observación de mesa:</strong> ${safe(raw.reclamo)}</p>`:''}${stale?'<p class="ka-warning">El resultado guardado corresponde a otro cruce. Retíralo antes de continuar.</p>':''}<fieldset ${canEdit&&!stale?'':'disabled'}><div class="ka-inputs"><label>Goles local<input name="goles_local" type="number" min="0" max="99" step="1" value="${m.goals[0]??''}"></label><label>Goles visitante<input name="goles_visitante" type="number" min="0" max="99" step="1" value="${m.goals[1]??''}"></label><label>Penales local<input name="penales_local" type="number" min="0" max="99" step="1" value="${m.penalties[0]??''}"></label><label>Penales visitante<input name="penales_visitante" type="number" min="0" max="99" step="1" value="${m.penalties[1]??''}"></label></div><small>Penales solo si el marcador está empatado.</small><label>Estado<select name="estado">${['PROGRAMADO','EN_VIVO','EN_REVISION','OFICIAL'].map(s=>`<option ${s===m.estado?'selected':''} value="${s}">${stateLabel(s)}</option>`).join('')}</select></label><label>Fecha y hora (Perú)<input type="datetime-local" name="fecha_hora" value="${localDate(m.date)}"></label><label>Cancha<input name="cancha" maxlength="100" value="${safe(m.cancha)}"></label><p class="ka-form-status" role="status"></p><button type="submit" class="btn-primary">${review?'Confirmar resultado':'Guardar '+safe(m.title.toLowerCase())}</button></fieldset>${raw?`<button type="button" class="ka-remove" data-remove="${safe(raw.id)}">Retirar programación y resultado</button>`:''}</form>`;
     }).join('');
     renderKnockout(root.querySelector('.ka-preview'),bracket);
     if(!available)say('Para guardar resultados falta aplicar la migración de eliminatorias en Supabase. El gráfico y su descarga ya están disponibles.');
@@ -43,8 +43,9 @@ export function initKnockoutAdmin() {
   select.addEventListener('change',()=>{say('');render();});
   root.querySelector('.ka-reload').addEventListener('click',load);
   document.querySelector('[data-target="tab-eliminatorias"]').addEventListener('click',load);
+  forms.addEventListener('invalid',event=>{activeForm=event.target.closest('form');say('Revisa el marcador: usa números enteros entre 0 y 99.');},true);
   forms.addEventListener('submit',async event=>{
-    event.preventDefault();if(busy)return;
+    event.preventDefault();if(busy)return;activeForm=event.target;
     const form=event.target,m=bracket.matches[Number(form.dataset.index)],data=new FormData(form);
     const number=name=>data.get(name)===''?null:Number(data.get(name));
     const p={torneo_id:bracket.tournamentId,categoria:bracket.category,fase:m.round,equipo_local_id:m.teams[0].id,equipo_visitante_id:m.teams[1].id,estado:m.estado==='EN_REVISION'&&data.get('estado')==='EN_REVISION'?'OFICIAL':data.get('estado'),goles_local:number('goles_local'),goles_visitante:number('goles_visitante'),penales_local:number('penales_local'),penales_visitante:number('penales_visitante'),fecha_hora:data.get('fecha_hora')?new Date(data.get('fecha_hora')+'-05:00').toISOString():null,cancha:String(data.get('cancha')||'').trim()||null};

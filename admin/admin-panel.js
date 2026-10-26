@@ -1,3 +1,4 @@
+import { approveKnockout } from "./panel-approval.js?v=1";
 import {
   escapeHTML as e,
   STATUS,
@@ -5,12 +6,11 @@ import {
   matchCounts,
   validateScore,
   peruDate,
-} from "./panel-model.js?v=1";
+} from "./panel-model.js?v=2";
 
 const TITLES = {
   inicio: ["Mesa de control", "El campeonato, en tus manos."],
   partidos: ["Partidos", "Consulta resultados y revisa cada acta."],
-  reclamos: ["Reclamos", "Las observaciones de mesa, junto a su partido."],
   historial: [
     "Mis aprobaciones",
     "Resultados que oficializaste con tu cuenta.",
@@ -30,7 +30,7 @@ const TITLES = {
   boleteria: ["Boletería", "Consulta ventas y administra el ingreso."],
   fichas: ["Fichas PDF", "Documentos oficiales de los equipos."],
 };
-import { loadPanelMatches } from "./panel-data.js?v=2";
+import { loadPanelMatches } from "./panel-data.js?v=3";
 const PHASES = {
   SF1: "Semifinal 1",
   SF2: "Semifinal 2",
@@ -70,7 +70,7 @@ export function initAdminPanel(client, say) {
         b.dataset.panelTarget === id ||
         (b.closest(".admin-bottom-nav") &&
           b.dataset.panelTarget === "tab-mas" &&
-          !["inicio", "partidos", "reclamos", "historial"].includes(target));
+          !["inicio", "partidos", "historial"].includes(target));
       b.classList.toggle("active", selected);
       b.setAttribute("aria-current", selected ? "page" : "false");
     });
@@ -82,14 +82,12 @@ export function initAdminPanel(client, say) {
     $("panel-filters").hidden = ![
       "inicio",
       "partidos",
-      "reclamos",
       "historial",
     ].includes(target);
     $("panel-status-wrap").hidden = target !== "partidos";
     $("panel-refresh").hidden = ![
       "inicio",
       "partidos",
-      "reclamos",
       "historial",
       "mesa",
     ].includes(target);
@@ -145,7 +143,7 @@ export function initAdminPanel(client, say) {
     .querySelector(".content-wrapper")
     .addEventListener("click", (event) => {
       const button = event.target.closest("[data-review-match]");
-      if (button) reviewMatch(button.dataset.reviewMatch);
+      if (button) reviewMatch(button.dataset.reviewMatch, button.dataset.origin);
       const access = event.target.closest("[data-mesa-user]");
       const knockout = event.target.closest("[data-knockout-category]");
       if (knockout) {
@@ -170,7 +168,7 @@ export function initAdminPanel(client, say) {
       m.goles_visitante != null
         ? `${e(m.goles_local)} <span>:</span> ${e(m.goles_visitante)}`
         : "<span>vs</span>";
-    return `<article class="panel-match"><div class="panel-match-meta"><span>Cat. ${e(m.categoria)}${m.grupo ? " / Grupo " + e(m.grupo) : ""}${m.jornada ? " / Jornada " + e(m.jornada) : ""}${m.fase ? " / " + e(PHASES[m.fase] || m.fase) : ""}</span><span class="match-status status-${e(m.estado)}">${e(STATUS[m.estado] || m.estado)}</span></div><div class="panel-match-pair">${team(m.equipo_local)}<div class="panel-result">${score}${m.penales_local != null ? `<small class="panel-penalties">Penales ${e(m.penales_local)} : ${e(m.penales_visitante)}</small>` : ""}</div>${team(m.equipo_visitante)}</div><div class="panel-match-bottom"><p>${e(peruDate(m.fecha_hora))}${m.cancha ? " / " + e(m.cancha) : ""}</p>${m.origen === "eliminatorias" ? `<button class="panel-secondary" data-knockout-category="${e(m.categoria)}">Ver eliminatoria</button>` : m.estado === "EN_REVISION" ? `<button class="panel-primary" data-review-match="${e(m.id)}">Revisar resultado</button>` : ""}</div>${m.reclamo ? `<details class="panel-claim" ${active === "reclamos" ? "open" : ""}><summary><span>Reclamo de mesa</span><span>Ver detalle</span></summary><p>${e(m.reclamo)}</p></details>` : ""}</article>`;
+    return `<article class="panel-match"><div class="panel-match-meta"><span>Cat. ${e(m.categoria)}${m.grupo ? " / Grupo " + e(m.grupo) : ""}${m.jornada ? " / Jornada " + e(m.jornada) : ""}${m.fase ? " / " + e(PHASES[m.fase] || m.fase) : ""}</span><span class="match-status status-${e(m.estado)}">${e(STATUS[m.estado] || m.estado)}</span></div><div class="panel-match-pair">${team(m.equipo_local)}<div class="panel-result">${score}${m.penales_local != null ? `<small class="panel-penalties">Penales ${e(m.penales_local)} : ${e(m.penales_visitante)}</small>` : ""}</div>${team(m.equipo_visitante)}</div><div class="panel-match-bottom"><p>${e(peruDate(m.fecha_hora))}${m.cancha ? " / " + e(m.cancha) : ""}</p>${m.estado === "EN_REVISION" ? `<button type="button" class="panel-primary" data-review-match="${e(m.id)}" data-origin="${e(m.origen || 'grupos')}">Revisar resultado</button>` : m.origen === "eliminatorias" ? `<button type="button" class="panel-secondary" data-knockout-category="${e(m.categoria)}">Ver eliminatoria</button>` : ""}</div>${m.reclamo && m.estado !== "OFICIAL" ? `<details class="panel-claim" ><summary><span>Reclamo de mesa</span><span>Ver detalle</span></summary><p>${e(m.reclamo)}</p></details>` : ""}</article>`;
   }
   function render() {
     const rows = scoped(),
@@ -193,15 +191,6 @@ export function initAdminPanel(client, say) {
     $("matches-list").innerHTML =
       all.map(matchCard).join("") ||
       blank("Sin partidos", "Prueba otra categoría o borra la búsqueda.");
-    $("claims-list").innerHTML =
-      rows
-        .filter((m) => String(m.reclamo || "").trim())
-        .map(matchCard)
-        .join("") ||
-      blank(
-        "Sin reclamos registrados",
-        "Aquí aparecerán las observaciones enviadas desde mesa.",
-      );
     const grouped = [
       ...new Set(matches.map((m) => String(m.categoria))),
     ].sort();
@@ -338,26 +327,40 @@ export function initAdminPanel(client, say) {
     d.showModal();
     return d;
   }
-  function reviewMatch(id) {
-    const m = matches.find((m) => m.id === id);
+  function reviewMatch(id, origin) {
+    const m = matches.find((m) => m.id === id && (m.origen || "grupos") === origin);
     if (!m || m.estado !== "EN_REVISION") return;
     const d = modal(
       "Revisar resultado",
-      `<p class="dialog-description">Categoría ${e(m.categoria)} / ${e(m.equipo_local?.nombre)} vs ${e(m.equipo_visitante?.nombre)}</p>${m.reclamo ? `<div class="dialog-claim"><strong>Reclamo pendiente de revisión</strong><p>${e(m.reclamo)}</p></div>` : ""}<form class="panel-review-form"><div class="score-fields"><label>${e(m.equipo_local?.nombre)}<input name="local" type="number" min="0" max="99" step="1" required value="${e(m.goles_local ?? "")}"></label><label>${e(m.equipo_visitante?.nombre)}<input name="visitante" type="number" min="0" max="99" step="1" required value="${e(m.goles_visitante ?? "")}"></label></div>${m.reclamo ? '<label class="review-check"><input type="checkbox" required>He revisado el reclamo antes de oficializar.</label>' : ""}<p class="dialog-description">El marcador se publicará en la tabla de posiciones.</p><p class="panel-form-message" role="status"></p><button type="submit" class="panel-primary">Aprobar y hacer oficial</button></form>`,
+      `<p class="dialog-description">Categoría ${e(m.categoria)} / ${e(m.equipo_local?.nombre)} vs ${e(m.equipo_visitante?.nombre)}</p>${m.reclamo ? `<div class="dialog-claim"><strong>Reclamo pendiente de revisión</strong><p>${e(m.reclamo)}</p></div>` : ""}<form class="panel-review-form" novalidate><div class="score-fields"><label>${e(m.equipo_local?.nombre)}<input name="local" type="number" min="0" max="99" step="1" required value="${e(m.goles_local ?? "")}"></label><label>${e(m.equipo_visitante?.nombre)}<input name="visitante" type="number" min="0" max="99" step="1" required value="${e(m.goles_visitante ?? "")}"></label></div>${m.origen === "eliminatorias" ? `<div class="score-fields"><label>Penales local<input name="penales_local" type="number" min="0" max="99" step="1" value="${e(m.penales_local ?? '')}"></label><label>Penales visitante<input name="penales_visitante" type="number" min="0" max="99" step="1" value="${e(m.penales_visitante ?? '')}"></label></div><p>Completa los penales solo si los goles están empatados.</p>` : ''}${m.reclamo ? '<label class="review-check"><input type="checkbox" required>He revisado el reclamo antes de oficializar.</label>' : ""}<p class="dialog-description">${m.origen === "eliminatorias" ? "El resultado quedará oficial en el cuadro de eliminatorias." : "El marcador se publicará en la tabla de posiciones."} Al aprobar, el reclamo se considera resuelto.</p><p class="panel-form-message" role="status"></p><button type="submit" class="panel-primary">Aprobar y hacer oficial</button></form>`,
     );
     d.querySelector("form").addEventListener("submit", async (event) => {
       event.preventDefault();
       const data = new FormData(event.currentTarget),
         a = data.get("local"),
         b = data.get("visitante");
-      if (!validateScore(a, b)) return;
+      const form = event.currentTarget;
+      if (!form.checkValidity() || !validateScore(a, b)) {
+        d.querySelector('[role=status]').textContent = form.querySelector('[type=checkbox]:invalid')
+          ? 'Marca que revisaste el reclamo antes de aprobar.'
+          : 'Completa el marcador con números enteros entre 0 y 99.';
+        form.reportValidity();
+        return;
+      }
       const button = d.querySelector("[type=submit]"),
         message = d.querySelector("[role=status]");
       if (button.disabled) return;
       button.disabled = true;
       message.textContent = "Guardando aprobación…";
       try {
-        let { error } = await client.rpc("aprobar_partido_admin", {
+        if (m.origen === 'eliminatorias') {
+          await approveKnockout(client, m, a, b, data.get('penales_local'), data.get('penales_visitante'));
+          d.close();
+          say('Eliminatoria oficializada.');
+          await refresh();
+          return;
+        }
+        let { data: approvedId, error } = await client.rpc("aprobar_partido_admin", {
           p_id: id,
           p_local: Number(a),
           p_visitante: Number(b),
@@ -395,6 +398,7 @@ export function initAdminPanel(client, say) {
           legacy = true;
         }
         if (error) throw error;
+        if (!legacy && approvedId !== id) throw new Error("No se confirmó la aprobación. Actualiza y vuelve a revisar.");
         d.close();
         say(
           legacy

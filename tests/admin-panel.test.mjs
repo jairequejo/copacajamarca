@@ -94,7 +94,7 @@ test("Category, status, accent-insensitive search and claims combine without los
   assert.equal(filterMatches(rows, { claims: true }).length, 2);
   assert.deepEqual(matchCounts(rows), {
     review: 1,
-    claims: 2,
+    claims: 1,
     official: 2,
     live: 0,
   });
