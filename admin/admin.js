@@ -1,6 +1,6 @@
 import { supabase } from '../assets/js/supabase.js';
 import { initAdminPanel } from './admin-panel.js?v=5';
-import { initKnockoutAdmin } from './eliminatorias-admin.js?v=34';
+import { initKnockoutAdmin } from './eliminatorias-admin.js?v=35';
 import { initFichasPendientes } from './fichas-pendientes.js?v=1';
 import { initAppSettings } from './app-update.js?v=1';
 import { loadCarnetPeople, carnetPersonName, carnetFileName } from './carnets-data.js?v=1';
