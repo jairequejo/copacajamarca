@@ -1,5 +1,5 @@
 import { supabase } from '../assets/js/supabase.js';
-import { initAdminPanel } from './admin-panel.js?v=5';
+import { initAdminPanel } from './admin-panel.js?v=6';
 import { initKnockoutAdmin } from './eliminatorias-admin.js?v=35';
 import { initFichasPendientes } from './fichas-pendientes.js?v=1';
 import { initAppSettings } from './app-update.js?v=1';

@@ -29,6 +29,7 @@ await db.exec(`
 await db.exec(await readFile('supabase/migrations/20260930000100_eliminatorias.sql','utf8'));
 await db.exec(`insert into eliminatorias_admins values('${admin}')`);
 await db.exec(await readFile('supabase/migrations/20261106000100_reparar_fixture_finales.sql','utf8'));
+await db.exec(await readFile('supabase/migrations/20261107000100_reparar_aprobacion_eliminatorias.sql','utf8'));
 
 const rows=(await db.query(`select * from eliminatorias_partidos order by categoria,fase`)).rows;
 assert.equal(rows.length,16);
@@ -44,5 +45,12 @@ const saved=(await db.query(`select to_jsonb(x) value from guardar_eliminatoria(
 assert.equal(saved.estado,'EN_VIVO');
 assert.equal(saved.clasificacion_manual,true);
 
+const semifinal=(await db.query(`insert into eliminatorias_partidos(torneo_id,categoria,fase,equipo_local_id,equipo_visitante_id,goles_local,goles_visitante,estado)
+  values($1,'2014','SF1',$2,$3,3,1,'EN_REVISION') returning *`,[tid,teams[0].id,teams[1].id])).rows[0];
+const approved=(await db.query(`select to_jsonb(x) value from aprobar_eliminatoria_admin($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) x`,[
+  semifinal.id,3,1,null,null,3,1,null,null,semifinal.equipo_local_id,semifinal.equipo_visitante_id
+])).rows[0].value;
+assert.equal(approved.estado,'OFICIAL');
+
 await db.close();
-console.log('SQL OK: 16 finales programadas, nunca oficiales, tabla accidental retirada y cruces manuales editables.');
+console.log('SQL OK: cruces manuales editables y semifinal de Mesa aprobada sin conflicto de versión.');

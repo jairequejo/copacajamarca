@@ -1,4 +1,4 @@
-import { approveKnockout } from "./panel-approval.js?v=1";
+import { approveKnockout } from "./panel-approval.js?v=2";
 import {
   escapeHTML as e,
   STATUS,
