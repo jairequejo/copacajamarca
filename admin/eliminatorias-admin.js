@@ -1,6 +1,6 @@
 import { supabase } from '../assets/js/supabase.js';
-import { buildKnockout, advanceKnockout } from '../assets/js/eliminatorias-model.js?v=5';
-import { loadKnockoutResults, tournamentFor, loadMatchesWithMetadata } from '../assets/js/eliminatorias-data.js?v=2';
+import { buildKnockout, advanceKnockout } from '../assets/js/eliminatorias-model.js?v=6';
+import { loadKnockoutResults, tournamentFor, loadMatchesWithMetadata } from '../assets/js/eliminatorias-data.js?v=3';
 import { renderKnockout } from '../assets/js/eliminatorias.js?v=35';
 const safe = s => String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function localDate(value) {

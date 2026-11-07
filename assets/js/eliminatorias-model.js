@@ -58,10 +58,21 @@ export function matchDecision(match, options) {
 }
 export function advanceKnockout(bracket, records = [], tournamentId = null, { includeReview = true } = {}) {
   const result = { ...bracket, includeReview, matches: bracket.matches.map((m, i) => ({ ...m, round: ROUND_IDS[i], teams: m.teams.map(t => ({ ...t })), goals: [null, null], penalties: [null, null], estado: 'PROGRAMADO' })), tournamentId };
+  const recordFor = match => records.find(r => String(r.categoria) === String(bracket.category) && r.fase === match.round && String(r.torneo_id) === String(tournamentId));
+  const directTeam = (record, side) => {
+    const relation = record[`equipo_${side}`];
+    const details = Array.isArray(relation) ? relation[0] : relation;
+    return {
+      id: record[`equipo_${side}_id`],
+      name: details?.nombre || record[`equipo_${side}_nombre`] || 'Equipo por confirmar',
+      logo: details?.logo_url || null,
+      seed: record.fase === 'F' ? 'Finalista' : 'Tercer puesto'
+    };
+  };
   const apply = index => {
     const match = result.matches[index];
-    const record = records.find(r => String(r.categoria) === String(bracket.category) && r.fase === match.round && String(r.torneo_id) === String(tournamentId));
-    if (!record || !bracket.ready || !match.teams.every(t => t.id)) return;
+    const record = recordFor(match);
+    if (!record || (!bracket.ready && !record.clasificacion_manual) || !match.teams.every(t => t.id)) return;
     // A correction upstream must never attach an old score to a different pairing.
     if (String(record.equipo_local_id) !== String(match.teams[0].id) || String(record.equipo_visitante_id) !== String(match.teams[1].id)) return;
     Object.assign(match, { recordId: record.id, updatedAt: record.updated_at, goals: [record.goles_local, record.goles_visitante], penalties: [record.penales_local, record.penales_visitante], estado: record.estado, date: record.fecha_hora, cancha: record.cancha });
@@ -73,6 +84,15 @@ export function advanceKnockout(bracket, records = [], tournamentId = null, { in
     if (decision) {
       result.matches[2].teams[i] = { ...decision.winner, seed: `Ganador semifinal ${i + 1}` };
       result.matches[3].teams[i] = { ...decision.loser, seed: `Perdedor semifinal ${i + 1}` };
+    }
+  }
+  // Algunas ediciones llegan con final y tercer puesto definidos directamente
+  // por la organización. Esos cruces no dependen de semifinales almacenadas.
+  for (const index of [2, 3]) {
+    const record = recordFor(result.matches[index]);
+    if (record?.clasificacion_manual && record.equipo_local_id && record.equipo_visitante_id) {
+      result.matches[index].teams = [directTeam(record, 'local'), directTeam(record, 'visitante')];
+      result.ready = true;
     }
   }
   apply(2); apply(3);

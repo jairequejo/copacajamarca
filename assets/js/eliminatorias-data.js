@@ -1,6 +1,6 @@
 import { supabase } from './supabase.js';
 export async function loadKnockoutResults() {
-  const response = await supabase.from('eliminatorias_partidos').select('*');
+  const response = await supabase.from('eliminatorias_partidos').select('*,equipo_local:equipos!eliminatorias_partidos_equipo_local_id_fkey(nombre,logo_url),equipo_visitante:equipos!eliminatorias_partidos_equipo_visitante_id_fkey(nombre,logo_url)');
   if (response.error && ['PGRST205', '42P01'].includes(response.error.code)) return { records: [], available: false };
   if (response.error) throw response.error;
   return { records: response.data || [], available: true };

@@ -67,6 +67,23 @@ test('Correction invalidates a previously saved final pairing and champion',()=>
   assert.equal(k.matches[2].teams[0].id,'four');assert.equal(k.champion,null);assert.deepEqual(k.matches[2].goals,[null,null]);
 });
 
+test('A manually classified final is editable and official without stored semifinals',()=>{
+  const manual=result('F','guest-one','guest-two',null,null,{
+    estado:'PROGRAMADO',clasificacion_manual:true,id:'manual-final',updated_at:'v1',
+    equipo_local:{nombre:'Invitado Uno',logo_url:'/logos/uno.svg'},
+    equipo_visitante:{nombre:'Invitado Dos',logo_url:'/logos/dos.svg'}
+  });
+  const scheduled=advanceKnockout(base(),[manual],tid,{includeReview:false});
+  assert.equal(scheduled.ready,true);
+  assert.equal(scheduled.matches[2].recordId,'manual-final');
+  assert.deepEqual(scheduled.matches[2].teams.map(t=>t.name),['Invitado Uno','Invitado Dos']);
+  assert.deepEqual(scheduled.matches[2].teams.map(t=>t.logo),['/logos/uno.svg','/logos/dos.svg']);
+
+  const official=advanceKnockout(base(),[{...manual,estado:'OFICIAL',goles_local:2,goles_visitante:1}],tid);
+  assert.equal(official.champion.id,'guest-one');
+  assert.equal(official.champion.name,'Invitado Uno');
+});
+
 test('Mesa-finished semifinals immediately advance winner logos and place losers in third, including penalties',()=>{
   const records=[result('SF1','one','four',1,1,{estado:'EN_REVISION',penales_local:3,penales_visitante:4}),
     result('SF2','two','three',2,0,{estado:'EN_REVISION'})];

@@ -1,7 +1,7 @@
 import { supabase } from './supabase.js';
-import { buildKnockout, isFinished, advanceKnockout } from './eliminatorias-model.js?v=5';
+import { buildKnockout, isFinished, advanceKnockout } from './eliminatorias-model.js?v=6';
 import { renderKnockout } from './eliminatorias.js?v=35';
-import { loadKnockoutResults, tournamentFor, loadMatchesWithMetadata } from './eliminatorias-data.js?v=2';
+import { loadKnockoutResults, tournamentFor, loadMatchesWithMetadata } from './eliminatorias-data.js?v=3';
 import { fixtureCategoryTabs, fixtureGroupKey, resolveFixtureSelection } from './fixture-navigation.js?v=1';
 
 // ═══════════════════════════════════════════════════════════
